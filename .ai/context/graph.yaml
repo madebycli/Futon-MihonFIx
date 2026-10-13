@@ -198,7 +198,14 @@ nodes:
   SIGNED_RELEASE_9_8_4:
     type: user_authorized_release
     authorization_date: 2026-10-13
-    status: prepared_pending_validation
+    status: published
+    source_head: e754d831497aa40c2d9083dfd40bbb79987203de
+    run_id: 38361962248
+    run_status: success
+    apk_asset_id: 636270858
+    apk_sha256: 0fd0249e2e56a5dcff4995b8c9799f91b671c82f387c557479b5f6f02ec95cca
+    optimized_r8_abi_identity_signature: passed
+    device_validation: pending
     branch: release/v9.8.4
     version_name: 9.8.4
     version_code: 90804

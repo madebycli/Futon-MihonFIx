@@ -17,5 +17,8 @@ Reader resume, navigation, downloads and progress use the same projection.
 Upstream ports: b2864d65 nested interactive errors; 3e86e87 header ownership adapted to Futon.
 Live upstreams and deliberately omitted deltas are in AUDIT.md. Existing snapshot and ABI behavior remains.
 Upstream intermediate XML: 56 tests passed. Comix source XML: 69 tests passed, Debug Build successful.
-Read actual workflow/release status before claiming optimized APK, signing or publication.
+Published 9.8.4 source e754d831497aa40c2d9083dfd40bbb79987203de, run 38361962248 success.
+APK asset 636270858, SHA256 0fd0249e2e56a5dcff4995b8c9799f91b671c82f387c557479b5f6f02ec95cca.
+R8/ABI/version/signature gates passed; devel is untouched, PR #3 stays unmerged.
+Re-fetch actual workflow/release status before relying on artifact availability.
 New device validation remains PENDING, regardless of historical successful device tests.

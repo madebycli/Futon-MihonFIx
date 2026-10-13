@@ -4,20 +4,25 @@
 **Fork of:** [Kotatsu](https://github.com/KotatsuApp/Kotatsu)  
 **Language:** Kotlin  
 **Build System:** Gradle with Kotlin DSL  
-**Minimum SDK:** 23 (Android 6.0+)  
+**Minimum SDK:** 26 (Android 8.0+)
 **Target SDK:** 36
 
 ---
 
-## Active Work: Mihon / Keiyoushi Compatibility Fix
+## Active Work: Mihon / Comix app-side compatibility
 
-An in-progress compatibility fix exists on branch `fix/mihon-uncaught-exception-interceptor`. It addresses Keiyoushi/Mihon extensions failing with `UncaughtExceptionInterceptor must be present in default client` and adds a temporary signed optimized APK workflow.
+Read `.ai/CONTEXT.md` first, then `.ai/context/{STATE.md,graph.yaml,HANDOFF_PROMPT.md}` and
+`docs/upstream-comix/{PLAN.md,AUDIT.md,VALIDATION.md}` for the current scope and evidence.
+The former Mihon fix is already integrated in `devel` and published in 9.8.3. PR #1 is closed.
 
-**Before continuing this work, read `.ai/MIHON_FIX_CONTEXT.md` and `CI.md`.** Then inspect the current branch HEAD, diff vs `devel`, `.ci/mihon-fix-latest.json`, and the latest GitHub Actions logs instead of assuming the snapshot in the context file is still current.
+The 2026-10-13 task uses `feat/comix-all-chapters-upstream-sync` and PR #3, with a separate
+user-authorized `release/v9.8.4` publication route. Do not merge `devel` without explicit permission.
+Only modify the host app for external Comix: reliably unique chapter numbers form one complete list,
+while duplicates/uncertain numbers retain groups. No extension fork or new signing key.
 
-At the last verified state, the focused `MihonNetworkHelperTest` regression suite passed. The signed APK job was skipped only because the workflow still treated unrelated project-wide `lintRelease` debt as a hard gate. Keep the focused Mihon tests as the authoritative compatibility gate, do not perform broad unrelated cleanup solely to get the temporary APK, and never claim an APK exists until a real workflow artifact is present.
-
-Keep all changes for this task on the fix branch. Do not merge into `devel` until the user has installed the test APK and verified real Keiyoushi extensions, especially Comix.
+Focused Mihon and Comix regressions are a hard gate; project-wide legacy release lint remains
+diagnostic in the existing workflow. Verify actual Actions/APK/signature evidence before claiming
+success. New on-device validation is PENDING; historical device tests apply only to their recorded tree.
 
 ---
 

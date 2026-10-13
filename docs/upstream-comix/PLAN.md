@@ -4,7 +4,7 @@
 Gezielte aktuelle Mihon-Fixes und eine kombinierte Comix-Kapitelliste.
 
 ## Anforderungen
-Comix-only anhand Source-ID/Extension-Paket; Alle zuerst und als Standard; Original-IDs/URLs behalten;
+Comix-only anhand Source-ID/Extension-Paket; bei eindeutigen Nummern keine Gruppen-Tabs; Original-IDs/URLs behalten;
 Gruppen weiterhin erreichbar; keine Netzwerkabfrage beim Chipwechsel; keine Migration oder Extension-Fork.
 Tests, Debug-APK und optimierter signierter Build. Der Benutzer hat anschließend einen signed Release autorisiert.
 

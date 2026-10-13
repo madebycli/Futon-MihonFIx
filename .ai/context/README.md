@@ -7,7 +7,7 @@ This directory is the persistent handoff memory for AI agents working on Mihon/K
 Before changing code, every new AI agent MUST:
 
 1. Read `STATE.md`, `graph.yaml`, and `HANDOFF_PROMPT.md` completely.
-2. Fetch the current head of `fix/mihon-uncaught-exception-interceptor`, PR #1, and `.ci/mihon-fix-latest.json` from GitHub. Never assume the SHA in these files is still current.
+2. Fetch the branch/PR/release currently named by `STATE.md` and current CI evidence. Old fix-branch and PR #1 references are historical; never assume their saved status is current.
 3. Fetch the current `devel` head of `Kototoro-app/Kototoro` and inspect its Mihon/Tachiyomi implementation before inventing another compatibility layer.
 4. Treat the newest user-provided on-device log/test result as the highest-value runtime evidence. Collapse repeated log lines into unique root causes.
 5. Update `STATE.md` and `graph.yaml` after every meaningful discovery, code change, test result, upstream-reference change, or resolved/introduced regression.
@@ -42,7 +42,7 @@ If Futon's implementation still fails for a Mihon/Keiyoushi behavior and Kototor
 
 ## Branch and PR safety rules
 
-- Work only on `fix/mihon-uncaught-exception-interceptor` unless the user explicitly changes this instruction.
+- Work on the current feature branch named in STATE.md or explicitly specified by the user.
 - Base remains `devel`.
 - Keep PR #1 as draft until the user explicitly asks otherwise.
 - Never merge PR #1 and never directly modify `devel` without explicit user approval.

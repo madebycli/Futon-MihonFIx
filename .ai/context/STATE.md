@@ -20,14 +20,17 @@ Last refreshed: 2026-10-13
 - Upstream intermediate source fa7907fe85ca1b07602e96c3d7c0f9666c64b09b, run 38360422794:
   downloaded focused XML reports prove 56 tests, 0 failures, 0 errors. Subsequent run superseded its lint/build.
 - Comix source f66145ddd8a3b4ad47bd42ee1696a94fea0e7a35; 13 new regression tests: run 38361172927 XML reports prove 69 tests, 0 failures/errors;
-  Debug Build run 38361172910 success. Signed optimized release 9.8.4 pending.
+  Debug Build run 38361172910 success. Signed optimized release 9.8.4 PUBLISHED: source e754d831497aa40c2d9083dfd40bbb79987203de,
+  run 38361962248 SUCCESS, APK asset 636270858, SHA256
+  0fd0249e2e56a5dcff4995b8c9799f91b671c82f387c557479b5f6f02ec95cca.
+  R8/ABI/version/signature gates passed, same release certificate as 9.8.3.
 - User simplified scope: external Comix ONLY, reliable unique (volume, number) keys become one complete
   chapter list with no group chips. Duplicates/unknown numbers keep groups. No host dedup/ranking engine,
   no Extension fork/preferences changes, no chapter deletion, no new persisted state or DB migration.
 - Reader/resume/progress/download mapping use the same projection; original IDs/URLs/scanlators remain intact.
 - Force refresh bypasses details cache; extension itself handles dedup preference changes through list memo.
 - Real-device retest of these new changes PENDING. Historical device success below applies only to its recorded tree.
-- Detailed plan/audit: docs/upstream-comix/; final validation must be recorded after CI/publication.
+- Detailed plan/audit: docs/upstream-comix/; final CI/publication evidence is recorded in VALIDATION.md.
 
 ## Historical compatibility and release preparation
 
