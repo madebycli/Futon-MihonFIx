@@ -42,6 +42,7 @@ jobs:
           # re-enables D8 interface desugaring and breaks serializers loaded later from extension APKs.
           grep -Eq '^[[:space:]]*minSdk = 26$' app/build.gradle
           ./gradlew testDebugUnitTest \
+            --tests "io.github.landwarderer.futon.mihon.MihonExceptionUnwrapTest" \
             --tests "io.github.landwarderer.futon.mihon.ExtensionRepoServiceTest" \
             --tests "io.github.landwarderer.futon.mihon.TachiyomiApkClassLoaderPolicyTest" \
             --tests "io.github.landwarderer.futon.mihon.compat.MihonNetworkHelperTest" \
@@ -119,26 +120,8 @@ jobs:
             echo "SIGNING_KIND=repository-release-key" >> "$GITHUB_ENV"
             echo "Using repository release signing key."
           else
-            TEMP_PASSWORD="$(openssl rand -hex 32)"
-            TEMP_ALIAS="futon-mihon-test"
-            echo "::add-mask::$TEMP_PASSWORD"
-            keytool -genkeypair \
-              -keystore "$KEYSTORE" \
-              -storepass "$TEMP_PASSWORD" \
-              -keypass "$TEMP_PASSWORD" \
-              -alias "$TEMP_ALIAS" \
-              -keyalg RSA \
-              -keysize 4096 \
-              -validity 30 \
-              -dname "CN=Futon Mihon Temporary Test,O=Futon Test,C=DE" \
-              -noprompt
-            test -s "$KEYSTORE"
-            echo "KEYSTORE_FILE=$KEYSTORE" >> "$GITHUB_ENV"
-            echo "KEYSTORE_PASSWORD=$TEMP_PASSWORD" >> "$GITHUB_ENV"
-            echo "KEY_ALIAS=$TEMP_ALIAS" >> "$GITHUB_ENV"
-            echo "KEY_PASSWORD=$TEMP_PASSWORD" >> "$GITHUB_ENV"
-            echo "SIGNING_KIND=temporary-test-key" >> "$GITHUB_ENV"
-            echo "Repository release signing secrets are unavailable; using a 30-day temporary test key."
+            echo "::error::Repository release signing secrets are required; no temporary key will be generated."
+            exit 1
           fi
 
       - name: Build signed optimized release APK
