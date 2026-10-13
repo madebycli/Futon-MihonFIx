@@ -26,14 +26,14 @@ jobs:
           distribution: 'temurin'
 
       - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
+        uses: android-actions/setup-android@v4
         with:
           packages: platform-tools
 
       - name: Build debug APK
         env:
           SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
-        run: ./gradlew assembleDebug --stacktrace --info --no-build-cache --no-configuration-cache
+        run: ./gradlew assembleDebug compileDebugAndroidTestKotlin --stacktrace --info --no-build-cache --no-configuration-cache
 
       - name: Upload debug APK
         uses: actions/upload-artifact@v4

@@ -166,6 +166,29 @@ class ComixChapterGroupingTest {
         assertEquals(listOf(2L), original.filterChapters("B").chapters.orEmpty().map { it.id })
     }
 
+    @Test
+    fun smartResumeCanAdvanceAcrossScanlatorGroups() = kotlinx.coroutines.test.runTest {
+        val details = MangaDetails(manga(listOf(chapter(1, 1f, "A"), chapter(2, 2f, "B"))))
+        val history = io.github.landwarderer.futon.core.model.MangaHistory(
+            createdAt = java.time.Instant.EPOCH, updatedAt = java.time.Instant.EPOCH,
+            chapterId = 1, page = 9, scroll = 0, percent = 1f, chaptersCount = 1,
+        )
+        val resolver = io.github.landwarderer.futon.reader.domain.SmartResumeResolver(
+            ReaderState(history), history,
+            io.github.landwarderer.futon.reader.domain.ChapterCompletionRule(
+                io.github.landwarderer.futon.core.prefs.ChapterCompletionMode.PERCENTAGE, 90, 1,
+            ), false,
+        )
+        var opened = 0L
+        val state = resolver.resolve(details.chapterListForBranch("A").map { it.id }, 10, true) {
+            opened = it
+            true
+        }
+        assertEquals(2L, opened)
+        assertEquals(ReaderState(2, 0, 0), state)
+        assertEquals("title/test/2", details.allChapters[1].url)
+    }
+
     private fun chapter(id: Long, number: Float, group: String) = MangaChapter(
         id = id, title = "Chapter ${number.toString().removeSuffix(".0")}", number = number,
         volume = 0, url = "title/test/$id", scanlator = group, uploadDate = 0L, branch = group, source = source,

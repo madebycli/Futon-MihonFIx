@@ -4,6 +4,17 @@ All notable changes to this project are documented in this file.
 
 The format is based on "Keep a Changelog" and follows semantic versioning where possible.
 
+## 9.8.5
+Date: 2026-10-13
+
+### Upstream integration
+- Merged all six AppFuton/Futon commits through 5d2206a (upstream release 9.8.2).
+- Preserve newer saved reading progress during metadata recalculation.
+- Add opt-in smart resume and restore cross-chapter prefetch behavior.
+- Update built-in parsers to b3c0000245 and Android SDK setup actions to v4.
+- Keep the downstream Mihon/Keiyoushi ABI, snapshot, network and external Comix fixes.
+- Adapt smart resume to the continuous external Comix chapter list.
+
 ## 9.8.4
 Date: 2026-10-13
 
@@ -36,6 +47,17 @@ Date: 2026-09-01
 ### Maintenance
 - Added focused Mihon regression coverage, optimized R8 runtime ABI verification and release signature verification
 - Hardened the tag release workflow to publish a named APK and SHA-256 checksum only after release gates pass
+
+## 9.8.2
+Date: 2026-10-03
+
+### Highlights
+* Fix saved reading progress reverting to an earlier page.
+* Add opt-in smart resume for newly available chapters.
+* Fix loading pauses between chapters when preloading is enabled.
+
+### Maintenance
+- Updated parsers and dependencies
 
 ## 9.8.1
 Date: 2026-08-16

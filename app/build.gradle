@@ -34,8 +34,8 @@ android {
 		// AbstractMethodError for typeParametersSerializers(). Match the extension host ABI.
 		minSdk = 26
 		targetSdk = 36
-		versionCode project.hasProperty('versionCode') ? project.property('versionCode').toInteger() : 90801
-        versionName project.hasProperty('versionName') ? project.property('versionName') : '9.8.1'
+		versionCode project.hasProperty('versionCode') ? project.property('versionCode').toInteger() : 90805
+        versionName project.hasProperty('versionName') ? project.property('versionName') : '9.8.5'
         generatedDensities = []
 		testInstrumentationRunner 'io.github.landwarderer.futon.HiltTestRunner'
 		ksp {
