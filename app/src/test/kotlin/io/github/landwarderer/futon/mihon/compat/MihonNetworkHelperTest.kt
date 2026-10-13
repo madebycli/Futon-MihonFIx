@@ -212,7 +212,7 @@ class MihonNetworkHelperTest {
     }
 
     @Test
-    fun sourceOwnsApiHeadersEvenWithClearanceCookie() {
+    fun sourceOwnsApiHeadersEvenWithClearanceCookie() = org.mockito.Mockito.mockStatic(android.util.Log::class.java).use {
         val request = Request.Builder().url("https://example.com/api/image").build()
         val cookies = object : CookieJar {
             override fun loadForRequest(url: okhttp3.HttpUrl) = listOf(
