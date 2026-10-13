@@ -196,7 +196,7 @@ abstract class ChaptersPagesViewModel(
 	fun markChapterAsCurrent(chapterId: Long) {
 		launchJob(Dispatchers.IO) {
 			val manga = mangaDetails.requireValue()
-			val chapters = checkNotNull(manga.chapters[selectedBranch.value])
+			val chapters = manga.chapterListForBranch(selectedBranch.value)
 			val chapterIndex = chapters.indexOfFirst { it.id == chapterId }
 			check(chapterIndex in chapters.indices) { "Chapter not found" }
 			val percent = chapterIndex / chapters.size.toFloat()

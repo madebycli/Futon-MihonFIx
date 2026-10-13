@@ -73,7 +73,7 @@ class MihonNetworkHelper(
         // a fresh off-screen WebView, shared per host, followed by one retry of the source request.
         builder.addInterceptor { chain ->
             val originalRequest = chain.request()
-            val request = enrichApiRequestHeadersIfNeeded(originalRequest)
+            val request = originalRequest
             val response = chain.proceed(request)
             val challengeUrl = request.toChallengeUrl()
 
@@ -91,7 +91,7 @@ class MihonNetworkHelper(
 
                     if (tryResolveAutomatically(request, challengeUrl)) {
                         response.close()
-                        val retryRequest = enrichApiRequestHeadersIfNeeded(originalRequest)
+                        val retryRequest = originalRequest
                         val retryClearance = getClearanceCookie(retryRequest)
                         Log.i(
                             TAG,
@@ -194,59 +194,6 @@ class MihonNetworkHelper(
             return referer.newBuilder().query(null).fragment(null).build().toString()
         }
         return url.newBuilder().encodedPath("/").query(null).fragment(null).build().toString()
-    }
-
-    private fun enrichApiRequestHeadersIfNeeded(request: Request): Request {
-        if (!request.url.encodedPath.startsWith("/api/")) return request
-        val cookies = cookieJar.loadForRequest(request.url)
-        val hasCfClearance = cookies.any { it.name == "cf_clearance" }
-        if (!hasCfClearance) return request
-        val origin = "${request.url.scheme}://${request.url.host}"
-        var modified = false
-        val builder = request.newBuilder()
-        if (request.header("Referer").isNullOrBlank()) {
-            builder.header("Referer", "$origin/")
-            modified = true
-        }
-        if (request.header("Origin").isNullOrBlank()) {
-            builder.header("Origin", origin)
-            modified = true
-        }
-        if (request.header("Accept").isNullOrBlank()) {
-            builder.header("Accept", "application/json, text/plain, */*")
-            modified = true
-        }
-        if (request.header("Accept-Language").isNullOrBlank()) {
-            builder.header("Accept-Language", "en-US,en;q=0.9")
-            modified = true
-        }
-        if (request.header("Sec-Fetch-Site").isNullOrBlank()) {
-            builder.header("Sec-Fetch-Site", "same-origin")
-            modified = true
-        }
-        if (request.header("Sec-Fetch-Mode").isNullOrBlank()) {
-            builder.header("Sec-Fetch-Mode", "cors")
-            modified = true
-        }
-        if (request.header("Sec-Fetch-Dest").isNullOrBlank()) {
-            builder.header("Sec-Fetch-Dest", "empty")
-            modified = true
-        }
-        if (request.header("X-Requested-With").isNullOrBlank()) {
-            builder.header("X-Requested-With", "XMLHttpRequest")
-            modified = true
-        }
-        if (request.header("X-XSRF-TOKEN").isNullOrBlank()) {
-            val xsrf = cookies.firstOrNull { it.name == "XSRF-TOKEN" }?.value
-            val decodedXsrf = xsrf?.let {
-                runCatching { URLDecoder.decode(it, StandardCharsets.UTF_8.name()) }.getOrDefault(it)
-            }
-            if (!decodedXsrf.isNullOrBlank()) {
-                builder.header("X-XSRF-TOKEN", decodedXsrf)
-                modified = true
-            }
-        }
-        return if (modified) builder.build() else request
     }
 
     private fun getClearanceCookie(request: Request): String? =

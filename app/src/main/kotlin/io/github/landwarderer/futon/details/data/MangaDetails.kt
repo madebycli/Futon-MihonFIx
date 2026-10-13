@@ -1,5 +1,6 @@
 package io.github.landwarderer.futon.details.data
 
+import io.github.landwarderer.futon.details.domain.ComixChapterGrouping
 import io.github.landwarderer.futon.core.model.getLocale
 import io.github.landwarderer.futon.core.model.isLocal
 import io.github.landwarderer.futon.core.model.withOverride
@@ -34,9 +35,21 @@ data class MangaDetails(
 
     val allChapters: List<MangaChapter> by lazy { mergeChapters() }
 
-    val chapters: Map<String?, List<MangaChapter>> by lazy {
-        allChapters.groupBy { it.branch }
+    val hasCombinedComixChapters: Boolean by lazy {
+        ComixChapterGrouping.shouldCombine(manga.source, allChapters)
     }
+
+    val chapters: Map<String?, List<MangaChapter>> by lazy {
+        if (hasCombinedComixChapters) {
+            mapOf(null to allChapters.sortedBy { it.number })
+        } else {
+            allChapters.groupBy { it.branch }
+        }
+    }
+
+    fun chapterListForBranch(branch: String?): List<MangaChapter> =
+        chapters[if (hasCombinedComixChapters) null else branch].orEmpty()
+
 
     val isLocal
         get() = manga.isLocal
@@ -78,7 +91,10 @@ data class MangaDetails(
         return manga.source.getLocale()
     }
 
-    fun filterChapters(branch: String?) = copy(
+    fun filterChapters(branch: String?) = if (hasCombinedComixChapters) {
+        // Keep every original chapter and local copy, while Reader next/previous uses numeric order.
+        copy(manga = manga.copy(chapters = chapterListForBranch(null)))
+    } else copy(
         manga = manga.filterChapters(branch),
         localManga = localManga?.run {
             copy(manga = manga.filterChapters(branch))

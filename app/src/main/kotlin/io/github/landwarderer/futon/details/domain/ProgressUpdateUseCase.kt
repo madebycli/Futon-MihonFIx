@@ -33,7 +33,7 @@ class ProgressUpdateUseCase @Inject constructor(
 			seed
 		}
 		val chapter = details.findChapterById(history.chapterId) ?: return PROGRESS_NONE
-		val chapters = details.getChapters(chapter.branch)
+		val chapters = details.chapterListForBranch(chapter.branch)
 		val chapterRepo = if (repo.source == chapter.source) {
 			repo
 		} else {

@@ -211,6 +211,28 @@ class MihonNetworkHelperTest {
         }
     }
 
+    @Test
+    fun sourceOwnsApiHeadersEvenWithClearanceCookie() = org.mockito.Mockito.mockStatic(android.util.Log::class.java).use {
+        val request = Request.Builder().url("https://example.com/api/image").build()
+        val cookies = object : CookieJar {
+            override fun loadForRequest(url: okhttp3.HttpUrl) = listOf(
+                okhttp3.Cookie.Builder().name("cf_clearance").value("test").domain(url.host).build(),
+            )
+            override fun saveFromResponse(url: okhttp3.HttpUrl, cookies: List<okhttp3.Cookie>) = Unit
+        }
+        val captured = AtomicReference<Request>()
+        val helper = MihonNetworkHelper(OkHttpClient.Builder().build(), cookies)
+        val client = helper.client.newBuilder().addInterceptor { chain ->
+            captured.set(chain.request())
+            Response.Builder().request(chain.request()).protocol(Protocol.HTTP_1_1)
+                .code(200).message("OK").body("".toResponseBody()).build()
+        }.build()
+        client.newCall(request).execute().close()
+        assertEquals(null, captured.get().header("Origin"))
+        assertEquals(null, captured.get().header("Referer"))
+        assertEquals(null, captured.get().header("Sec-Fetch-Site"))
+    }
+
     private fun executeThroughUserAgentInterceptor(request: Request): Request {
         val capturedRequest = AtomicReference<Request>()
         val client = OkHttpClient.Builder()

@@ -4,6 +4,19 @@ All notable changes to this project are documented in this file.
 
 The format is based on "Keep a Changelog" and follows semantic versioning where possible.
 
+## 9.8.4
+Date: 2026-10-13
+
+### Fixes
+- External Comix chapters with unique chapter numbers now form one continuous list without scanlator tabs.
+- Preserve group views for duplicate or uncertain chapter numbers; no upload is removed by Futon.
+- Keep reader navigation, resume, download indicators and progress consistent with the combined list.
+- Preserve extension-selected HTTP headers and unwrap nested Mihon interactive/Cloudflare errors.
+
+### Validation
+- Focused compatibility and Comix regression tests, debug build and optimized signed release gates.
+- Real-device retest of 9.8.4 remains pending.
+
 ## 9.8.3
 Date: 2026-09-01
 

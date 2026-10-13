@@ -26,6 +26,7 @@ import io.github.landwarderer.futon.core.util.ext.MutableEventFlow
 import io.github.landwarderer.futon.core.util.ext.call
 import io.github.landwarderer.futon.core.util.ext.firstNotNull
 import io.github.landwarderer.futon.core.util.ext.requireValue
+import io.github.landwarderer.futon.details.domain.hasCombinedComixChapters
 import io.github.landwarderer.futon.details.data.MangaDetails
 import io.github.landwarderer.futon.details.domain.DetailsInteractor
 import io.github.landwarderer.futon.details.domain.DetailsLoadUseCase
@@ -476,7 +477,7 @@ class ReaderViewModel @Inject constructor(
                                 detectReaderModeUseCase(manga, newState)
                             }.getOrDefault(settings.defaultReaderMode)
                             val branch = chaptersLoader.peekChapter(newState.chapterId)?.branch
-                            selectedBranch.value = branch
+                            selectedBranch.value = if (details.hasCombinedComixChapters) null else branch
                             readerMode.value = mode
                             try {
                                 chaptersLoader.loadSingleChapter(newState.chapterId)
@@ -566,12 +567,12 @@ class ReaderViewModel @Inject constructor(
         val state = getCurrentState() ?: return
         val chapter = chaptersLoader.peekChapter(state.chapterId) ?: return
         val m = mangaDetails.value ?: return
-        val chapterIndex = m.chapters[chapter.branch]?.indexOfFirst { it.id == chapter.id } ?: -1
+        val chapterIndex = m.chapterListForBranch(chapter.branch).indexOfFirst { it.id == chapter.id }
         val newState = ReaderUiState(
             mangaName = m.toManga().title,
             chapter = chapter,
             chapterIndex = chapterIndex,
-            chaptersTotal = m.chapters[chapter.branch].sizeOrZero(),
+            chaptersTotal = m.chapterListForBranch(chapter.branch).size,
             totalPages = chaptersLoader.getPagesCount(chapter.id),
             currentPage = state.page,
             percent = computePercent(state.chapterId, state.page),
@@ -586,7 +587,7 @@ class ReaderViewModel @Inject constructor(
 
     private fun computePercent(chapterId: Long, pageIndex: Int): Float {
         val branch = chaptersLoader.peekChapter(chapterId)?.branch
-        val chapters = mangaDetails.value?.chapters?.get(branch) ?: return PROGRESS_NONE
+        val chapters = mangaDetails.value?.chapterListForBranch(branch) ?: return PROGRESS_NONE
         val chaptersCount = chapters.size
         val chapterIndex = chapters.indexOfFirst { x -> x.id == chapterId }
         val pagesCount = chaptersLoader.getPagesCount(chapterId)
@@ -655,7 +656,7 @@ class ReaderViewModel @Inject constructor(
             val chapter = manga.findChapterById(history.chapterId) ?: return null
             // specified branch is requested
             return if (ReaderIntent.EXTRA_BRANCH in savedStateHandle) {
-                if (chapter.branch == requestedBranch) {
+                if (manga.hasCombinedComixChapters() || chapter.branch == requestedBranch) {
                     ReaderState(history)
                 } else {
                     ReaderState(manga, requestedBranch)

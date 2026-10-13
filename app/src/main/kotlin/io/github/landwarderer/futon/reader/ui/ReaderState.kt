@@ -1,5 +1,6 @@
 package io.github.landwarderer.futon.reader.ui
 
+import io.github.landwarderer.futon.details.domain.chapterListForBranch
 import android.os.Parcelable
 import kotlinx.parcelize.Parcelize
 import io.github.landwarderer.futon.core.model.MangaHistory
@@ -19,9 +20,7 @@ data class ReaderState(
 	)
 
 	constructor(manga: Manga, branch: String?) : this(
-		chapterId = manga.chapters?.let {
-			it.firstOrNull { x -> x.branch == branch } ?: it.firstOrNull()
-		}?.id ?: error("Cannot find first chapter"),
+		chapterId = (manga.chapterListForBranch(branch).firstOrNull() ?: manga.chapters?.firstOrNull())?.id ?: error("Cannot find first chapter"),
 		page = 0,
 		scroll = 0,
 	)

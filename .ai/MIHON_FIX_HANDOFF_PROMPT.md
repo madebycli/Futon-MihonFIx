@@ -1,3 +1,5 @@
+> Historical compatibility snapshot. For current branch, release authorization, Comix scope and CI evidence, read `.ai/CONTEXT.md` and `.ai/context/STATE.md` first. Old branch/status examples below are not current routing instructions.
+
 # Ready-to-paste AI continuation prompt
 
 You are continuing active work on the Android/Kotlin repository `madebycli/Futon`.

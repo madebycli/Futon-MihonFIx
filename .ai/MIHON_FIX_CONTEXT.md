@@ -1,3 +1,5 @@
+> Historical compatibility snapshot. For current branch, release authorization, Comix scope and CI evidence, read `.ai/CONTEXT.md` and `.ai/context/STATE.md` first. Old branch/status examples below are not current routing instructions.
+
 # Mihon / Keiyoushi Fix — AI Handoff Context
 
 Last verified: 2026-08-25 18:24 CEST

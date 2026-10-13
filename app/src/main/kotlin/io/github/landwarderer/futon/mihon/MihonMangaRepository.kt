@@ -8,8 +8,6 @@ import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.HttpSource
 import io.github.landwarderer.futon.core.cache.MemoryContentCache
-import io.github.landwarderer.futon.core.exceptions.CloudFlareException
-import io.github.landwarderer.futon.core.exceptions.InteractiveActionRequiredException
 import io.github.landwarderer.futon.core.parser.CachingMangaRepository
 import io.github.landwarderer.futon.mihon.compat.MihonRequestContext
 import io.github.landwarderer.futon.mihon.model.snapshot
@@ -498,13 +496,8 @@ class MihonMangaRepository(
     private inline fun <T> rethrowMihonWrappedExceptions(block: () -> T): T {
         try {
             return block()
-        } catch (e: RuntimeException) {
-            when (val cause = e.cause) {
-                is CloudFlareException -> throw cause
-                is InteractiveActionRequiredException -> throw cause
-                is java.io.IOException -> throw cause
-                else -> throw e
-            }
+        } catch (e: Exception) {
+            throw unwrapMihonFailure(e)
         }
     }
 }

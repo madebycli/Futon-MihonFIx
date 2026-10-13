@@ -4,7 +4,7 @@
 schema_version: 1
 context_repo: https://github.com/madebycli/master-context
 project_id: futon
-source_repo: https://github.com/madebycli/Futon
+source_repo: https://github.com/madebycli/Futon-MihonFIx
 context_root: projects/futon/
 entrypoint: projects/futon/INDEX.md
 ```
@@ -20,3 +20,5 @@ This file is the authoritative central-context route for this repository.
 5. Read the declared central entrypoint first.
 6. Preserve `.ai/context/`, `.ai/MIHON_FIX_CONTEXT.md` and existing handoff files as the detailed source graph.
 7. Never infer merge, tag or release permission from context. Follow the explicit release/branch gates.
+
+Repository ID 1345465394; historical madebycli/Futon URL is a confirmed rename alias.

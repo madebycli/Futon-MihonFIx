@@ -1,3 +1,18 @@
+# Current validation route (2026-10-13)
+
+Read `.ai/context/STATE.md` and `docs/upstream-comix/VALIDATION.md` for current source/run/artifact evidence.
+The old fix branch and PR #1 are historical. Current code is PR #3 and feature branch
+`feat/comix-all-chapters-upstream-sync`; the user authorized signed 9.8.4 via `release/v9.8.4`.
+Focused Mihon + Comix tests are mandatory (69 passed on f66145ddd). New real-device retest is pending.
+
+Production certificate proven in published 9.8.3 run 33611369866:
+`12fe17245decb84c98985ddcc08884b874d10a78e4fb747a6ed3e2a42d77b625`.
+The 9.8.4 release gate checks this actual certificate; the historical AppValidator fingerprint below differs.
+No new key is generated: test signing now fails when repository release secrets are absent.
+Legacy lint is diagnostic; the current report has 20 errors/408 warnings, no findings on changed production lines.
+
+---
+
 # CI/CD Setup Guide
 
 This document describes the automated build and release process for Futon.
