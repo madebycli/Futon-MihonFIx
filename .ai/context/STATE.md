@@ -1,16 +1,35 @@
-# Current Mihon/Keiyoushi Compatibility State
+# Current Futon Compatibility and Comix State
 
-Last manually refreshed: 2026-09-01
+Last refreshed: 2026-10-13
 
-## Repository state
+## Active work
 
-- Repository: `madebycli/Futon`
-- Working branch: `fix/mihon-uncaught-exception-interceptor`
-- Base branch: `devel`
-- Base SHA: `05f11b2e6d46993677eec4e7eb66fde2c76e5a4b`
-- PR #1 remains open and unmerged. It may be marked Ready for Review after the release-prep CI is green.
-- Never merge or modify `devel` without an explicit user request.
-- Never expose signing secrets.
+- Repository madebycli/Futon-MihonFIx, ID 1345465394; old Futon name is a rename alias.
+- Base devel 6f171b4f9f07ba792d02e1682da779ac739002eb; feature branch feat/comix-all-chapters-upstream-sync.
+- Draft PR #3, no merge authorized. PR #1 is CLOSED and was not merged through GitHub.
+- Published v9.8.3 on 2026-09-02, run 33611369866 success. Older release-prep statements below are historical.
+- User explicitly authorized a signed release after this task on 2026-10-13; prepare 9.8.4/90804
+  using release/v9.8.4 without merging devel. Never replace published 9.8.3 or generate new keys.
+- Published 9.8.3 certificate SHA256: 12fe17245decb84c98985ddcc08884b874d10a78e4fb747a6ed3e2a42d77b625
+  (verified in run logs). AppValidator/CI.md carry an older differing fingerprint; not changed in this scope.
+
+## Current code and evidence
+
+- Targeted Kototoro ports: b2864d65 (nested interactive IO failures), 3e86e87 (extension header ownership,
+  adapted by removing Futon's own API-header refill; CommonHeaders already injects only native parser headers).
+- Upstream intermediate source fa7907fe85ca1b07602e96c3d7c0f9666c64b09b, run 38360422794:
+  downloaded focused XML reports prove 56 tests, 0 failures, 0 errors. Subsequent run superseded its lint/build.
+- Comix source f66145ddd8a3b4ad47bd42ee1696a94fea0e7a35; 13 new regression tests: run 38361172927 XML reports prove 69 tests, 0 failures/errors;
+  Debug Build run 38361172910 success. Signed optimized release 9.8.4 pending.
+- User simplified scope: external Comix ONLY, reliable unique (volume, number) keys become one complete
+  chapter list with no group chips. Duplicates/unknown numbers keep groups. No host dedup/ranking engine,
+  no Extension fork/preferences changes, no chapter deletion, no new persisted state or DB migration.
+- Reader/resume/progress/download mapping use the same projection; original IDs/URLs/scanlators remain intact.
+- Force refresh bypasses details cache; extension itself handles dedup preference changes through list memo.
+- Real-device retest of these new changes PENDING. Historical device success below applies only to its recorded tree.
+- Detailed plan/audit: docs/upstream-comix/; final validation must be recorded after CI/publication.
+
+## Historical compatibility and release preparation
 
 ## Final real-device validation
 

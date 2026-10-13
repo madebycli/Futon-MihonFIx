@@ -215,7 +215,10 @@ jobs:
           AAPT="$(find "$ANDROID_HOME/build-tools" -type f -name aapt | sort -V | tail -n 1)"
           test -x "$APKSIGNER"
           test -x "$AAPT"
-          "$APKSIGNER" verify --verbose --print-certs "$APK"
+          SIGNATURE_INFO="$($APKSIGNER verify --verbose --print-certs "$APK")"
+          printf '%s\n' "$SIGNATURE_INFO"
+          # Verified certificate of the published v9.8.3 APK (run 33611369866).
+          grep -Fq 'certificate SHA-256 digest: 12fe17245decb84c98985ddcc08884b874d10a78e4fb747a6ed3e2a42d77b625' <<< "$SIGNATURE_INFO"
           BADGING="$($AAPT dump badging "$APK" | head -n 1)"
           echo "$BADGING"
           grep -Fq "versionCode='$VERSION_CODE'" <<< "$BADGING"

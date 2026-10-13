@@ -1,6 +1,6 @@
 schema_version: 1
 project: Futon-Mihon-Compatibility
-updated_at: 2026-09-01
+updated_at: 2026-10-13
 update_policy:
   mandatory: true
   evidence_priority:
@@ -13,7 +13,7 @@ update_policy:
 nodes:
   FUTON_REPO:
     type: repository
-    value: madebycli/Futon
+    value: madebycli/Futon-MihonFIx
 
   FUTON_FIX_BRANCH:
     type: branch
@@ -27,7 +27,7 @@ nodes:
     value: 1
     base: devel
     base_sha: 05f11b2e6d46993677eec4e7eb66fde2c76e5a4b
-    state: open
+    state: closed
     merged: false
     merge_allowed_without_user: false
 
@@ -58,7 +58,7 @@ nodes:
 
   RELEASE_9_8_3:
     type: release_candidate
-    status: prepared_not_published
+    status: published
     version_name: 9.8.3
     version_code: 90803
     future_tag: v9.8.3
@@ -66,8 +66,8 @@ nodes:
     reason: "The validated repository-key APK already uses versionCode 90803; v9.8.2 would derive 90802 and create an Android downgrade relative to the tested build."
     release_notes: docs/releases/9.8.3.md
     changelog_updated: true
-    tag_created: false
-    github_release_published: false
+    tag_created: true
+    github_release_published: true
 
   RELEASE_WORKFLOW:
     type: release_gate
@@ -77,7 +77,7 @@ nodes:
       - tag_matches_gradle_release_identity
       - repository_release_signing_secrets_present
       - focused_mihon_regression_tests
-      - release_lint_hard_gate
+      - release_lint_diagnostic
       - optimized_r8_release_build
       - optimized_mihon_runtime_abi_gate
       - apk_version_identity_check
@@ -93,7 +93,7 @@ nodes:
     source_head: 9b50dbd18a6e75cd9726511ec09158711fa785dd
     run_id: 33545883702
     run_number: 297
-    status: in_progress_at_context_write
+    status: success
     note: "Fetch live status before marking release preparation fully green."
 
   FIX_DEFAULT_CLIENT:
@@ -148,7 +148,7 @@ nodes:
     type: reference_repository
     repository: Kototoro-app/Kototoro
     branch: devel
-    live_verified_sha: b2c20e84298bfcc806567d784c8cb6607b1c919f
+    live_verified_sha: 6410cdd1e1a92031f429c46cec39b5d2ea041fa2
 
   KEIYOUSHI_REFERENCE:
     type: reference_repository
@@ -168,6 +168,42 @@ nodes:
       - do_not_modify_devel_directly_without_explicit_user_request
       - do_not_expose_signing_secrets
       - do_not_publish_release_without_explicit_user_request
+
+  COMIX_UNIQUE_CHAPTER_PROJECTION:
+    type: app_side_feature
+    source_id: 7537715367149829912
+    extension_package: eu.kanade.tachiyomi.extension.en.comix
+    branch: feat/comix-all-chapters-upstream-sync
+    pr: 3
+    source_head: f66145ddd8a3b4ad47bd42ee1696a94fea0e7a35
+    behavior: combine_reliably_unique_numbers_without_group_chips
+    duplicate_or_uncertain_numbers: preserve_existing_groups_and_uploads
+    device_validation: pending
+    tests: 69_passed_0_failed
+    test_run: 38361172927
+    debug_run: 38361172910
+    debug_build: success
+    reference: docs/upstream-comix/AUDIT.md
+
+  UPSTREAM_2026_10:
+    type: targeted_integration
+    kototoro_head: 6410cdd1e1a92031f429c46cec39b5d2ea041fa2
+    extensions_lib_head: 42255ee5fa96d9425697b7c143587483207308d1
+    extensions_source_head: e97033fe901ebd52964577d869b4549f65028cb0
+    ports: [b2864d65a9c0f3a427cb06cfb42912fb416f8abf, 3e86e87ea78a690f1ea66ff1f28f67db8dc0a277]
+    source_head: fa7907fe85ca1b07602e96c3d7c0f9666c64b09b
+    test_run: 38360422794
+    focused_tests: 56_passed_0_failed
+
+  SIGNED_RELEASE_9_8_4:
+    type: user_authorized_release
+    authorization_date: 2026-10-13
+    status: prepared_pending_validation
+    branch: release/v9.8.4
+    version_name: 9.8.4
+    version_code: 90804
+    merge_devel_authorized: false
+    expected_certificate_sha256: 12fe17245decb84c98985ddcc08884b874d10a78e4fb747a6ed3e2a42d77b625
 
 edges:
   - from: DEVICE_VALIDATION_78D
