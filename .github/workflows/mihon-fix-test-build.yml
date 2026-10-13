@@ -45,6 +45,7 @@ jobs:
           grep -Eq '^[[:space:]]*minSdk = 26$' app/build.gradle
           ./gradlew testDebugUnitTest \
             --tests "io.github.landwarderer.futon.mihon.MihonExceptionUnwrapTest" \
+            --tests "io.github.landwarderer.futon.details.domain.ComixChapterGroupingTest" \
             --tests "io.github.landwarderer.futon.mihon.ExtensionRepoServiceTest" \
             --tests "io.github.landwarderer.futon.mihon.TachiyomiApkClassLoaderPolicyTest" \
             --tests "io.github.landwarderer.futon.mihon.compat.MihonNetworkHelperTest" \

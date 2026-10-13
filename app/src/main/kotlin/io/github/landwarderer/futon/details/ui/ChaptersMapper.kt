@@ -18,8 +18,12 @@ fun MangaDetails.mapChapters(
 	isGrid: Boolean,
 	isDownloadedOnly: Boolean,
 ): List<ChapterListItem> {
-	val remoteChapters = chapters[branch].orEmpty()
-	val localChapters = local?.manga?.getChapters(branch).orEmpty()
+	val remoteChapters = chapterListForBranch(branch)
+	val localChapters = if (hasCombinedComixChapters) {
+        local?.manga?.chapters.orEmpty().sortedBy { it.number }
+    } else {
+        local?.manga?.getChapters(branch).orEmpty()
+    }
 	if (remoteChapters.isEmpty() && localChapters.isEmpty()) {
 		return emptyList()
 	}

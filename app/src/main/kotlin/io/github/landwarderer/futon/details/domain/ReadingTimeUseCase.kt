@@ -19,7 +19,7 @@ class ReadingTimeUseCase @Inject constructor(
 		if (!settings.isReadingTimeEstimationEnabled) {
 			return null
 		}
-		val chapters = manga?.chapters?.get(branch)
+		val chapters = manga?.chapterListForBranch(branch)
 		if (chapters.isNullOrEmpty()) {
 			return null
 		}

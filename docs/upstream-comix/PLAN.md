@@ -9,10 +9,10 @@ Gruppen weiterhin erreichbar; keine Netzwerkabfrage beim Chipwechsel; keine Migr
 Tests, Debug-APK und optimierter signierter Build. Der Benutzer hat anschließend einen signed Release autorisiert.
 
 ## Architektur
-A: lokale UI-Projektion mit einem reservierten Filterwert, gemeinsamer Projektion für Details und Reader.
+A: lokale Projektion einer einzigen ungefilterten Kapitelgruppe bei eindeutigen Nummern, gemeinsam für Details und Reader.
 Passt zu RecyclerView/ViewBinding/Flow; O(n log n), keine neuen Abhängigkeiten und keine DB-Migration.
 B: separate Repository-Liste würde Reader, Speicherung und Downloads duplizieren und den Originaldatensatz
-verändern. Nicht gewählt. Ranking aus host-eigenen memo-Snapshots; bei fehlender Metadata konservativer Fallback.
+verändern. Nicht gewählt. Keine neue Ranking-/Dedup-Logik: unklare oder doppelte Nummern behalten bestehende Gruppen.
 Keine dynamischen Extension-Klassen im neuen State.
 
 ## Dateistruktur

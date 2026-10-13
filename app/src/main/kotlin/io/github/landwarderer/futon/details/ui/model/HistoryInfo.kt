@@ -37,7 +37,7 @@ fun HistoryInfo(
 	val chapters = if (manga?.chapters?.isEmpty() == true) {
 		emptyList()
 	} else {
-		manga?.chapters?.get(branch)
+		manga?.chapterListForBranch(branch)
 	}
 	val currentChapter = if (history != null && !chapters.isNullOrEmpty()) {
 		chapters.indexOfFirst { it.id == history.chapterId }

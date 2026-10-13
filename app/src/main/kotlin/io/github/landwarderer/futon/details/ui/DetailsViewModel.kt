@@ -245,7 +245,7 @@ class DetailsViewModel @Inject constructor(
 					val manga = it.toManga()
 					// find default branch
 					val hist = historyRepository.getOne(manga)
-					selectedBranch.value = manga.getPreferredBranch(hist)
+					selectedBranch.value = if (it.hasCombinedComixChapters) null else manga.getPreferredBranch(hist)
 					true
 				} else {
 					false
