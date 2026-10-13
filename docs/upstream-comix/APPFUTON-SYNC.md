@@ -43,5 +43,8 @@ Affected production/tests match upstream diff plus the explicit integration poin
 5. Verify AppFuton head is an ancestor of devel / GitHub ahead-by for upstream is zero; update both contexts.
 
 ## Offene Fragen / UNKLAR
-New unit/build CI pending at initial write. No attached Android device/emulator: runtime instrumentation
+Verified: 99 focused unit tests, zero failures/errors/skips (downloaded XML artifact 11832843169).
+Debug run 38436109198 succeeded and compiled the upstream instrumented test sources.
+PR #4 merged into devel at 2c708fcf593279243d33650d8d0eae41d00a5bad. GitHub compare confirms
+behind_by=0 against actual parent 5d2206a. Signed release run 38437336280 is in progress. No attached Android device/emulator: runtime instrumentation
 and device tests PENDING. Full lint has pre-existing debt; new findings must be checked separately.

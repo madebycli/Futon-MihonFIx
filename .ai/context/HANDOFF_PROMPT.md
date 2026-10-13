@@ -1,29 +1,25 @@
-# Futon Handoff: 2026-10-13
+# Futon Handoff: actual AppFuton parent sync, 2026-10-13
 
-Read .ai/CONTEXT.md, STATE.md, graph.yaml, docs/upstream-comix/{PLAN,AUDIT,VALIDATION}.md.
-Project futon, canonical repo madebycli/Futon-MihonFIx (ID 1345465394), base devel
-6f171b4f9f07ba792d02e1682da779ac739002eb. Historical Futon name is a confirmed rename alias.
+Read .ai/CONTEXT.md and its validated central route first, then STATE.md, graph.yaml and
+docs/upstream-comix/APPFUTON-SYNC.md. Project futon, repo madebycli/Futon-MihonFIx
+(ID 1345465394), main/default branch devel.
 
-PR #3 merged into devel on 2026-10-13 evening, merge 78befa347ef37abed2d1d76ec0cd531e063f2a7e; Comix commit
-f66145ddd8a3b4ad47bd42ee1696a94fea0e7a35. Re-fetch live PR/base status before continuing.
-The user separately authorized a signed release; release/v9.8.4 is the existing workflow route,
-version 9.8.4/90804, same package/certificate as published 9.8.3. No new key or extension fork.
+Correction: the earlier audit only checked Kototoro/Keiyoushi compatibility references.
+Actual fork parent AppFuton/Futon had six missing commits through 5d2206a6926adf53be0867ad784948ed16663f44.
+All original commits are preserved by two-parent merge 5dc3735972f75f5c946b67eef28c47b5a48ea0c6.
+PR #4 merged into devel at 2c708fcf593279243d33650d8d0eae41d00a5bad. GitHub behind_by=0.
+Upstream v9.8.2 progress race protection, optional smart resume, adjacent prefetch and parser b3c0000245
+are included. The user explicitly authorized actual upstream integration and signed publication.
 
-Scope was simplified by the user: ONLY the external Comix Mihon extension. With trustworthy unique
-(volume, number) keys, show all delivered chapters without scanlator chips. Duplicates or uncertain
-numbers keep existing groups; no ranking/dedup engine or chapter deletion. Preserve original IDs/URLs.
-Reader resume, navigation, downloads and progress use the same projection.
+Mihon fixes are still required: none of the six commits modifies the host ABI/runtime layers.
+Preserve minSdk26, interceptors, classloader, modern/legacy ABI and durable snapshots.
+Only app changes for external Comix: trustworthy unique (volume, number) keys share one complete
+list without group chips. Duplicates/uncertain numbers keep groups and original IDs/URLs.
+Smart resume uses this same projection, including cross-scanlator successors. No extension fork/new key.
 
-Upstream ports: b2864d65 nested interactive errors; 3e86e87 header ownership adapted to Futon.
-Live upstreams and deliberately omitted deltas are in AUDIT.md. Existing snapshot and ABI behavior remains.
-Upstream intermediate XML: 56 tests passed. Comix source XML: 69 tests passed, Debug Build successful.
-Published 9.8.4 source e754d831497aa40c2d9083dfd40bbb79987203de, run 38361962248 success.
-APK asset 636270858, SHA256 0fd0249e2e56a5dcff4995b8c9799f91b671c82f387c557479b5f6f02ec95cca.
-R8/ABI/version/signature gates passed. The user now authorized main-branch synchronization;
-README/context follow-up does not change the tested production tree.
-Re-fetch actual workflow/release status before relying on artifact availability.
-New device validation remains PENDING, regardless of historical successful device tests.
-
-Current development branch: devel. README is English, GitHub-only downloads, with corrected SDK and certificate metadata.
-Live extension-source audit: 44eeaaad3f64ef9c7418afe5b2303e79d09fcf2f (Comix 1.6.48 extension-only assets/pager/captcha update).
-No additional host port; update the external extension separately. Future merges/releases still need task authorization.
+99 focused tests passed, zero errors/failures/skips, artifact 11832843169 in run38436109226.
+Debug run38436109198 succeeded, including compileDebugAndroidTestKotlin.
+Signed 9.8.5/90805 release run38437336280 from release/v9.8.5 is in progress.
+Re-fetch live release status before claiming publication; current final proof is in APPFUTON-SYNC.md.
+New device and instrumented runtime execution remains PENDING. Historical device success does not
+validate this new tree. README stays English, GitHub-only downloads, original style.

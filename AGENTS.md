@@ -16,7 +16,10 @@ Read `.ai/CONTEXT.md` first, then `.ai/context/{STATE.md,graph.yaml,HANDOFF_PROM
 The former Mihon fix is already integrated in `devel` and published in 9.8.3. PR #1 is closed.
 
 PR #3 was merged into `devel` with explicit user authorization on 2026-10-13 evening.
-The tested app tree is already published as 9.8.4 via `release/v9.8.4`.
+Actual parent AppFuton/Futon was subsequently merged via PR #4 at
+2c708fcf593279243d33650d8d0eae41d00a5bad, preserving all six original commits through 5d2206a.
+GitHub behind count is zero. See `docs/upstream-comix/APPFUTON-SYNC.md`; Mihon fixes remain necessary.
+99 focused tests and debug/instrumented-source compilation passed. Signed 9.8.5 publication is in progress.
 Use `devel` as the current main branch; future merges/releases still require task authorization.
 Only modify the host app for external Comix: reliably unique chapter numbers form one complete list,
 while duplicates/uncertain numbers retain groups. No extension fork or new signing key.

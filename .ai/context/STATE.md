@@ -162,3 +162,18 @@ No application/source/test code, APK version or signing identity changed in this
 Verified PR #3 merged successfully at 78befa347ef37abed2d1d76ec0cd531e063f2a7e. The complete app/build/test tree
 matches v9.8.4 byte-for-byte; documentation-only follow-up requires no new APK or repeat build.
 All old fix/release/feature branch heads are ancestors of the updated main branch.
+
+## Actual AppFuton parent synchronization (2026-10-13)
+
+Correction: the previous no-missing-upstream statement concerned Kototoro/Keiyoushi compatibility
+references. It did not compare our actual fork parent AppFuton/Futon. Six parent commits were missing.
+All six through 5d2206a6926adf53be0867ad784948ed16663f44 are now preserved in the real two-parent
+merge 5dc3735972f75f5c946b67eef28c47b5a48ea0c6, PR #4. Upstream release v9.8.2 contains progress
+race protection, optional smart resume, adjacent prefetch and parser b3c0000245.
+None replaces the Mihon host ABI/runtime fixes; these remain necessary. Smart resume uses the complete
+external Comix list for reliably unique numbers. Release target is 9.8.5/90805 with existing signing key.
+See docs/upstream-comix/APPFUTON-SYNC.md for exact commits, conflict resolutions and validation.
+PR validation: Debug 38436109198 successful; 99 focused tests passed in 38436109226
+(downloaded XML artifact 11832843169). PR #4 merged at 2c708fcf593279243d33650d8d0eae41d00a5bad,
+GitHub behind_by=0. Signed 9.8.5 release run 38437336280 in progress, publication not yet verified.
+New device/instrumented runtime execution remains PENDING.

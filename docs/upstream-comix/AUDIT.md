@@ -97,3 +97,10 @@ Signatur-Fingerprint stimmen mit dem Build überein. Distribution erfolgt über 
 
 PR #3 ist verifiziert gemergt: 78befa347ef37abed2d1d76ec0cd531e063f2a7e. Der gesamte app-/build-/test-Tree ist identisch mit v9.8.4.
 README-Inhalte, lokale Bild-/Dokumentlinks und YAML wurden geprüft; keine erneute Build-/Testbehauptung für die Dokumentation.
+
+## Correction: actual fork parent AppFuton/Futon
+
+The earlier audit addressed compatibility reference repositories. It did not establish that the
+actual AppFuton fork parent had no missing commits. The actual parent was six commits ahead through
+5d2206a6926adf53be0867ad784948ed16663f44 (upstream v9.8.2).
+See [APPFUTON-SYNC.md](APPFUTON-SYNC.md) for the complete parent merge and retained Mihon fixes.

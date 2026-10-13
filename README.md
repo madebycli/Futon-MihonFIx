@@ -16,6 +16,7 @@
 * Search manga by name, genres and more filters
 * Favorites organized by user-defined categories
 * Reading history, bookmarks and incognito mode support
+* Optional smart resume for newly available chapters and adjacent-chapter preloading
 * Download manga and read it offline. Third-party CBZ archives are also supported
 * Clean and convenient Material You UI, optimized for phones, tablets and desktop
 * Standard and Webtoon-optimized customizable reader, gesture support on reading interface
