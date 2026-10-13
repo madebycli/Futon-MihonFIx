@@ -94,3 +94,6 @@ Die englische README behält Layout, Screenshots und Abschnittsstruktur. Entfern
 F-Droid-/IzzyOnDroid-Badges und Downloadbuttons sowie die fremde CodeTriage-Badge. Release-/Lizenz-
 und Clone-Links verweisen auf dieses Repository; Android-Minimum, SDK und veröffentlichter
 Signatur-Fingerprint stimmen mit dem Build überein. Distribution erfolgt über GitHub Releases.
+
+PR #3 ist verifiziert gemergt: 78befa347ef37abed2d1d76ec0cd531e063f2a7e. Der gesamte app-/build-/test-Tree ist identisch mit v9.8.4.
+README-Inhalte, lokale Bild-/Dokumentlinks und YAML wurden geprüft; keine erneute Build-/Testbehauptung für die Dokumentation.

@@ -15,9 +15,9 @@ Read `.ai/CONTEXT.md` first, then `.ai/context/{STATE.md,graph.yaml,HANDOFF_PROM
 `docs/upstream-comix/{PLAN.md,AUDIT.md,VALIDATION.md}` for the current scope and evidence.
 The former Mihon fix is already integrated in `devel` and published in 9.8.3. PR #1 is closed.
 
-The 2026-10-13 task uses `feat/comix-all-chapters-upstream-sync` and PR #3, with a separate
-user-authorized `release/v9.8.4` publication route. The user authorized integration into `devel`
-on 2026-10-13 evening. Check live PR/state evidence; future merges still require task authorization.
+PR #3 was merged into `devel` with explicit user authorization on 2026-10-13 evening.
+The tested app tree is already published as 9.8.4 via `release/v9.8.4`.
+Use `devel` as the current main branch; future merges/releases still require task authorization.
 Only modify the host app for external Comix: reliably unique chapter numbers form one complete list,
 while duplicates/uncertain numbers retain groups. No extension fork or new signing key.
 

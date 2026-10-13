@@ -4,7 +4,7 @@ Read .ai/CONTEXT.md, STATE.md, graph.yaml, docs/upstream-comix/{PLAN,AUDIT,VALID
 Project futon, canonical repo madebycli/Futon-MihonFIx (ID 1345465394), base devel
 6f171b4f9f07ba792d02e1682da779ac739002eb. Historical Futon name is a confirmed rename alias.
 
-Integration authorized into devel on 2026-10-13 evening via PR #3; Comix commit
+PR #3 merged into devel on 2026-10-13 evening, merge 78befa347ef37abed2d1d76ec0cd531e063f2a7e; Comix commit
 f66145ddd8a3b4ad47bd42ee1696a94fea0e7a35. Re-fetch live PR/base status before continuing.
 The user separately authorized a signed release; release/v9.8.4 is the existing workflow route,
 version 9.8.4/90804, same package/certificate as published 9.8.3. No new key or extension fork.
@@ -23,3 +23,7 @@ R8/ABI/version/signature gates passed. The user now authorized main-branch synch
 README/context follow-up does not change the tested production tree.
 Re-fetch actual workflow/release status before relying on artifact availability.
 New device validation remains PENDING, regardless of historical successful device tests.
+
+Current development branch: devel. README is English, GitHub-only downloads, with corrected SDK and certificate metadata.
+Live extension-source audit: 44eeaaad3f64ef9c7418afe5b2303e79d09fcf2f (Comix 1.6.48 extension-only assets/pager/captcha update).
+No additional host port; update the external extension separately. Future merges/releases still need task authorization.

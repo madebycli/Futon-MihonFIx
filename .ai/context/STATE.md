@@ -5,9 +5,11 @@ Last refreshed: 2026-10-13
 ## Active work
 
 - Repository madebycli/Futon-MihonFIx, ID 1345465394; old Futon name is a rename alias.
-- Base devel 6f171b4f9f07ba792d02e1682da779ac739002eb; feature branch feat/comix-all-chapters-upstream-sync.
+- Main/default branch devel now includes all feature commits through merge 78befa347ef37abed2d1d76ec0cd531e063f2a7e.
+  Previous base: 6f171b4f9f07ba792d02e1682da779ac739002eb.
 - Main-branch synchronization is explicitly authorized by the user on 2026-10-13 (evening).
-  PR #3 targets devel and is being integrated. PR #1 is CLOSED and was not merged through GitHub.
+  PR #3 is MERGED into devel at 78befa347ef37abed2d1d76ec0cd531e063f2a7e.
+  PR #1 is CLOSED and was not merged through GitHub.
 - Published v9.8.3 on 2026-09-02, run 33611369866 success. Older release-prep statements below are historical.
 - Signed 9.8.4/90804 is published from release/v9.8.4. The user has now separately authorized
   synchronization into devel. Never replace existing published releases or generate new keys.
@@ -156,3 +158,7 @@ commits are available. extensions-source 44eeaaad3f64ef9c7418afe5b2303e79d09fcf2
 Comix 1.6.48 assets/pager/captcha behavior only; update the external extension separately.
 README stays English and keeps its layout; GitHub Releases replaces unsupported store badges/buttons.
 No application/source/test code, APK version or signing identity changed in this documentation follow-up.
+
+Verified PR #3 merged successfully at 78befa347ef37abed2d1d76ec0cd531e063f2a7e. The complete app/build/test tree
+matches v9.8.4 byte-for-byte; documentation-only follow-up requires no new APK or repeat build.
+All old fix/release/feature branch heads are ancestors of the updated main branch.

@@ -177,6 +177,8 @@ nodes:
     pr: 3
     main_integration_authorized_at: 2026-10-13
     integration_target: devel
+    integration_status: merged
+    main_merge_commit: 78befa347ef37abed2d1d76ec0cd531e063f2a7e
     source_head: f66145ddd8a3b4ad47bd42ee1696a94fea0e7a35
     behavior: combine_reliably_unique_numbers_without_group_chips
     duplicate_or_uncertain_numbers: preserve_existing_groups_and_uploads

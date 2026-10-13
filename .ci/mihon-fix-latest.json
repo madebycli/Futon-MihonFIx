@@ -17,5 +17,7 @@
   "release_published": true,
   "release_apk_asset_id": "636270858",
   "release_apk_sha256": "0fd0249e2e56a5dcff4995b8c9799f91b671c82f387c557479b5f6f02ec95cca",
-  "merge_pending_explicit_user_request": true
+  "merge_pending_explicit_user_request": false,
+  "merge_commit": "78befa347ef37abed2d1d76ec0cd531e063f2a7e",
+  "merge_authorized_at": "2026-10-13"
 }
