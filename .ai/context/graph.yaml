@@ -241,7 +241,11 @@ nodes:
   SIGNED_RELEASE_9_8_5:
     type: user_authorized_release
     authorization_date: 2026-10-13
-    status: in_progress
+    status: published
+    run_status: success
+    apk_asset_id: 637756905
+    apk_sha256: d4deebca968a4d1696e653fed6d95b7a738e677cea5522963ee632ac41f3e586
+    optimized_r8_abi_identity_signature: passed
     source_head: 2c708fcf593279243d33650d8d0eae41d00a5bad
     run_id: 38437336280
     branch: release/v9.8.5

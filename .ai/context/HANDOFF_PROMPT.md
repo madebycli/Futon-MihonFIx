@@ -19,7 +19,9 @@ Smart resume uses this same projection, including cross-scanlator successors. No
 
 99 focused tests passed, zero errors/failures/skips, artifact 11832843169 in run38436109226.
 Debug run38436109198 succeeded, including compileDebugAndroidTestKotlin.
-Signed 9.8.5/90805 release run38437336280 from release/v9.8.5 is in progress.
+Signed 9.8.5/90805 release run38437336280 from release/v9.8.5 succeeded and is published.
+APK asset637756905, SHA256 d4deebca968a4d1696e653fed6d95b7a738e677cea5522963ee632ac41f3e586.
+Released source2c708fcf593279243d33650d8d0eae41d00a5bad; same certificate as9.8.4.
 Re-fetch live release status before claiming publication; current final proof is in APPFUTON-SYNC.md.
 New device and instrumented runtime execution remains PENDING. Historical device success does not
 validate this new tree. README stays English, GitHub-only downloads, original style.

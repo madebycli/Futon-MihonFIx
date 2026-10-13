@@ -46,5 +46,17 @@ Affected production/tests match upstream diff plus the explicit integration poin
 Verified: 99 focused unit tests, zero failures/errors/skips (downloaded XML artifact 11832843169).
 Debug run 38436109198 succeeded and compiled the upstream instrumented test sources.
 PR #4 merged into devel at 2c708fcf593279243d33650d8d0eae41d00a5bad. GitHub compare confirms
-behind_by=0 against actual parent 5d2206a. Signed release run 38437336280 is in progress. No attached Android device/emulator: runtime instrumentation
+behind_by=0 against actual parent 5d2206a. Signed release run38437336280 succeeded; publication verified below. No attached Android device/emulator: runtime instrumentation
 and device tests PENDING. Full lint has pre-existing debt; new findings must be checked separately.
+
+## Verified signed 9.8.5 publication
+
+Published 2026-10-13T17:32:16Z: https://github.com/madebycli/Futon-MihonFIx/releases/tag/v9.8.5
+Release run38437336280 SUCCESS, source2c708fcf593279243d33650d8d0eae41d00a5bad.
+Fresh regressions, optimized R8, host ABI, package io.github.landwarderer.futon, version9.8.5/90805
+and v2 signature passed. Certificate SHA256:
+12fe17245decb84c98985ddcc08884b874d10a78e4fb747a6ed3e2a42d77b625.
+APK asset637756905, 21,354,341 bytes, SHA256:
+d4deebca968a4d1696e653fed6d95b7a738e677cea5522963ee632ac41f3e586.
+Documentation-only main follow-ups preserve the released app/build/test tree.
+Real-device and instrumented runtime retests remain PENDING.

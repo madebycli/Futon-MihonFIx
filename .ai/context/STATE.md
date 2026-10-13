@@ -175,5 +175,17 @@ external Comix list for reliably unique numbers. Release target is 9.8.5/90805 w
 See docs/upstream-comix/APPFUTON-SYNC.md for exact commits, conflict resolutions and validation.
 PR validation: Debug 38436109198 successful; 99 focused tests passed in 38436109226
 (downloaded XML artifact 11832843169). PR #4 merged at 2c708fcf593279243d33650d8d0eae41d00a5bad,
-GitHub behind_by=0. Signed 9.8.5 release run 38437336280 in progress, publication not yet verified.
+GitHub behind_by=0. Signed 9.8.5 release run38437336280 succeeded; publication verified below.
 New device/instrumented runtime execution remains PENDING.
+
+## Verified signed 9.8.5 publication
+
+Published 2026-10-13T17:32:16Z: https://github.com/madebycli/Futon-MihonFIx/releases/tag/v9.8.5
+Release run38437336280 SUCCESS, source2c708fcf593279243d33650d8d0eae41d00a5bad.
+Fresh regressions, optimized R8, host ABI, package io.github.landwarderer.futon, version9.8.5/90805
+and v2 signature passed. Certificate SHA256:
+12fe17245decb84c98985ddcc08884b874d10a78e4fb747a6ed3e2a42d77b625.
+APK asset637756905, 21,354,341 bytes, SHA256:
+d4deebca968a4d1696e653fed6d95b7a738e677cea5522963ee632ac41f3e586.
+Documentation-only main follow-ups preserve the released app/build/test tree.
+Real-device and instrumented runtime retests remain PENDING.
