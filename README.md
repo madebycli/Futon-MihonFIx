@@ -2,7 +2,7 @@
 
 **Futon is a free and open-source manga reader for Android with built-in online content sources.**
 
-![Android 6.0](https://img.shields.io/badge/android-6.0+-brightgreen) [![Sources count](https://img.shields.io/badge/dynamic/yaml?url=https%3A%2F%2Fraw.githubusercontent.com%2FKotatsu-Redo%2Fkotatsu-parsers-redo%2Frefs%2Fheads%2Fmaster%2F.github%2Fsummary.yaml&query=total&label=manga%20sources&color=%23E9321C)](https://github.com/Kotatsu-Redo/kotatsu-parsers-redo) [![License](https://img.shields.io/github/license/AppFuton/Futon)](https://github.com/AppFuton/Futon/blob/devel/LICENSE) [![GitHub Release](https://img.shields.io/github/v/release/appfuton/futon?sort=date&display_name=tag&style=flat&link=https%3A%2F%2Fgithub.com%2FAppFuton%2FFuton%2Freleases%2Flatest)](https://github.com/AppFuton/Futon/releases/latest) [![IzzyOnDroid Yearly Downloads](https://img.shields.io/badge/dynamic/json?url=https://dlstats.izzyondroid.org/iod-stats-collector/stats/basic/yearly/rolling.json&query=$.['io.github.landwarderer.futon']&label=IzzyOnDroid%20yearly%20downloads)](https://apt.izzysoft.de/packages/io.github.landwarderer.futon) [![F-Droid Version](https://img.shields.io/badge/F--Droid-%2311AB00.svg?logo=f-droid&logoColor=white)](https://f-droid.org/en/packages/io.github.landwarderer.futon/) [![Open Source Helpers](https://www.codetriage.com/appfuton/futon/badges/users.svg)](https://www.codetriage.com/appfuton/futon) [![Discord](https://img.shields.io/discord/1452862077134700628)
+![Android 8.0](https://img.shields.io/badge/android-8.0+-brightgreen) [![Sources count](https://img.shields.io/badge/dynamic/yaml?url=https%3A%2F%2Fraw.githubusercontent.com%2FKotatsu-Redo%2Fkotatsu-parsers-redo%2Frefs%2Fheads%2Fmaster%2F.github%2Fsummary.yaml&query=total&label=manga%20sources&color=%23E9321C)](https://github.com/Kotatsu-Redo/kotatsu-parsers-redo) [![License](https://img.shields.io/github/license/madebycli/Futon-MihonFIx)](https://github.com/madebycli/Futon-MihonFIx/blob/devel/LICENSE) [![GitHub Release](https://img.shields.io/github/v/release/madebycli/Futon-MihonFIx?sort=date&display_name=tag&style=flat)](https://github.com/madebycli/Futon-MihonFIx/releases/latest) [![Discord](https://img.shields.io/discord/1452862077134700628)
 ](https://discord.gg/9sqBHXhwzz)
 
 
@@ -11,7 +11,8 @@
 <div align="left">
 
 * Online [manga catalogues](https://github.com/Kotatsu-Redo/kotatsu-parsers-redo) (with 1200+ manga sources)
-* Support for [Tachiyomi keiyoushi](https://github.com/keiyoushi/extensions) extensions
+* Support for externally installed [Mihon / Tachiyomi / Keiyoushi](https://github.com/keiyoushi/extensions) extensions
+* A continuous chapter list for external Comix when chapter numbers are unique; group views remain available for duplicates
 * Search manga by name, genres and more filters
 * Favorites organized by user-defined categories
 * Reading history, bookmarks and incognito mode support
@@ -22,7 +23,7 @@
 * Integration with manga tracking services: Shikimori, AniList, MyAnimeList, Kitsu
 * Password / fingerprint-protected access to the app
 * Automatically sync app data with other devices on the same account
-* Support for older devices running Android 6.0+
+* Support for devices running Android 8.0+
 
 </div>
 <div align="left">
@@ -32,15 +33,15 @@
 ### Prerequisites
 
 - **JDK 17** (recommended: [Temurin](https://adoptium.net/temurin/releases/) distribution)
-- **Android SDK** (compile SDK 36, build tools 35.0.0, minimum SDK 23)
+- **Android SDK** (compile SDK 37, minimum SDK 26; Gradle selects the required build tools)
 - **Android Studio** (recommended) or Android SDK command-line tools
 
 ### Building the Project
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/AppFuton/Futon.git
-   cd Futon
+   git clone https://github.com/madebycli/Futon-MihonFIx.git
+   cd Futon-MihonFIx
    ```
 
 2. **Build debug APK:**
@@ -55,7 +56,7 @@
    ```
    Output: `app/build/outputs/apk/release/app-release.apk`
    
-   *Note: Requires keystore setup via environment variables or `local.properties`*
+   *Note: Requires `KEYSTORE_FILE`, `KEYSTORE_PASSWORD`, `KEY_ALIAS` and `KEY_PASSWORD` environment variables. Keep signing material outside the repository.*
 
 4. **Build nightly APK:**
    ```bash
@@ -109,13 +110,13 @@ For detailed contribution guidelines, see [CONTRIBUTING.md](./CONTRIBUTING.md).
 
 ### Downloads
 
-[<img src="https://gitlab.com/IzzyOnDroid/repo/-/raw/master/assets/IzzyOnDroidButtonGreyBorder_nofont.png" height="80" alt="Get it at IzzyOnDroid">](https://apt.izzysoft.de/packages/io.github.landwarderer.futon)
-[<img src="https://f-droid.org/badge/get-it-on.png"
-    alt="Get it on F-Droid"
-    height="80">](https://f-droid.org/packages/io.github.landwarderer.futon)
+[![Download APK](https://img.shields.io/badge/Download-APK-brightgreen?logo=github)](https://github.com/madebycli/Futon-MihonFIx/releases/latest)
+
+Download the signed APK from [GitHub Releases](https://github.com/madebycli/Futon-MihonFIx/releases/latest).
+Each stable release includes an APK, its SHA-256 checksum and build information.
 
 ### Localization
-Help us by translating
+Help translate the upstream Futon project:
 
 <a href="https://hosted.weblate.org/engage/futon/"><img src="https://hosted.weblate.org/widget/futon/open-graph.png" width="500"></a>
 <a href="https://hosted.weblate.org/engage/futon/"><img src="https://hosted.weblate.org/widget/futon/horizontal-auto.svg" width="500"></a>
@@ -128,12 +129,14 @@ Help us by translating
 
 ### Community
 
-Join our Discord for support, discussion, and announcements: https://discord.gg/9sqBHXhwzz
+Join the upstream Futon community on Discord for support and discussion: https://discord.gg/9sqBHXhwzz
 
 ### Certificate fingerprints
 
+SHA-256 of the signing certificate used for this fork's published releases 9.8.3 and 9.8.4:
+
 ```plaintext
-EF:48:B2:2E:F2:C5:40:45:53:1F:6E:76:00:C2:7E:C3:D0:3B:71:22:1E:0B:05:FF:B6:8E:33:57:CF:8E:4D:40
+12:FE:17:24:5D:EC:B8:4C:98:98:5D:DC:C0:88:84:B8:74:D1:0A:78:E4:FB:74:7A:6E:D3:E2:A4:2D:77:B6:25
 ```
 
 ### License
@@ -152,7 +155,7 @@ install instructions.
 
 <div align="left">
 
-The developers of this application do not have any affiliation with the content available in the app and does not store
+The developers of this application do not have any affiliation with the content available in the app and do not store
 or distribute any content. This application should be considered a web browser, all content that can be found using this
 application is freely available on the Internet. All DMCA takedown requests should be sent to the owners of the website
 where the content is hosted.

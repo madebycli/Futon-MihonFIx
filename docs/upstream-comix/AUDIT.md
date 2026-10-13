@@ -72,3 +72,25 @@ Suite für fa7907fe85ca1b07602e96c3d7c0f9666c64b09b erneut gestartet: 3836042279
 Noch kein grünes Testergebnis oder neuer APK-/Release-Nachweis zu diesem Zeitpunkt.
 
 Focused test step of run 38360422794 passed on fa7907fe85ca1b07602e96c3d7c0f9666c64b09b; release lint still running at the beginning of package B.
+
+## Hauptbranch-Sync und erneuter Upstream-Check (2026-10-13, Abend)
+
+Der Benutzer hat die Übernahme aller fehlenden Futon-Commits in den Hauptbranch ausdrücklich beauftragt.
+Der verifizierte Default-/Hauptbranch ist devel, nicht main. PR #3 enthält sechs seit devel fehlende
+Commits; der veröffentlichte 9.8.4-Release enthält bereits sämtliche App-Änderungen. Der spätere
+04b692da-Commit verändert ausschließlich Dokumentation/Kontext. Die alten Fix-Branches enthalten
+keine zusätzlichen Commits außerhalb dieses Standes.
+
+Kototoro devel bleibt 6410cdd1e1a92031f429c46cec39b5d2ea041fa2; extensions-lib main bleibt
+42255ee5fa96d9425697b7c143587483207308d1. Kein neuer erforderlicher Host-Port.
+
+extensions-source main ist jetzt 44eeaaad3f64ef9c7418afe5b2303e79d09fcf2f. Der einzige neue Commit
+gegenüber e97033fe ist Comix: solve both captchas, fall back to the site's pager (#19924),
+Extension-Version 1.6.48. Er verändert Extension-eigene JS-Assets und Comix.kt, ohne neuen Host-ABI:
+kein Futon-App-Port und kein heimliches Kopieren/Forken der externen Extension. Der betreffende
+Fix wird durch Aktualisieren der separat installierten Comix-Extension bezogen.
+
+Die englische README behält Layout, Screenshots und Abschnittsstruktur. Entfernt wurden die
+F-Droid-/IzzyOnDroid-Badges und Downloadbuttons sowie die fremde CodeTriage-Badge. Release-/Lizenz-
+und Clone-Links verweisen auf dieses Repository; Android-Minimum, SDK und veröffentlichter
+Signatur-Fingerprint stimmen mit dem Build überein. Distribution erfolgt über GitHub Releases.

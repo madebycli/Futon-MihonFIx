@@ -175,6 +175,8 @@ nodes:
     extension_package: eu.kanade.tachiyomi.extension.en.comix
     branch: feat/comix-all-chapters-upstream-sync
     pr: 3
+    main_integration_authorized_at: 2026-10-13
+    integration_target: devel
     source_head: f66145ddd8a3b4ad47bd42ee1696a94fea0e7a35
     behavior: combine_reliably_unique_numbers_without_group_chips
     duplicate_or_uncertain_numbers: preserve_existing_groups_and_uploads
@@ -209,7 +211,7 @@ nodes:
     branch: release/v9.8.4
     version_name: 9.8.4
     version_code: 90804
-    merge_devel_authorized: false
+    merge_devel_authorized: true
     expected_certificate_sha256: 12fe17245decb84c98985ddcc08884b874d10a78e4fb747a6ed3e2a42d77b625
 
 edges:

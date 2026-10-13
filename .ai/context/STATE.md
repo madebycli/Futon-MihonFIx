@@ -6,10 +6,11 @@ Last refreshed: 2026-10-13
 
 - Repository madebycli/Futon-MihonFIx, ID 1345465394; old Futon name is a rename alias.
 - Base devel 6f171b4f9f07ba792d02e1682da779ac739002eb; feature branch feat/comix-all-chapters-upstream-sync.
-- Draft PR #3, no merge authorized. PR #1 is CLOSED and was not merged through GitHub.
+- Main-branch synchronization is explicitly authorized by the user on 2026-10-13 (evening).
+  PR #3 targets devel and is being integrated. PR #1 is CLOSED and was not merged through GitHub.
 - Published v9.8.3 on 2026-09-02, run 33611369866 success. Older release-prep statements below are historical.
-- User explicitly authorized a signed release after this task on 2026-10-13; prepare 9.8.4/90804
-  using release/v9.8.4 without merging devel. Never replace published 9.8.3 or generate new keys.
+- Signed 9.8.4/90804 is published from release/v9.8.4. The user has now separately authorized
+  synchronization into devel. Never replace existing published releases or generate new keys.
 - Published 9.8.3 certificate SHA256: 12fe17245decb84c98985ddcc08884b874d10a78e4fb747a6ed3e2a42d77b625
   (verified in run logs). AppValidator/CI.md carry an older differing fingerprint; not changed in this scope.
 
@@ -145,3 +146,13 @@ Once release-prep CI is green:
 2. Do not merge until the user explicitly requests the merge.
 3. After the user explicitly requests release publication, merge to `devel`, verify the merged commit live, then create `v9.8.3` on the merged release commit.
 4. The tag-triggered release workflow will perform all production gates and publish the GitHub Release only if they pass.
+
+## Main-branch integration / README update (2026-10-13 evening)
+
+User authorized updating the main branch; repository main/default branch is devel.
+All functional changes already exist in published 9.8.4. Integration preserves the six feature commits,
+followed by documentation-only README/context changes. No additional Kototoro/extensions-lib host
+commits are available. extensions-source 44eeaaad3f64ef9c7418afe5b2303e79d09fcf2f changes external
+Comix 1.6.48 assets/pager/captcha behavior only; update the external extension separately.
+README stays English and keeps its layout; GitHub Releases replaces unsupported store badges/buttons.
+No application/source/test code, APK version or signing identity changed in this documentation follow-up.
