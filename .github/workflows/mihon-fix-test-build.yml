@@ -33,7 +33,7 @@ jobs:
           distribution: temurin
 
       - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
+        uses: android-actions/setup-android@v4
         with:
           packages: platform-tools
 
@@ -45,6 +45,7 @@ jobs:
           grep -Eq '^[[:space:]]*minSdk = 26$' app/build.gradle
           ./gradlew testDebugUnitTest \
             --tests "io.github.landwarderer.futon.mihon.MihonExceptionUnwrapTest" \
+            --tests "io.github.landwarderer.futon.reader.domain.*" \
             --tests "io.github.landwarderer.futon.details.domain.ComixChapterGroupingTest" \
             --tests "io.github.landwarderer.futon.mihon.ExtensionRepoServiceTest" \
             --tests "io.github.landwarderer.futon.mihon.TachiyomiApkClassLoaderPolicyTest" \
@@ -107,7 +108,7 @@ jobs:
           distribution: temurin
 
       - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
+        uses: android-actions/setup-android@v4
         with:
           packages: platform-tools
 
