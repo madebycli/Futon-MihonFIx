@@ -1,12 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-	<string name="url_github" translatable="false">https://github.com/AppFuton/Futon</string>
+	<string name="url_github" translatable="false">https://github.com/madebycli/Futon-MihonFIx</string>
 	<string name="url_telegram_web" translatable="false"></string>
 	<string name="url_telegram" translatable="false"></string>
 	<string name="url_weblate" translatable="false">https://hosted.weblate.org/engage/Futon</string>
 	<string name="url_user_manual" translatable="false">https://futonapp.pages.dev/manuals/guides/getting-started/</string>
-	<string name="account_type_sync" translatable="false">io.github.landwarderer.futon.sync</string>
-	<string name="github_updates_repo" translatable="false">AppFuton/Futon</string>
+	<string name="github_updates_repo" translatable="false">madebycli/Futon-MihonFIx</string>
 	<string name="shikimori_clientId" translatable="false">Mw6F0tPEOgyV7F9U9Twg50Q8SndMY7hzIOfXg0AX_XU</string>
 	<string name="shikimori_clientSecret" translatable="false">euBMt1GGRSDpVIFQVPxZrO7Kh6X4gWyv0dABuj4B-M8</string>
 	<string name="anilist_clientId" translatable="false">33558</string>
@@ -14,8 +13,6 @@
 	<string name="mal_clientId" translatable="false">66e27ac5d5a1764e944677b42e2c4737</string>
 	<string name="kitsu_clientId" translatable="false">dd031b32d2f56c990b1425efe6c42ad847e7fe3ab46bf1299f05ecd856bdb7dd</string>
 	<string name="kitsu_clientSecret" translatable="false">54d7307928f63414defd96399fc31ba847961ceaecef3a5fd93144e960c0e151</string>
-	<string name="sync_authority_history" translatable="false">io.github.landwarderer.futon.history</string>
-	<string name="sync_authority_favourites" translatable="false">io.github.landwarderer.futon.favourites</string>
 	<string name="tg_backup_bot_name" translatable="false">futon_backup_bot</string>
 	<string name="discord_app_id" translatable="false">1395464028611940393</string>
 	<string name="app_icon_url" translatable="false">https://raw.githubusercontent.com/FutonApp/Futon/refs/heads/devel/metadata/en-US/icon.png</string>

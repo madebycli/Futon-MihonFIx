@@ -1,8 +1,17 @@
 # Current Futon Compatibility and Comix State
 
-Last refreshed: 2026-10-13
+Last refreshed: 2026-10-24
 
 ## Active work
+
+Current task: user-authorized AppFuton upstream sync, Galaxy S26 Ultra installation conflict fix and
+new signed release. See docs/upstream-comix/ANDROID-INSTALL-9.9.md.
+User screenshot: Obtainium failureConflict on9.8.5; development build installs.
+New release target9.9.0/90900; standalone package io.github.madebycli.futon.mihonfix plus legacy update APK.
+Both retain existing certificate; no new key. Upstream9162c49 (both new commits) integrated.
+Validation/publication PENDING until live Actions gates pass. Physical device retest PENDING.
+Earlier release facts below remain historical evidence.
+
 
 - Repository madebycli/Futon-MihonFIx, ID 1345465394; old Futon name is a rename alias.
 - Main/default branch devel now includes all feature commits through merge 78befa347ef37abed2d1d76ec0cd531e063f2a7e.

@@ -14,7 +14,7 @@ jobs:
   release:
     name: Verify, build and publish release
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 90
 
     steps:
       - name: Checkout code
@@ -110,11 +110,18 @@ jobs:
           echo "KEY_ALIAS=$KEY_ALIAS" >> "$GITHUB_ENV"
           echo "KEY_PASSWORD=$KEY_PASSWORD" >> "$GITHUB_ENV"
 
-      - name: Run Mihon regression tests
+      - name: Build debug and compile instrumented tests
+        run: ./gradlew assembleDebug compileDebugAndroidTestKotlin --stacktrace --no-build-cache --no-configuration-cache
+
+      - name: Run Mihon and upstream novel regression tests
         run: |
           set -euo pipefail
           grep -Eq '^[[:space:]]*minSdk = 26$' app/build.gradle
           ./gradlew testDebugUnitTest \
+            --tests "io.github.landwarderer.futon.novel.*" \
+            --tests "io.github.landwarderer.futon.onboarding.*" \
+            --tests "io.github.landwarderer.futon.core.prefs.HomeBackgroundFontTest" \
+            --tests "io.github.landwarderer.futon.core.prefs.NovelAppSettingsTest" \
             --tests "io.github.landwarderer.futon.reader.domain.*" \
             --tests "io.github.landwarderer.futon.details.domain.ComixChapterGroupingTest" \
             --tests "io.github.landwarderer.futon.mihon.MihonExceptionUnwrapTest" \
@@ -130,6 +137,15 @@ jobs:
             --stacktrace \
             --no-build-cache \
             --no-configuration-cache
+
+      - name: Upload regression reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Futon-9.9.0-Regression-Reports
+          path: app/build/test-results/testDebugUnitTest/*.xml
+          if-no-files-found: warn
+          retention-days: 14
 
       - name: Run release lint (diagnostic)
         id: release_lint
@@ -151,136 +167,87 @@ jobs:
           if-no-files-found: warn
           retention-days: 14
 
-      - name: Build signed optimized release APK
+      - name: Build both signed optimized APKs
         env:
           SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-        run: >-
-          ./gradlew assembleRelease
-          -PversionName=${{ steps.version.outputs.version }}
-          -PversionCode=${{ steps.version.outputs.version_code }}
-          --stacktrace
-          --no-build-cache
-          --no-configuration-cache
-
-      - name: Verify optimized Mihon runtime ABI
-        shell: bash
+          VERSION: ${{ steps.version.outputs.version }}
+          VERSION_CODE: ${{ steps.version.outputs.version_code }}
         run: |
           set -euo pipefail
-          APK="$GITHUB_WORKSPACE/app/build/outputs/apk/release/app-release.apk"
-          test -s "$APK"
-          rm -rf "$RUNNER_TEMP/futon-release-dex"
-          mkdir -p "$RUNNER_TEMP/futon-release-dex"
-          unzip -q "$APK" 'classes*.dex' -d "$RUNNER_TEMP/futon-release-dex"
-          cat "$RUNNER_TEMP"/futon-release-dex/classes*.dex | strings > "$RUNNER_TEMP/futon-release-dex/strings.txt"
-          DEX_STRINGS="$RUNNER_TEMP/futon-release-dex/strings.txt"
+          mkdir -p release-artifact
+          ./gradlew assembleRelease -Pstandalone=false -PversionName="$VERSION" -PversionCode="$VERSION_CODE" --stacktrace --no-build-cache --no-configuration-cache
+          cp app/build/outputs/apk/release/app-release.apk "release-artifact/Futon-$VERSION-legacy-update.apk"
+          ./gradlew assembleRelease -Pstandalone=true -PversionName="$VERSION" -PversionCode="$VERSION_CODE" --stacktrace --no-build-cache --no-configuration-cache
+          cp app/build/outputs/apk/release/app-release.apk "release-artifact/Futon-MihonFix-$VERSION.apk"
 
-          require_dex_string() {
-            local symbol="$1"
-            if ! grep -Fq "$symbol" "$DEX_STRINGS"; then
-              echo "::error::Optimized APK is missing required Mihon ABI symbol: $symbol"
-              exit 1
-            fi
-          }
+      - name: Verify both APK identities, signatures and optimized Mihon ABI
+        run: bash scripts/verify-release-apks.sh "$GITHUB_WORKSPACE/release-artifact" "${{ steps.version.outputs.version }}" "${{ steps.version.outputs.version_code }}"
 
-          for symbol in \
-            'com/squareup/zstd/ZstdCompressor' \
-            'androidx/preference/PreferenceScreen' \
-            'eu/kanade/tachiyomi/source/ConfigurableSource' \
-            'eu/kanade/tachiyomi/source/Source' \
-            'eu/kanade/tachiyomi/source/model/RefreshContext' \
-            'eu/kanade/tachiyomi/source/online/HttpSource' \
-            'eu/kanade/tachiyomi/source/model/SManga' \
-            'eu/kanade/tachiyomi/source/model/SChapter' \
-            'eu/kanade/tachiyomi/source/model/SMangaUpdate' \
-            'eu/kanade/tachiyomi/source/model/Page' \
-            'getMangaUpdate' \
-            'fetchRelatedMangaList' \
-            'getChapterList' \
-            'getPageList' \
-            'fetchPageList' \
-            'CaptchaAutoResolveCoordinator' \
-            'TachiyomiApkClassLoaderPolicy' \
-            'org/brotli/dec/BrotliInputStream'; do
-            require_dex_string "$symbol"
-          done
-
-      - name: Verify APK identity and signature
-        shell: bash
+      - name: Enable emulator acceleration
         run: |
-          set -euo pipefail
-          APK="$GITHUB_WORKSPACE/app/build/outputs/apk/release/app-release.apk"
-          VERSION="${{ steps.version.outputs.version }}"
-          VERSION_CODE="${{ steps.version.outputs.version_code }}"
-          APKSIGNER="$(find "$ANDROID_HOME/build-tools" -type f -name apksigner | sort -V | tail -n 1)"
-          AAPT="$(find "$ANDROID_HOME/build-tools" -type f -name aapt | sort -V | tail -n 1)"
-          test -x "$APKSIGNER"
-          test -x "$AAPT"
-          SIGNATURE_INFO="$($APKSIGNER verify --verbose --print-certs "$APK")"
-          printf '%s\n' "$SIGNATURE_INFO"
-          # Verified certificate of the published v9.8.3 APK (run 33611369866).
-          grep -Fq 'certificate SHA-256 digest: 12fe17245decb84c98985ddcc08884b874d10a78e4fb747a6ed3e2a42d77b625' <<< "$SIGNATURE_INFO"
-          BADGING="$($AAPT dump badging "$APK" | head -n 1)"
-          echo "$BADGING"
-          grep -Fq "versionCode='$VERSION_CODE'" <<< "$BADGING"
-          grep -Fq "versionName='$VERSION'" <<< "$BADGING"
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
 
-      - name: Prepare release files
-        shell: bash
+      - name: Verify Android 16 installation and coexistence
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 36
+          arch: x86_64
+          target: google_apis
+          profile: pixel_7_pro
+          disable-animations: true
+          script: bash scripts/test-install-compat.sh "$GITHUB_WORKSPACE/release-artifact" "${{ steps.version.outputs.version }}"
+
+      - name: Record build provenance
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          VERSION_CODE: ${{ steps.version.outputs.version_code }}
         run: |
-          set -euo pipefail
-          VERSION="${{ steps.version.outputs.version }}"
-          VERSION_CODE="${{ steps.version.outputs.version_code }}"
-          OUT="$GITHUB_WORKSPACE/release-artifact"
-          APK_NAME="Futon-$VERSION.apk"
-          mkdir -p "$OUT"
-          cp "$GITHUB_WORKSPACE/app/build/outputs/apk/release/app-release.apk" "$OUT/$APK_NAME"
-          cd "$OUT"
-          sha256sum "$APK_NAME" > "$APK_NAME.sha256"
           {
-            echo "Futon $VERSION"
-            echo "Version code: $VERSION_CODE"
+            echo "Futon MihonFix $VERSION ($VERSION_CODE)"
             echo "Source commit: $GITHUB_SHA"
+            echo "Upstream: AppFuton/Futon 9162c49a380029365cc53283daa766c1f78b6e5d"
             echo "Signing: repository-release-key"
+            echo "Certificate SHA256: 12fe17245decb84c98985ddcc08884b874d10a78e4fb747a6ed3e2a42d77b625"
             echo "Build: optimized release (R8 minify + resource shrinking)"
-          } > BUILD-INFO.txt
+            echo "Standalone: io.github.madebycli.futon.mihonfix"
+            echo "Legacy update: io.github.landwarderer.futon"
+            echo "Android 16 emulator install/upgrade/coexistence: passed"
+            echo "Physical Galaxy S26 Ultra test: pending"
+          } > release-artifact/BUILD-INFO.txt
+
+      - name: Upload APKs and installation evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Futon-9.9.0-APKs-And-Install-Evidence
+          path: release-artifact/*
+          if-no-files-found: warn
+          retention-days: 14
 
       - name: Publish GitHub release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.version.outputs.release_tag }}
           target_commitish: ${{ github.sha }}
-          name: Futon ${{ steps.version.outputs.version }}
+          name: Futon MihonFix ${{ steps.version.outputs.version }}
           body_path: docs/releases/${{ steps.version.outputs.version }}.md
           draft: false
           prerelease: false
           make_latest: true
           fail_on_unmatched_files: true
           files: |
-            release-artifact/Futon-${{ steps.version.outputs.version }}.apk
-            release-artifact/Futon-${{ steps.version.outputs.version }}.apk.sha256
+            release-artifact/Futon-MihonFix-${{ steps.version.outputs.version }}.apk
+            release-artifact/Futon-MihonFix-${{ steps.version.outputs.version }}.apk.sha256
+            release-artifact/Futon-${{ steps.version.outputs.version }}-legacy-update.apk
+            release-artifact/Futon-${{ steps.version.outputs.version }}-legacy-update.apk.sha256
+            release-artifact/INSTALL-VALIDATION.txt
             release-artifact/BUILD-INFO.txt
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Notify Discord - Release published
-        env:
-          WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_BUILD }}
-          RELEASE_URL: https://github.com/${{ github.repository }}/releases/tag/${{ steps.version.outputs.release_tag }}
-        run: |
-          if [ -z "$WEBHOOK" ]; then exit 0; fi
-          payload=$(jq -n --arg content "Release published: ${{ steps.version.outputs.release_tag }}\n$RELEASE_URL" '{content: $content}')
-          curl -s -H "Content-Type: application/json" -d "$payload" "$WEBHOOK" || true
-
       - name: Clean up keystore
         if: always()
         run: rm -f keystore.jks
-
-      - name: Notify Discord - Release failed
-        if: failure()
-        env:
-          WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_BUILD }}
-        run: |
-          if [ -z "$WEBHOOK" ]; then exit 0; fi
-          payload=$(jq -n --arg content "Release failed for $GITHUB_REF\nhttps://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}" '{content: $content}')
-          curl -s -H "Content-Type: application/json" -d "$payload" "$WEBHOOK" || true

@@ -35,7 +35,7 @@ class CloudFlareInterceptor : Interceptor {
                 CloudFlareHelper.PROTECTION_NOT_DETECTED
             }
         } else {
-            try {
+            val detected = try {
                 CloudFlareHelper.checkResponseForProtection(response)
             } catch (e: IllegalArgumentException) {
                 if (e.message?.contains("Bad position") == true) {
@@ -44,6 +44,20 @@ class CloudFlareInterceptor : Interceptor {
                     e.printStackTraceDebug("CloudFlareInterceptor")
                     CloudFlareHelper.PROTECTION_NOT_DETECTED
                 }
+            }
+            if (detected != CloudFlareHelper.PROTECTION_NOT_DETECTED) {
+                detected
+            } else if (response.code == 403 || response.code == 503) {
+                val cfMitigated = response.header("cf-mitigated")
+                val server = response.header("server")
+                val isCf = response.header("cf-ray") != null || server?.contains("cloudflare", ignoreCase = true) == true
+                if (isCf && cfMitigated?.contains("challenge", ignoreCase = true) == true) {
+                    CloudFlareHelper.PROTECTION_CAPTCHA
+                } else {
+                    CloudFlareHelper.PROTECTION_NOT_DETECTED
+                }
+            } else {
+                CloudFlareHelper.PROTECTION_NOT_DETECTED
             }
         }
 

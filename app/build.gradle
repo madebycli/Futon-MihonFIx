@@ -26,7 +26,15 @@ android {
 	}
 
 	defaultConfig {
-		applicationId 'io.github.landwarderer.futon'
+		// Keep legacy updates compatible; the standalone APK can coexist with upstream Futon.
+		applicationId project.findProperty('standalone') == 'true' ?
+			'io.github.madebycli.futon.mihonfix' : 'io.github.landwarderer.futon'
+		manifestPlaceholders.appLabel = project.findProperty('standalone') == 'true' ?
+			'Futon MihonFix' : '@string/app_name'
+		// Sync providers and accounts are package identities too, not just the manifest package.
+		resValue 'string', 'account_type_sync', applicationId + '.sync'
+		resValue 'string', 'sync_authority_history', applicationId + '.history'
+		resValue 'string', 'sync_authority_favourites', applicationId + '.favourites'
 		// Current Mihon and Keiyoushi extensions both target API 26 as their minimum.
 		// Keeping Futon lower makes D8 desugar interface default methods in host libraries
 		// (notably kotlinx.serialization GeneratedSerializer). Dynamically loaded extension
@@ -34,8 +42,8 @@ android {
 		// AbstractMethodError for typeParametersSerializers(). Match the extension host ABI.
 		minSdk = 26
 		targetSdk = 36
-		versionCode project.hasProperty('versionCode') ? project.property('versionCode').toInteger() : 90805
-        versionName project.hasProperty('versionName') ? project.property('versionName') : '9.8.5'
+		versionCode project.hasProperty('versionCode') ? project.property('versionCode').toInteger() : 90900
+        versionName project.hasProperty('versionName') ? project.property('versionName') : '9.9.0'
         generatedDensities = []
 		testInstrumentationRunner 'io.github.landwarderer.futon.HiltTestRunner'
 		ksp {

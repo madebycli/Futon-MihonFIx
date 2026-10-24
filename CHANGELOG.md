@@ -4,6 +4,20 @@ All notable changes to this project are documented in this file.
 
 The format is based on "Keep a Changelog" and follows semantic versioning where possible.
 
+## 9.9.0
+Date: 2026-10-24
+
+### Installation
+- Add a separately installable Futon MihonFix APK with its own package, sync providers and account type.
+- Keep the legacy package APK for in-place updates of existing repository-key installations.
+- Both APKs use the existing repository release certificate.
+
+### AppFuton upstream 9.9
+- Integrate both upstream commits through 9162c49a380029365cc53283daa766c1f78b6e5d.
+- Light Novel reading mode, online novel sources, local EPUB/PDF import and PDF reader.
+- Home screen mode indicator, fonts and onboarding walkthrough.
+- Update built-in parsers to dc223c3d80 and retain downstream Mihon/Comix compatibility.
+
 ## 9.8.5
 Date: 2026-10-13
 

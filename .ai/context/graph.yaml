@@ -254,6 +254,24 @@ nodes:
     device_validation: pending
     expected_certificate_sha256: 12fe17245decb84c98985ddcc08884b874d10a78e4fb747a6ed3e2a42d77b625
 
+  ANDROID_INSTALL_9_9_0:
+    type: user_authorized_release_and_install_fix
+    authorization_date: 2026-10-24
+    branch: release/v9.9.0
+    upstream_head: 9162c49a380029365cc53283daa766c1f78b6e5d
+    original_commits_integrated: 2
+    standalone_application_id: io.github.madebycli.futon.mihonfix
+    legacy_application_id: io.github.landwarderer.futon
+    version_name: 9.9.0
+    version_code: 90900
+    observed_failure: Obtainium_failureConflict
+    development_apk_installs: user_confirmed
+    exact_device_package_manager_code: unavailable
+    certificate_sha256: 12fe17245decb84c98985ddcc08884b874d10a78e4fb747a6ed3e2a42d77b625
+    validation: pending
+    device_validation: pending
+    reference: docs/upstream-comix/ANDROID-INSTALL-9.9.md
+
 edges:
   - from: DEVICE_VALIDATION_78D
     relation: validates

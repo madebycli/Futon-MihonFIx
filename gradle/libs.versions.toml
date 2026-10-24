@@ -35,7 +35,7 @@ material = "1.14.0-alpha05"
 moshi = "1.15.2"
 okhttp = "5.5.0"
 okio = "3.18.1"
-parsers = "b3c0000245"
+parsers = "dc223c3d80"
 preference = "1.2.1"
 quickjsKt = "1.0.5"
 recyclerview = "1.4.0"
@@ -123,6 +123,7 @@ rxjava = { module = "io.reactivex:rxjava", version.ref = "rxjava" }
 rxandroid = { module = "io.reactivex:rxandroid", version.ref = "rxandroid" }
 okhttp-bom = { module = "com.squareup.okhttp3:okhttp-bom", version.ref = "okhttp" }
 okhttp = { module = "com.squareup.okhttp3:okhttp" }
+okhttp-brotli = { module = "com.squareup.okhttp3:okhttp-brotli" }
 okhttp-dnsoverhttps = { module = "com.squareup.okhttp3:okhttp-dnsoverhttps" }
 okhttp-tls = { module = "com.squareup.okhttp3:okhttp-tls" }
 okio = { module = "com.squareup.okio:okio", version.ref = "okio" }
