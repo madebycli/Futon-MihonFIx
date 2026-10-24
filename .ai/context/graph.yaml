@@ -1,6 +1,6 @@
 schema_version: 1
 project: Futon-Mihon-Compatibility
-updated_at: 2026-10-13
+updated_at: 2026-10-24
 update_policy:
   mandatory: true
   evidence_priority:
@@ -268,7 +268,26 @@ nodes:
     development_apk_installs: user_confirmed
     exact_device_package_manager_code: unavailable
     certificate_sha256: 12fe17245decb84c98985ddcc08884b874d10a78e4fb747a6ed3e2a42d77b625
-    validation: pending
+    validation: passed
+    status: published
+    source_head: 7ca49784847411ec11e25a6829d97eee420ec145
+    run_id: 40125428415
+    run_status: success
+    standalone_asset_id: 673157154
+    standalone_apk_sha256: ad8265207967d9214b315f4c5851eb4f10e5c3e3f47d1dba725c634a8807026d
+    legacy_asset_id: 673157151
+    legacy_apk_sha256: a244f99cae1f997dffc263842e9f8b90a7c0fc5b3e3d4191e7c51908692aa353
+    focused_regressions: passed
+    debug_and_instrumented_compilation: passed
+    optimized_r8_abi_identity_signature: passed
+    emulator_api: 36
+    emulator_abi: x86_64
+    emulator_legacy_upgrade: passed
+    emulator_upstream_coexistence: passed
+    emulator_standalone_startup: passed
+    lint: diagnostic_20_errors_457_warnings
+    main_branch: devel
+    main_synchronized: true
     device_validation: pending
     reference: docs/upstream-comix/ANDROID-INSTALL-9.9.md
 

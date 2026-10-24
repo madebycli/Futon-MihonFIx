@@ -1,27 +1,28 @@
-# Futon Handoff: actual AppFuton parent sync, 2026-10-13
+# Futon handoff: signed 9.9.0 and Android installation conflict, 2026-10-24
 
-Read .ai/CONTEXT.md and its validated central route first, then STATE.md, graph.yaml and
-docs/upstream-comix/APPFUTON-SYNC.md. Project futon, repo madebycli/Futon-MihonFIx
-(ID 1345465394), main/default branch devel.
+Read .ai/CONTEXT.md and its validated central route, then STATE.md, graph.yaml and
+docs/upstream-comix/ANDROID-INSTALL-9.9.md. Repo madebycli/Futon-MihonFIx (ID1345465394), default devel.
 
-Correction: the earlier audit only checked Kototoro/Keiyoushi compatibility references.
-Actual fork parent AppFuton/Futon had six missing commits through 5d2206a6926adf53be0867ad784948ed16663f44.
-All original commits are preserved by two-parent merge 5dc3735972f75f5c946b67eef28c47b5a48ea0c6.
-PR #4 merged into devel at 2c708fcf593279243d33650d8d0eae41d00a5bad. GitHub behind_by=0.
-Upstream v9.8.2 progress race protection, optional smart resume, adjacent prefetch and parser b3c0000245
-are included. The user explicitly authorized actual upstream integration and signed publication.
+The user authorized actual upstream integration, the Galaxy S26 Ultra installation fix and a new signed release.
+Both missing AppFuton commits through 9162c49a380029365cc53283daa766c1f78b6e5d are preserved by
+two-parent source 7ca49784847411ec11e25a6829d97eee420ec145. Upstream 9.9 novel/PDF/EPUB/onboarding
+features and parser dc223c3d80 coexist with existing Mihon/Comix compatibility. Retain the downstream
+real Brotli adapter, minSdk 26, classloader/interceptor contracts, image ownership and snapshots.
 
-Mihon fixes are still required: none of the six commits modifies the host ABI/runtime layers.
-Preserve minSdk26, interceptors, classloader, modern/legacy ABI and durable snapshots.
-Only app changes for external Comix: trustworthy unique (volume, number) keys share one complete
-list without group chips. Duplicates/uncertain numbers keep groups and original IDs/URLs.
-Smart resume uses this same projection, including cross-scanlator successors. No extension fork/new key.
+Signed 9.9.0/90900 is PUBLISHED, release run 40125428415 SUCCESS. Both optimized APKs retain the
+repository certificate 12fe17245decb84c98985ddcc08884b874d10a78e4fb747a6ed3e2a42d77b625.
+Standalone Futon-MihonFix-9.9.0.apk uses io.github.madebycli.futon.mihonfix and separate sync identities.
+Legacy-update APK keeps io.github.landwarderer.futon for in-place upgrades of repository-key installs.
+Keep BOTH package identities and the same signing key stable in future releases. -Pstandalone=true selects
+the separate app; the release workflow builds both. Namespace/class names stay unchanged.
+Default devel is synchronized to the verified app/build/test tree, with documentation-only evidence changes.
 
-99 focused tests passed, zero errors/failures/skips, artifact 11832843169 in run38436109226.
-Debug run38436109198 succeeded, including compileDebugAndroidTestKotlin.
-Signed 9.8.5/90805 release run38437336280 from release/v9.8.5 succeeded and is published.
-APK asset637756905, SHA256 d4deebca968a4d1696e653fed6d95b7a738e677cea5522963ee632ac41f3e586.
-Released source2c708fcf593279243d33650d8d0eae41d00a5bad; same certificate as9.8.4.
-Re-fetch live release status before claiming publication; current final proof is in APPFUTON-SYNC.md.
-New device and instrumented runtime execution remains PENDING. Historical device success does not
-validate this new tree. README stays English, GitHub-only downloads, original style.
+Android 16/API 36 emulator passed legacy 9.8.5 upgrade, coexistence with original AppFuton 9.9,
+standalone replacement, provider registration and startup. Focused regressions and debug/instrumented
+compilation passed. Lint remains diagnostic: 20 errors/457 warnings. Public release has checksum/build/install proof.
+Standalone asset 673157154, SHA256 ad8265207967d9214b315f4c5851eb4f10e5c3e3f47d1dba725c634a8807026d.
+Legacy asset 673157151, SHA256 a244f99cae1f997dffc263842e9f8b90a7c0fc5b3e3d4191e7c51908692aa353.
+
+Device evidence: Obtainium failureConflict on 9.8.5; dev APK installed, then the user removed the penultimate dev build.
+Exact device-side PackageManager reason unavailable. A physical Galaxy S26 Ultra retest remains PENDING.
+No Play Protect bypass or new signing key. Give the user the standalone APK for the next install attempt.

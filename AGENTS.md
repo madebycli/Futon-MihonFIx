@@ -11,6 +11,18 @@
 
 ## Active Work: Mihon / Comix app-side compatibility
 
+Latest verified release: signed **9.9.0/90900**, source 7ca49784847411ec11e25a6829d97eee420ec145,
+run 40125428415 SUCCESS (2026-10-24). User authorized upstream integration and new signed publication.
+Default devel includes the tested release tree. See docs/upstream-comix/ANDROID-INSTALL-9.9.md.
+Actual AppFuton parent 9162c49 (upstream 9.9) is integrated; retain all downstream Mihon/Comix fixes.
+Release builds produce standalone `io.github.madebycli.futon.mihonfix` with `-Pstandalone=true`
+and legacy-update `io.github.landwarderer.futon` APKs, both signed with the existing repository key.
+Keep the two package identities and package-specific sync accounts/providers stable in future releases.
+Debug/instrumented compilation, focused regressions, both optimized APKs, ABI/certificate gates and Android 16
+emulator install/upgrade/upstream coexistence/startup passed. Physical S26 Ultra retest PENDING.
+Lint is diagnostic: 20 errors/457 warnings. Older release notes below are historical.
+
+
 Read `.ai/CONTEXT.md` first, then `.ai/context/{STATE.md,graph.yaml,HANDOFF_PROMPT.md}` and
 `docs/upstream-comix/{PLAN.md,AUDIT.md,VALIDATION.md}` for the current scope and evidence.
 The former Mihon fix is already integrated in `devel` and published in 9.8.3. PR #1 is closed.

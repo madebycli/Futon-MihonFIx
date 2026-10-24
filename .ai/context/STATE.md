@@ -6,10 +6,14 @@ Last refreshed: 2026-10-24
 
 Current task: user-authorized AppFuton upstream sync, Galaxy S26 Ultra installation conflict fix and
 new signed release. See docs/upstream-comix/ANDROID-INSTALL-9.9.md.
-User screenshot: Obtainium failureConflict on9.8.5; development build installs.
-New release target9.9.0/90900; standalone package io.github.madebycli.futon.mihonfix plus legacy update APK.
-Both retain existing certificate; no new key. Upstream9162c49 (both new commits) integrated.
-Validation/publication PENDING until live Actions gates pass. Physical device retest PENDING.
+User screenshot: Obtainium failureConflict on 9.8.5; development build installs.
+Published signed release 9.9.0/90900; standalone package io.github.madebycli.futon.mihonfix plus legacy update APK.
+Both retain existing certificate; no new key. Upstream 9162c49 (both new commits) integrated.
+Run 40125428415 SUCCESS: debug/instrumented compilation, focused regressions, both optimized APKs,
+ABI/identity/certificate gates and Android 16 emulator upgrade/coexistence/startup passed.
+Default branch devel now contains the verified release tree; source 7ca49784847411ec11e25a6829d97eee420ec145.
+Physical Galaxy S26 Ultra retest remains PENDING. Lint diagnostic: 20 errors/457 warnings.
+Latest release: https://github.com/madebycli/Futon-MihonFIx/releases/tag/v9.9.0
 Earlier release facts below remain historical evidence.
 
 
@@ -191,10 +195,46 @@ New device/instrumented runtime execution remains PENDING.
 
 Published 2026-10-13T17:32:16Z: https://github.com/madebycli/Futon-MihonFIx/releases/tag/v9.8.5
 Release run38437336280 SUCCESS, source2c708fcf593279243d33650d8d0eae41d00a5bad.
-Fresh regressions, optimized R8, host ABI, package io.github.landwarderer.futon, version9.8.5/90805
+Fresh regressions, optimized R8, host ABI, package io.github.landwarderer.futon, version 9.8.5/90805
 and v2 signature passed. Certificate SHA256:
 12fe17245decb84c98985ddcc08884b874d10a78e4fb747a6ed3e2a42d77b625.
 APK asset637756905, 21,354,341 bytes, SHA256:
 d4deebca968a4d1696e653fed6d95b7a738e677cea5522963ee632ac41f3e586.
 Documentation-only main follow-ups preserve the released app/build/test tree.
 Real-device and instrumented runtime retests remain PENDING.
+
+## Verified signed 9.9.0 publication (2026-10-24)
+
+Release: https://github.com/madebycli/Futon-MihonFIx/releases/tag/v9.9.0
+Source: 7ca49784847411ec11e25a6829d97eee420ec145 (two-parent upstream integration).
+Release run 40125428415 SUCCESS, job 120965704916; published 2026-10-24T19:50:19Z.
+https://github.com/madebycli/Futon-MihonFIx/actions/runs/40125428415
+
+Focused Mihon/Comix/reader and upstream novel tests passed; debug APK and instrumented-source compilation passed.
+Both optimized R8 APKs passed package/version/minSdk 26/targetSdk 36, ARM64-library presence, host ABI and
+v2 certificate checks. Certificate remains 12fe17245decb84c98985ddcc08884b874d10a78e4fb747a6ed3e2a42d77b625.
+Keiyoushi extensions-lib main remains 42255ee5fa96d9425697b7c143587483207308d1; no new host ABI delta.
+
+Android 16/API 36 x86_64 emulator passed:
+- Update published repository-key 9.8.5 to the new legacy APK.
+- Install/update standalone beside legacy.
+- Install original AppFuton 9.9 and retain/update standalone alongside it.
+- Confirm package-specific history/favourites/file providers.
+- Launch standalone; process stays alive with no crash.
+
+Standalone APK asset 673157154, 25,385,272 bytes:
+Futon-MihonFix-9.9.0.apk
+SHA256 ad8265207967d9214b315f4c5851eb4f10e5c3e3f47d1dba725c634a8807026d
+Legacy APK asset 673157151, 25,385,940 bytes:
+Futon-9.9.0-legacy-update.apk
+SHA256 a244f99cae1f997dffc263842e9f8b90a7c0fc5b3e3d4191e7c51908692aa353
+
+Regression XML artifact 12572786951; APK/install evidence artifact 12573693104.
+Lint artifact 12573132063 reports 20 errors/457 warnings and remains diagnostic; this is not a clean lint pass.
+Public assets include APK checksum files, BUILD-INFO.txt and INSTALL-VALIDATION.txt.
+
+User confirmed a development build installed, then removed the penultimate development version.
+The exact physical-device PackageManager conflict code remains unavailable.
+No physical Galaxy S26 Ultra test has been performed; user installation retest remains PENDING.
+Default branch devel is synchronized with this verified application/build/test tree;
+the synchronization adds documentation evidence and uses [skip ci] to avoid duplicate builds/notifications.
