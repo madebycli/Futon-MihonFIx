@@ -414,7 +414,7 @@ class MangaSourcesRepository @Inject constructor(
 			val entities = new.map { x ->
 				MangaSourceEntity(
 					source = x.name,
-					isEnabled = defaultSourceEnabled(x is NovelParserSource, isAllEnabled),
+					isEnabled = defaultSourceEnabled(x is NovelParserSource, x is MihonMangaSource, isAllEnabled),
 					sortKey = ++maxSortKey,
 					addedIn = BuildConfig.VERSION_CODE,
 					lastUsedAt = 0,
@@ -624,5 +624,6 @@ class MangaSourcesRepository @Inject constructor(
 internal fun shouldSeedDefaultMangaSources(isDatabaseEmpty: Boolean, sourcesVersion: Int): Boolean =
 	isDatabaseEmpty && sourcesVersion == 0
 
-internal fun defaultSourceEnabled(isNovel: Boolean, allSourcesEnabled: Boolean): Boolean =
-	isNovel || allSourcesEnabled
+/** Novels and installed Mihon extensions are on when discovered; built-in manga sources follow the preference. */
+internal fun defaultSourceEnabled(isNovel: Boolean, isMihon: Boolean, allSourcesEnabled: Boolean): Boolean =
+	isNovel || isMihon || allSourcesEnabled

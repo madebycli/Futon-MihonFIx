@@ -14,9 +14,12 @@ class SourceDiscoveryPolicyTest {
     }
 
     @Test
-    fun mihonDiscoveryRespectsTheAllSourcesPreference() {
-        assertFalse(defaultSourceEnabled(isNovel = false, allSourcesEnabled = false))
-        assertTrue(defaultSourceEnabled(isNovel = false, allSourcesEnabled = true))
-        assertTrue(defaultSourceEnabled(isNovel = true, allSourcesEnabled = false))
+    fun discoveredSourcesAreEnabledByKind() {
+        // Built-in manga sources follow the "all sources" preference.
+        assertFalse(defaultSourceEnabled(isNovel = false, isMihon = false, allSourcesEnabled = false))
+        assertTrue(defaultSourceEnabled(isNovel = false, isMihon = false, allSourcesEnabled = true))
+        // A freshly installed Mihon extension and the novel sources are usable without a manual step.
+        assertTrue(defaultSourceEnabled(isNovel = false, isMihon = true, allSourcesEnabled = false))
+        assertTrue(defaultSourceEnabled(isNovel = true, isMihon = false, allSourcesEnabled = false))
     }
 }
