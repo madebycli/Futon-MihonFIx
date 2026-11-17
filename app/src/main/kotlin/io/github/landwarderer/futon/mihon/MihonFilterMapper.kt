@@ -226,7 +226,8 @@ object MihonFilterMapper {
 
             is Filter.Text -> {
                 val baseKey = "$PREFIX_TEXT$prefix${filter.name}"
-                selectedTags.find { it.startsWith(baseKey) }?.let { matchingTag ->
+                // "Title" must not pick up the value of a sibling filter named "Title 2" (Kototoro ab6051d2).
+                selectedTags.find { it == baseKey || it.startsWith("$baseKey=") }?.let { matchingTag ->
                     filter.state = if (matchingTag.contains("=")) {
                         matchingTag.substringAfter("=")
                     } else {
