@@ -13,6 +13,17 @@ See docs/pr-reviews/chapters.md. CI results must be checked for each final head;
 Earlier work and release instructions below are historical.
 
 
+### Verified signed 9.10.0 publication (2026-11-17)
+Clio 9.10.0 / 91000 (formerly Futon MihonFix), user-authorized stable release: https://github.com/madebycli/Futon-MihonFIx/releases/tag/v9.10.0
+Source 6e7b6b3e4ce80c1fd9a3267fa75c442e40cd2748 on release/v9.10.0, run 44124286818 SUCCESS (all steps), published 2026-11-17T16:48:51Z.
+Merged into devel first: PRs #5 (chapters, Kototoro), #6 (Markdown descriptions), #7 (Mihon/Cloudflare update), #8 (Clio branding and icon).
+Both APKs use the existing repository certificate 12fe17245decb84c98985ddcc08884b874d10a78e4fb747a6ed3e2a42d77b625.
+Standalone Futon-MihonFix-9.10.0.apk SHA256 b74461d404ad32c2014be63a642c586a46afb77f3811125975a0f212601bf2c4;
+legacy Futon-9.10.0-legacy-update.apk SHA256 75183c3ad5b3f2c6603982a99045c0d41b54ac82d6a71e67908bffdacd3dd656.
+Android 16 emulator install/upgrade/coexistence passed (INSTALL-VALIDATION.txt). The release gate selects tests by package
+(details.domain.*, mihon.*, core.network.*). Physical-device validation of 9.10.0 is PENDING; full lintRelease stays diagnostic.
+Package IDs, signing and release asset names are unchanged; only the visible name is Clio.
+
 ### 2026-11-17 update
 - AppFuton/Futon devel 127c51d (45 commits since 9.9) merged directly into `devel` (0e2e4b1, user-authorized, no PR).
   Compile + 231 of 233 unit tests passed locally; the 2 failures are live-network `WuxiaworldRepositoryTest`

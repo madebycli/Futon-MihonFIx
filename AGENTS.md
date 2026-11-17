@@ -15,7 +15,8 @@
 
 ## Active Work: Mihon / Comix app-side compatibility
 
-Latest verified release: signed **9.9.0/90900**, source 7ca49784847411ec11e25a6829d97eee420ec145,
+Latest verified release: signed **Clio 9.10.0/91000** (run 44124286818, source 6e7b6b3e4ce80c1fd9a3267fa75c442e40cd2748,
+2026-11-17, details in .ai/context/STATE.md). Previous: signed **9.9.0/90900**, source 7ca49784847411ec11e25a6829d97eee420ec145,
 run 40125428415 SUCCESS (2026-10-24). User authorized upstream integration and new signed publication.
 Default devel includes the tested release tree. See docs/upstream-comix/ANDROID-INSTALL-9.9.md.
 Actual AppFuton parent 9162c49 (upstream 9.9) is integrated; retain all downstream Mihon/Comix fixes.
