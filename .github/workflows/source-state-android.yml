@@ -6,6 +6,7 @@ on:
       - 'app/src/main/kotlin/io/github/landwarderer/futon/explore/data/MangaSourcesRepository.kt'
       - 'app/src/main/kotlin/io/github/landwarderer/futon/core/db/dao/MangaSourcesDao.kt'
       - 'app/src/androidTest/kotlin/io/github/landwarderer/futon/core/db/SourceStatePersistenceTest.kt'
+      - 'app/src/androidTest/kotlin/io/github/landwarderer/futon/core/db/SourceAssimilationTest.kt'
       - '.github/workflows/source-state-android.yml'
 permissions:
   contents: read
@@ -44,7 +45,7 @@ jobs:
           disable-animations: true
           script: |
             cd "$RUNNER_TEMP/source-state"
-            ./gradlew -Dorg.gradle.java.home="$JAVA_HOME" connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=io.github.landwarderer.futon.core.db.SourceStatePersistenceTest --stacktrace --no-configuration-cache
+            ./gradlew -Dorg.gradle.java.home="$JAVA_HOME" connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=io.github.landwarderer.futon.core.db.SourceStatePersistenceTest,io.github.landwarderer.futon.core.db.SourceAssimilationTest --stacktrace --no-configuration-cache
       - name: Upload Android test reports
         if: always()
         uses: actions/upload-artifact@v4

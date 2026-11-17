@@ -72,10 +72,7 @@ class MangaSourcesRepository @Inject constructor(
 
 	init {
 		mihonExtensionManager.installedExtensions
-			.onEach {
-				isNewSourcesAssimilated.set(false)
-				assimilateNewSources()
-			}
+			.onEach { refreshDiscoveredSources() }
 			.launchIn(repositoryScope)
 	}
 
@@ -387,6 +384,12 @@ class MangaSourcesRepository @Inject constructor(
 
 	fun clearNewSourcesBadge() {
 		settings.sourcesVersion = BuildConfig.VERSION_CODE
+	}
+
+	/** Reconcile currently discovered sources while retaining all persisted user choices. */
+	internal suspend fun refreshDiscoveredSources() {
+		isNewSourcesAssimilated.set(false)
+		assimilateNewSources()
 	}
 
 	private suspend fun assimilateNewSources(): Boolean = assimilationMutex.withLock {
