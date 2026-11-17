@@ -42,6 +42,8 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import org.koitharu.kotatsu.parsers.model.ContentType
 import org.koitharu.kotatsu.parsers.model.MangaParserSource
 import org.koitharu.kotatsu.parsers.model.MangaSource
@@ -64,15 +66,13 @@ class MangaSourcesRepository @Inject constructor(
 
 	private val repositoryScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 	private val isNewSourcesAssimilated = AtomicBoolean(false)
+	private val assimilationMutex = Mutex()
 	private val dao: MangaSourcesDao
 		get() = db.getSourcesDao()
 
 	init {
 		mihonExtensionManager.installedExtensions
-			.onEach {
-				isNewSourcesAssimilated.set(false)
-				assimilateNewSources()
-			}
+			.onEach { refreshDiscoveredSources() }
 			.launchIn(repositoryScope)
 	}
 
@@ -106,7 +106,8 @@ class MangaSourcesRepository @Inject constructor(
 
 	suspend fun getTopSources(limit: Int): List<MangaSource> {
 		assimilateNewSources()
-		return dao.findLastUsed(limit).toSources(settings.isNsfwContentDisabled, null)
+		val recent = if (settings.isAllSourcesEnabled) dao.findLastUsed(limit) else dao.findLastUsedEnabled(limit)
+		return recent.toSources(settings.isNsfwContentDisabled, null)
 	}
 
 	suspend fun getDisabledSources(): Set<MangaSource> {
@@ -341,8 +342,8 @@ class MangaSourcesRepository @Inject constructor(
 	}
 
 	suspend fun setSourcesEnabledExclusive(sources: Set<MangaSource>) {
+		assimilateNewSources()
 		db.withTransaction {
-			assimilateNewSources()
 			for (s in allMangaSources) {
 				dao.setEnabled(s.name, s in sources)
 			}
@@ -350,8 +351,8 @@ class MangaSourcesRepository @Inject constructor(
 	}
 
 	suspend fun disableAllSources() {
+		assimilateNewSources()
 		db.withTransaction {
-			assimilateNewSources()
 			dao.disableAllSources()
 		}
 	}
@@ -385,59 +386,62 @@ class MangaSourcesRepository @Inject constructor(
 		settings.sourcesVersion = BuildConfig.VERSION_CODE
 	}
 
-	private suspend fun assimilateNewSources(): Boolean {
+	/** Reconcile currently discovered sources while retaining all persisted user choices. */
+	internal suspend fun refreshDiscoveredSources() {
+		isNewSourcesAssimilated.set(false)
+		assimilateNewSources()
+	}
+
+	private suspend fun assimilateNewSources(): Boolean = assimilationMutex.withLock {
 		if (isNewSourcesAssimilated.getAndSet(true)) {
 			updateMihonTitles()
-			return false
+			return@withLock false
 		}
-		
-		// Initial cache population from database
-		dao.findAll().forEach { entity ->
-			if ((entity.source.startsWith("mihon:") || entity.source.startsWith("MIHON_")) && entity.title != null) {
-				updateMihonTitle(entity.source, entity.title)
+		try {
+			val existingSources = dao.findAll()
+			val seedDefaults = shouldSeedDefaultMangaSources(existingSources.isEmpty(), settings.sourcesVersion)
+
+			// Initial cache population from database
+			existingSources.forEach { entity ->
+				if ((entity.source.startsWith("mihon:") || entity.source.startsWith("MIHON_")) && entity.title != null) {
+					updateMihonTitle(entity.source, entity.title)
+				}
 			}
-		}
 
-		val new = getNewSources()
-		var maxSortKey = dao.getMaxSortKey()
-		val isAllEnabled = settings.isAllSourcesEnabled
-		val entities = new.map { x ->
-			MangaSourceEntity(
-				source = x.name,
-				isEnabled = if (x is MihonMangaSource || x is NovelParserSource) true else isAllEnabled,
-				sortKey = ++maxSortKey,
-				addedIn = BuildConfig.VERSION_CODE,
-				lastUsedAt = 0,
-				isPinned = x is MihonMangaSource,
-				cfState = CloudFlareHelper.PROTECTION_NOT_DETECTED,
-				title = x.getTitle(context),
-			)
-		}
-		dao.insertIfAbsent(entities)
-
-		// Always ensure all NovelParserSource entries are enabled
-		for (novelSource in NovelParserSource.entries) {
-			val existing = dao.findAll().find { it.source == novelSource.name }
-			if (existing == null || !existing.isEnabled) {
-				dao.setEnabled(novelSource.name, true)
+			val new = getNewSources()
+			var maxSortKey = dao.getMaxSortKey()
+			val isAllEnabled = settings.isAllSourcesEnabled
+			val entities = new.map { x ->
+				MangaSourceEntity(
+					source = x.name,
+					isEnabled = defaultSourceEnabled(x is NovelParserSource, x is MihonMangaSource, isAllEnabled),
+					sortKey = ++maxSortKey,
+					addedIn = BuildConfig.VERSION_CODE,
+					lastUsedAt = 0,
+					isPinned = x is MihonMangaSource,
+					cfState = CloudFlareHelper.PROTECTION_NOT_DETECTED,
+					title = x.getTitle(context),
+				)
 			}
-		}
+			dao.insertIfAbsent(entities)
 
-		// Ensure default MangaParserSource entries are enabled if no manga sources are enabled yet
-		val enabledNames = dao.findAllEnabledNames()
-		val hasEnabledManga = allMangaSources.any { it.name in enabledNames }
-		if (!hasEnabledManga) {
-			val defaultLocales = setOf(java.util.Locale.getDefault().language, "en", "all")
-			val defaultMangaSources = allMangaSources.filter {
-				it.locale in defaultLocales && it.contentType == ContentType.MANGA && !it.isBroken
-			}.take(15)
-			for (s in defaultMangaSources) {
-				dao.setEnabled(s.name, true)
+			// Seed built-in defaults only on a fresh database, never after a user disables sources.
+			if (seedDefaults) {
+				val defaultLocales = setOf(java.util.Locale.getDefault().language, "en", "all")
+				val defaultMangaSources = allMangaSources.filter {
+					it.locale in defaultLocales && it.contentType == ContentType.MANGA && !it.isBroken
+				}.take(15)
+				for (s in defaultMangaSources) {
+					dao.setEnabled(s.name, true)
+				}
 			}
-		}
 
-		updateMihonTitles()
-		return new.isNotEmpty()
+			updateMihonTitles()
+			new.isNotEmpty()
+		} catch (error: Throwable) {
+			isNewSourcesAssimilated.set(false)
+			throw error
+		}
 	}
 
 	private suspend fun updateMihonTitles() {
@@ -482,9 +486,12 @@ class MangaSourcesRepository @Inject constructor(
         result.addAll(MangaParserSource.entries)
         result.addAll(io.github.landwarderer.futon.novel.data.source.NovelParserSource.entries)
         result.addAll(mihonExtensionManager.getMihonMangaSources())
-		for (e in entities) {
-			result.remove(e.toMangaSource() ?: continue)
+		val knownNames = HashSet<String>(entities.size * 2)
+		for (entity in entities) {
+			knownNames.add(entity.source)
+			entity.toMangaSource()?.name?.let(knownNames::add)
 		}
+		result.removeAll { it.name in knownNames }
 		return result
 	}
 
@@ -612,3 +619,11 @@ class MangaSourcesRepository @Inject constructor(
 		return io.github.landwarderer.futon.novel.data.source.NovelParserSource.fromName(this)
 	}
 }
+
+/** A populated database represents existing user choices, including an intentionally empty active list. */
+internal fun shouldSeedDefaultMangaSources(isDatabaseEmpty: Boolean, sourcesVersion: Int): Boolean =
+	isDatabaseEmpty && sourcesVersion == 0
+
+/** Novels and installed Mihon extensions are on when discovered; built-in manga sources follow the preference. */
+internal fun defaultSourceEnabled(isNovel: Boolean, isMihon: Boolean, allSourcesEnabled: Boolean): Boolean =
+	isNovel || isMihon || allSourcesEnabled

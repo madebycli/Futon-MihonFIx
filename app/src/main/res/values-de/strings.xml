@@ -58,6 +58,9 @@
     <string name="chapters">Kapitel</string>
     <string name="details">Details</string>
     <string name="network_error">Netzwerkfehler</string>
+    <string name="sources_manage_empty">Keine aktiven Quellen. Öffne den Katalog, um Quellen hinzuzufügen.</string>
+    <string name="sources_manage_error">Quellen konnten nicht geladen werden. Bitte erneut versuchen.</string>
+    <string name="sources_manage_open_catalog">Quellenkatalog öffnen</string>
     <string name="error_occurred">Ein Fehler ist aufgetreten</string>
     <string name="history">Verlauf</string>
     <string name="favourites">Favoriten</string>
@@ -656,4 +659,6 @@
     <string name="source_origin_built_in">Integriert</string>
     <string name="source_origin_mihon">Mihon-Erweiterung</string>
     <string name="source_summary_with_origin">%1$s · %2$s</string>
+    <string name="merge_chapter_groups">Kapitelgruppen zusammenführen</string>
+    <string name="merge_chapter_groups_summary">Alle Gruppen eines Mangas in einer Liste anzeigen; wiederholte Kapitel erscheinen einmal. Es wird nichts gelöscht.</string>
 </resources>

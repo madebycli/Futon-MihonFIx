@@ -25,10 +25,30 @@ class ChapterPagesMenuProvider(
 	private val sheet: BaseAdaptiveSheet<*>,
 	private val pager: ViewPager2,
 	private val settings: AppSettings,
+	private val invalidateMenu: () -> Unit,
 ) : OnBackPressedCallback(false), MenuProvider, SearchView.OnQueryTextListener, MenuItem.OnActionExpandListener,
 	Slider.OnChangeListener {
 
 	private var expandedItemRef: WeakReference<MenuItem>? = null
+	private val refreshGate = ExpandedMenuRefreshGate(
+		onLock = { sheet.expandAndLock() },
+		onUnlock = { sheet.unlock() },
+		onRefresh = { pager.post(::refreshMenuWhenReady) },
+	)
+
+	private fun refreshMenuWhenReady() {
+		if (refreshGate.isDisposed) return
+		if (refreshGate.isOpen) refreshGate.requestRefresh() else invalidateMenu()
+	}
+
+	fun requestMenuRefresh() = refreshGate.requestRefresh()
+
+	fun dispose() {
+		if (refreshGate.isOpen) viewModel.performChapterSearch(null)
+		expandedItemRef = null
+		isEnabled = false
+		refreshGate.dispose()
+	}
 
 	override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
 		val tab = getCurrentTab()
@@ -87,12 +107,18 @@ class ChapterPagesMenuProvider(
 	}
 
 	override fun handleOnBackPressed() {
-		expandedItemRef?.get()?.collapseActionView()
+		val item = expandedItemRef?.get()
+		if (item == null || !item.collapseActionView()) {
+			expandedItemRef = null
+			isEnabled = false
+			viewModel.performChapterSearch(null)
+			refreshGate.close()
+		}
 	}
 
 	override fun onMenuItemActionExpand(item: MenuItem): Boolean {
 		expandedItemRef = WeakReference(item)
-		sheet.expandAndLock()
+		refreshGate.open()
 		isEnabled = true
 		return true
 	}
@@ -102,7 +128,7 @@ class ChapterPagesMenuProvider(
 		isEnabled = false
 		(item.actionView as? SearchView)?.setQuery("", false)
 		viewModel.performChapterSearch(null)
-		sheet.unlock()
+		refreshGate.close()
 		return true
 	}
 
