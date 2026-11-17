@@ -12,6 +12,14 @@ class ExtensionUpdatesTest {
     }
 
     @Test
+    fun partialRepositoryFailuresDoNotFinishOrThrottleTheCheck() {
+        assertTrue(canCompleteUpdateCheck(emptyList()))
+        assertTrue(canCompleteUpdateCheck(listOf(null, null)))
+        assertFalse(canCompleteUpdateCheck(listOf(null, "offline")))
+        assertFalse(canCompleteUpdateCheck(listOf("offline")))
+    }
+
+    @Test
     fun successfulChecksAreThrottledButClockRollbackAndFirstRunAreNot() {
         assertTrue(shouldCheckForUpdates(1000L, 0L, 500L))
         assertFalse(shouldCheckForUpdates(1000L, 600L, 500L))

@@ -43,7 +43,7 @@ class ExtensionUpdatesWorker @AssistedInject constructor(
         val installed = loader.getInstalledExtensions(context).associate { it.pkgName to it.versionCode }
         val available = repositories.getAvailableExtensions(ExternalExtensionType.MIHON)
         val repos = repositories.getByType(ExternalExtensionType.MIHON)
-        if (repos.isNotEmpty() && repos.all { it.lastError != null }) {
+        if (!canCompleteUpdateCheck(repos.map { it.lastError })) {
             Result.retry()
         } else {
             val packages = newerInstalledPackages(installed, available.map { it.pkgName to it.versionCode })
@@ -104,3 +104,5 @@ internal fun newerInstalledPackages(installed: Map<String, Long>, available: Lis
 
 internal fun shouldCheckForUpdates(now: Long, last: Long, interval: Long): Boolean =
     last <= 0 || now < last || now - last >= interval
+
+internal fun canCompleteUpdateCheck(repositoryErrors: List<String?>): Boolean = repositoryErrors.none { it != null }
