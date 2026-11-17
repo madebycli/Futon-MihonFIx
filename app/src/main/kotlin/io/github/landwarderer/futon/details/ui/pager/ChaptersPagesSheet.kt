@@ -51,6 +51,7 @@ class ChaptersPagesSheet : BaseAdaptiveSheet<SheetChaptersPagesBinding>(),
 
 	private val viewModel by ChaptersPagesViewModel.ActivityVMLazy(this)
 	private var chapterMenuProvider: ChapterPagesMenuProvider? = null
+	private var actionModeSheetLocked = false
 
 	override fun onCreateViewBinding(inflater: LayoutInflater, container: ViewGroup?): SheetChaptersPagesBinding {
 		return SheetChaptersPagesBinding.inflate(inflater, container, false)
@@ -88,6 +89,10 @@ class ChaptersPagesSheet : BaseAdaptiveSheet<SheetChaptersPagesBinding>(),
 			override fun onDestroy(owner: LifecycleOwner) {
 				menuProvider.dispose()
 				chapterMenuProvider = null
+				if (actionModeSheetLocked) {
+					actionModeSheetLocked = false
+					unlock()
+				}
 			}
 		})
 		onBackPressedDispatcher.addCallback(viewLifecycleOwner, menuProvider)
@@ -101,6 +106,9 @@ class ChaptersPagesSheet : BaseAdaptiveSheet<SheetChaptersPagesBinding>(),
 		viewModel.showMergeRepeatedChapters.observe(viewLifecycleOwner, menuInvalidator)
 
 		actionModeDelegate?.addListener(this, viewLifecycleOwner)
+		if (actionModeDelegate?.isActionModeStarted == true) {
+			view?.post(::lockForActionModeIfActive)
+		}
 		addSheetCallback(this, viewLifecycleOwner)
 
 		viewModel.newChaptersCount.observe(viewLifecycleOwner, ::onNewChaptersChanged)
@@ -129,11 +137,21 @@ class ChaptersPagesSheet : BaseAdaptiveSheet<SheetChaptersPagesBinding>(),
 
 	override fun onActionModeStarted(mode: ActionMode) {
 		viewBinding?.toolbar?.menuView?.isVisible = false
-		view?.post(::expandAndLock)
+		view?.post(::lockForActionModeIfActive)
+	}
+
+	private fun lockForActionModeIfActive() {
+		if (!actionModeSheetLocked && actionModeDelegate?.isActionModeStarted == true && viewBinding != null) {
+			actionModeSheetLocked = true
+			expandAndLock()
+		}
 	}
 
 	override fun onActionModeFinished(mode: ActionMode) {
-		unlock()
+		if (actionModeSheetLocked) {
+			actionModeSheetLocked = false
+			unlock()
+		}
 		val state = behavior?.state ?: STATE_EXPANDED
 		viewBinding?.toolbar?.menuView?.isVisible = state != STATE_COLLAPSED
 	}

@@ -44,6 +44,7 @@ class ChapterPagesMenuProvider(
 	fun requestMenuRefresh() = refreshGate.requestRefresh()
 
 	fun dispose() {
+		if (refreshGate.isOpen) viewModel.performChapterSearch(null)
 		expandedItemRef = null
 		isEnabled = false
 		refreshGate.dispose()
