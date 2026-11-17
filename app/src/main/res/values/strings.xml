@@ -1140,4 +1140,8 @@
     <string name="exclude_nsfw_from_shortcuts_summary">Adult manga will not appear in the shortcut menu shown when you long press the app icon</string>
     <string name="update_removed">Update removed</string>
     <string name="recently_read_manga">Recently read manga</string>
+    <string name="extension_updates_channel">Extension updates</string>
+    <string name="extension_updates_available">Extension updates available</string>
+    <string name="extension_updates_notifications">Extension update notifications</string>
+    <string name="extension_updates_onboarding">Clio can notify you when updates are available for your installed extensions. Updates are never installed automatically. You can change this later in the extension manager.</string>
 </resources>

@@ -1,6 +1,11 @@
 package io.github.landwarderer.futon.settings.sources.extension
 
+import android.Manifest
+import android.os.Build
 import android.content.Intent
+import androidx.activity.result.contract.ActivityResultContracts
+import io.github.landwarderer.futon.core.prefs.AppSettings
+import javax.inject.Inject
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuInflater
@@ -25,6 +30,8 @@ import io.github.landwarderer.futon.mihon.extensions.repo.ExternalExtensionRepo
 @AndroidEntryPoint
 class ExtensionDownloaderActivity : BaseActivity<ActivityExtensionDownloaderBinding>() {
 
+    @Inject lateinit var settings: AppSettings
+    private val notificationPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) { }
     private val viewModel by viewModels<ExtensionDownloaderViewModel>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -109,6 +116,7 @@ class ExtensionDownloaderActivity : BaseActivity<ActivityExtensionDownloaderBind
 
         override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
             menuInflater.inflate(R.menu.opt_extensions, menu)
+            menu.findItem(R.id.action_extension_notifications)?.isChecked = settings.isExtensionUpdateNotificationsEnabled
             val searchMenuItem = menu.findItem(R.id.action_search)
             searchMenuItem.setOnActionExpandListener(this)
             val searchView = searchMenuItem.actionView as SearchView
@@ -117,7 +125,16 @@ class ExtensionDownloaderActivity : BaseActivity<ActivityExtensionDownloaderBind
             searchView.queryHint = searchMenuItem.title
         }
 
-        override fun onMenuItemSelected(menuItem: MenuItem): Boolean = false
+        override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
+            if (menuItem.itemId != R.id.action_extension_notifications) return false
+            val enabled = !menuItem.isChecked
+            settings.isExtensionUpdateNotificationsEnabled = enabled
+            menuItem.isChecked = enabled
+            if (enabled && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+            }
+            return true
+        }
 
         override fun onMenuItemActionExpand(item: MenuItem): Boolean {
             return true

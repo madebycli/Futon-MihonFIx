@@ -18,6 +18,7 @@ import io.github.landwarderer.futon.local.data.LocalStorageChanges
 import io.github.landwarderer.futon.local.data.index.LocalMangaIndex
 import io.github.landwarderer.futon.local.domain.model.LocalManga
 import io.github.landwarderer.futon.mihon.MihonExtensionManager
+import io.github.landwarderer.futon.mihon.extensions.update.ExtensionUpdatesWorker
 import io.github.landwarderer.futon.settings.work.WorkScheduleManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -86,6 +87,7 @@ open class BaseApp : Application(), Configuration.Provider {
 			localStorageChanges.collect(localMangaIndexProvider.get())
 		}
 		workScheduleManager.init()
+		processLifecycleScope.launch(Dispatchers.IO) { ExtensionUpdatesWorker.schedule(this@BaseApp, settings) }
 	}
 
 	override fun attachBaseContext(base: Context) {
