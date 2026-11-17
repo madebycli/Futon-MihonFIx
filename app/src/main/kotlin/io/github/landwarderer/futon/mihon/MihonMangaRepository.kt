@@ -10,6 +10,7 @@ import eu.kanade.tachiyomi.source.online.HttpSource
 import io.github.landwarderer.futon.core.cache.MemoryContentCache
 import io.github.landwarderer.futon.core.parser.CachingMangaRepository
 import io.github.landwarderer.futon.mihon.compat.MihonRequestContext
+import io.github.landwarderer.futon.mihon.model.MihonModelRules
 import io.github.landwarderer.futon.mihon.model.snapshot
 import io.github.landwarderer.futon.mihon.state.MihonChapterSnapshotStore
 import io.github.landwarderer.futon.mihon.state.MihonSnapshotPersistence
@@ -175,6 +176,14 @@ class MihonMangaRepository(
                 }
             }
             .sortedBy { it.number }
+            .let { list ->
+                // A scanlator is a credit: it is a branch only when groups compete for one chapter number.
+                if (MihonModelRules.scanlatorBranches(list, { it.scanlator }, { it.number })) {
+                    list
+                } else {
+                    list.map { if (it.branch == null) it else it.copy(branch = null) }
+                }
+            }
 
         details.applyDetailFallbacks(sContent)
         rememberMihonManga(details)
@@ -197,9 +206,9 @@ class MihonMangaRepository(
             }
         }
 
-        pages.mapIndexed { index, page ->
+        pages.map { page ->
             if (mihonSource !is HttpSource) {
-                return@mapIndexed page.asContentPage(source, sChapter).toMangaPage()
+                return@map page.asContentPage(source, sChapter).toMangaPage()
             }
 
             val headers = try {
@@ -220,6 +229,9 @@ class MihonMangaRepository(
             }
 
             page.asContentPage(source, sChapter, headers).let { contentPage ->
+                // The extension's own page index travels in the url: Comix and others resolve pages that share one
+                // chapter url by Page.index (Kototoro 038b8826). The page id is a hashed cache id, not an index.
+                val index = page.index
                 val updatedPage = if (page.imageUrl.isNullOrBlank() && page.url.isNotBlank()) {
                     contentPage.copy(
                         url = "mihon://resolve?page_url=${java.net.URLEncoder.encode(page.url, "UTF-8")}&index=$index",
@@ -250,7 +262,7 @@ class MihonMangaRepository(
                 val httpSource = mihonSource as? HttpSource ?: return@withContext pageUrl
                 return@withContext rethrowMihonWrappedExceptions {
                     withMihonSourceContext {
-                        httpSource.getImageUrl(Page(0, pageUrl))
+                        httpSource.getImageUrl(page.toMihonPage(imageUrl = null))
                     }
                 }
             }
@@ -458,11 +470,14 @@ class MihonMangaRepository(
         snapshot.memo = readMihonField(JsonObject(emptyMap())) { memo }
     }
 
-    private fun MangaPage.toMihonPage(imageUrl: String): Page {
+    private fun MangaPage.toMihonPage(imageUrl: String?): Page {
+        var pageIndex = id.toInt()
         var originalPageUrl = url
         var originalImageUrl = imageUrl
         if (url.startsWith("mihon://")) {
             val uri = android.net.Uri.parse(url)
+            // Wrapped pages keep the extension's index separately from the chapter-scoped cache id.
+            pageIndex = wrappedMihonPageIndex(url) ?: 0
             uri.getQueryParameter("page_url")?.takeIf(String::isNotBlank)?.let {
                 originalPageUrl = it
             }
@@ -473,7 +488,7 @@ class MihonMangaRepository(
             }
         }
         return Page(
-            index = id.toInt(),
+            index = pageIndex,
             url = originalPageUrl,
             imageUrl = originalImageUrl,
         )
@@ -500,4 +515,10 @@ class MihonMangaRepository(
             throw unwrapMihonFailure(e)
         }
     }
+}
+
+/** The extension's own page index carried by a wrapped `mihon://` page url, or null for any other url. */
+internal fun wrappedMihonPageIndex(url: String): Int? {
+    if (!url.startsWith("mihon://")) return null
+    return Regex("""[?&]index=(-?\d+)""").find(url)?.groupValues?.get(1)?.toIntOrNull()
 }

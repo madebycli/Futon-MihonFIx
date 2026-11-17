@@ -1,5 +1,6 @@
-// Ported and adapted from Kototoro at f4f37a5b7290da05c10b9325912f2a37ebeff0f9.
-// Upstream project: Kototoro-app/Kototoro, Apache-2.0.
+// Ported and adapted from Kototoro (Kototoro-app/Kototoro, Apache-2.0) at
+// f32242d649471627d8906a523511bc69217897eb: app/.../core/network/webview/WebViewClearanceSolver.kt
+// (earlier adaptation: f4f37a5b7290da05c10b9325912f2a37ebeff0f9).
 package io.github.landwarderer.futon.core.network.webview
 
 import android.content.Context
@@ -10,38 +11,50 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.core.content.ContextCompat
 import androidx.core.util.Predicate
+import io.github.landwarderer.futon.core.network.cloudflare.CLEARANCE_COOKIE_NAMES
+import io.github.landwarderer.futon.core.network.cloudflare.CLEARANCE_SOLVE_TIMEOUT_MS
+import io.github.landwarderer.futon.core.network.cloudflare.ClearanceSolveDecision
+import io.github.landwarderer.futon.core.network.cloudflare.ClearanceSolveTracker
+import io.github.landwarderer.futon.core.network.cloudflare.ClearanceSolver
+import io.github.landwarderer.futon.core.network.cloudflare.safeForBrowser
 import io.github.landwarderer.futon.core.network.cookies.MutableCookieJar
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeoutOrNull
 import okhttp3.CookieJar
-import okhttp3.Headers
 import okhttp3.Request
 import org.koitharu.kotatsu.parsers.network.CloudFlareHelper
-import java.util.Locale
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.coroutines.resume
 
 /**
- * Fresh off-screen Cloudflare solver used by the Mihon extension network stack.
+ * Fresh off-screen Cloudflare solver used by the Mihon extension network stack (Mihon's own approach).
  *
- * The request URL and safe request headers are loaded in a new WebView using the same user agent
- * as OkHttp. The WebView shares Futon's Android cookie store, so a newly issued cf_clearance can
- * be reused when the extension retries its original request. No Activity is opened by this class.
+ * The request URL and its browser-safe headers are loaded in a new WebView that uses the same user agent as
+ * OkHttp and shares Futon's Android cookie store. Cloudflare runs its challenge in that WebView; once a new
+ * `cf_clearance` is written the caller retries the original request. No Activity is opened by this class.
+ *
+ * [solve] is cancellable: when the last caller waiting for a host goes away, the coroutine is cancelled, which
+ * stops and destroys the WebView. The WebView is created, stopped and destroyed on the main thread.
  */
 class WebViewClearanceSolver(
     context: Context,
     private val cookieJar: CookieJar,
-) {
+) : ClearanceSolver {
     private val appContext = context.applicationContext
     private val executor = ContextCompat.getMainExecutor(appContext)
 
-    suspend fun solve(request: Request): Boolean {
+    /**
+     * Solves the challenge of [request] in an off-screen WebView. Returns true only if a `cf_clearance` that
+     * differs from the one before the solve is stored. The old clearance is removed first, so a new cookie is the
+     * success signal. A timeout ([CLEARANCE_SOLVE_TIMEOUT_MS]) or cancellation returns false and destroys the WebView.
+     */
+    override suspend fun solve(request: Request): Boolean {
         val url = request.url.toString()
         val oldClearance = CloudFlareHelper.getClearanceCookie(cookieJar, url)
         removeClearance(request)
-        val headers = parseHeaders(request.headers)
+        val headers = request.headers.safeForBrowser()
 
-        return withTimeoutOrNull(WAIT_TIMEOUT_MS) {
+        return withTimeoutOrNull(CLEARANCE_SOLVE_TIMEOUT_MS) {
             var session: SolveSession? = null
             try {
                 suspendCancellableCoroutine { continuation ->
@@ -61,7 +74,7 @@ class WebViewClearanceSolver(
     private fun removeClearance(request: Request) {
         (cookieJar as? MutableCookieJar)?.removeCookies(
             request.url,
-            Predicate { it.name in CLOUDFLARE_COOKIE_NAMES },
+            Predicate { it.name in CLEARANCE_COOKIE_NAMES },
         )
     }
 
@@ -69,19 +82,14 @@ class WebViewClearanceSolver(
         settings.javaScriptEnabled = true
         settings.domStorageEnabled = true
         settings.cacheMode = WebSettings.LOAD_NO_CACHE
+        // Same user agent as the request: Cloudflare binds its cookie to it.
         request.header("User-Agent")?.let { settings.userAgentString = it }
     }
 
-    private fun parseHeaders(headers: Headers): Map<String, String> {
-        val result = LinkedHashMap<String, String>()
-        for (i in 0 until headers.size) {
-            val name = headers.name(i)
-            val value = headers.value(i)
-            if (isRequestHeaderSafe(name, value)) result.putIfAbsent(name, value)
-        }
-        return result
-    }
-
+    /**
+     * Owns one off-screen WebView solve: create and load on the main thread, settle exactly once, destroy at most
+     * once. [destroy] is safe to call from any thread, before or after the WebView was created.
+     */
     private inner class SolveSession(
         private val url: String,
         private val oldClearance: String?,
@@ -92,34 +100,32 @@ class WebViewClearanceSolver(
         @Volatile
         private var webView: WebView? = null
 
-        @Volatile
-        private var challengeFound = false
+        /** Mihon's solve rules, shared with the other Cloudflare solvers. */
+        private val tracker = ClearanceSolveTracker(url)
 
         private val settled = AtomicBoolean(false)
         private val destroyed = AtomicBoolean(false)
 
         fun start() {
             executor.execute {
+                // Cancelled before the WebView was created.
                 if (destroyed.get()) return@execute
                 val created = try {
                     createWebView(request)
                 } catch (e: Exception) {
-                    android.util.Log.w(TAG, "createWebView failed: $url", e)
+                    android.util.Log.w(TAG, "createWebView failed host=${request.url.host} type=${e.javaClass.simpleName}")
                     settle(false)
                     return@execute
                 }
                 webView = created
                 if (destroyed.get()) {
+                    // destroy() raced with the creation.
                     destroyWebView(created)
                     return@execute
                 }
                 created.webViewClient = object : WebViewClient() {
                     override fun onPageFinished(view: WebView, finishedUrl: String) {
-                        if (hasNewClearance()) {
-                            settle(true)
-                            return
-                        }
-                        if (finishedUrl == url && !challengeFound) settle(false)
+                        decide(tracker.onPageFinished(finishedUrl, hasNewClearance()))
                     }
 
                     override fun onReceivedHttpError(
@@ -127,11 +133,9 @@ class WebViewClearanceSolver(
                         request: WebResourceRequest?,
                         errorResponse: WebResourceResponse?,
                     ) {
-                        if (request?.isForMainFrame != true) return
-                        if (errorResponse?.statusCode in ERROR_CODES) {
-                            challengeFound = true
-                        } else {
-                            settle(false)
+                        if (request?.isForMainFrame == true) {
+                            // 403/503 is the challenge page: wait for its JS. Any other error cannot be solved here.
+                            decide(tracker.onMainFrameHttpError(errorResponse?.statusCode ?: 0))
                         }
                     }
                 }
@@ -149,6 +153,14 @@ class WebViewClearanceSolver(
             executor.execute { webView?.let(::destroyWebView) }
         }
 
+        private fun decide(decision: ClearanceSolveDecision) {
+            when (decision) {
+                ClearanceSolveDecision.SOLVED -> settle(true)
+                ClearanceSolveDecision.FAILED -> settle(false)
+                ClearanceSolveDecision.WAIT -> Unit
+            }
+        }
+
         private fun settle(result: Boolean) {
             if (settled.compareAndSet(false, true)) onSettled(result)
         }
@@ -162,22 +174,7 @@ class WebViewClearanceSolver(
         }
     }
 
-    companion object {
-        internal const val WAIT_TIMEOUT_MS = 30_000L
-        private const val TAG = "WebViewClearanceSolver"
-        private val ERROR_CODES = setOf(403, 503)
-        private val CLOUDFLARE_COOKIE_NAMES = setOf("cf_clearance")
-        private val UNSAFE_HEADER_NAMES = setOf(
-            "content-length", "host", "trailer", "te", "upgrade",
-            "cookie2", "keep-alive", "transfer-encoding", "set-cookie",
-        )
-
-        internal fun isRequestHeaderSafe(rawName: String, rawValue: String): Boolean {
-            val name = rawName.lowercase(Locale.ENGLISH)
-            val value = rawValue.lowercase(Locale.ENGLISH)
-            if (name in UNSAFE_HEADER_NAMES || name.startsWith("proxy-")) return false
-            if (name == "connection" && value == "upgrade") return false
-            return true
-        }
+    private companion object {
+        const val TAG = "WebViewClearanceSolver"
     }
 }

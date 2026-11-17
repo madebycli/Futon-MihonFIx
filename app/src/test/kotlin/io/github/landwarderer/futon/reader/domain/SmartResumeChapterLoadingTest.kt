@@ -2,6 +2,7 @@ package io.github.landwarderer.futon.reader.domain
 
 import android.content.Context
 import io.github.landwarderer.futon.core.exceptions.resolve.CaptchaAutoResolveCoordinator
+import io.github.landwarderer.futon.core.network.webview.CloudflareSolveCoordinator
 import io.github.landwarderer.futon.core.ui.util.ForegroundActivityHolder
 import io.github.landwarderer.futon.core.model.TestMangaSource
 import io.github.landwarderer.futon.core.parser.MangaRepository
@@ -62,7 +63,9 @@ class SmartResumeChapterLoadingTest {
         `when`(details.allChapters).thenReturn(chapters)
         val loader = ChaptersLoader(
             factory,
-            CaptchaAutoResolveCoordinator(mock(Context::class.java), ForegroundActivityHolder()),
+            CaptchaAutoResolveCoordinator(
+                mock(Context::class.java), ForegroundActivityHolder(), mock(CloudflareSolveCoordinator::class.java),
+            ),
         )
         loader.init(details)
         loader.loadSingleChapter(1)
