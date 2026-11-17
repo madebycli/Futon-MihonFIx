@@ -134,7 +134,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: Futon-9.9.0-Regression-Reports
+          name: Futon-${{ steps.version.outputs.version }}-Regression-Reports
           path: app/build/test-results/testDebugUnitTest/*.xml
           if-no-files-found: warn
           retention-days: 14
@@ -198,9 +198,9 @@ jobs:
           VERSION_CODE: ${{ steps.version.outputs.version_code }}
         run: |
           {
-            echo "Futon MihonFix $VERSION ($VERSION_CODE)"
+            echo "Clio (Futon MihonFix) $VERSION ($VERSION_CODE)"
             echo "Source commit: $GITHUB_SHA"
-            echo "Upstream: AppFuton/Futon 9162c49a380029365cc53283daa766c1f78b6e5d"
+            echo "Upstream: AppFuton/Futon 127c51d6477e96ed313af2d7008d12b6d060f367"
             echo "Signing: repository-release-key"
             echo "Certificate SHA256: 12fe17245decb84c98985ddcc08884b874d10a78e4fb747a6ed3e2a42d77b625"
             echo "Build: optimized release (R8 minify + resource shrinking)"
@@ -214,7 +214,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: Futon-9.9.0-APKs-And-Install-Evidence
+          name: Futon-${{ steps.version.outputs.version }}-APKs-And-Install-Evidence
           path: release-artifact/*
           if-no-files-found: warn
           retention-days: 14
@@ -224,7 +224,7 @@ jobs:
         with:
           tag_name: ${{ steps.version.outputs.release_tag }}
           target_commitish: ${{ github.sha }}
-          name: Futon MihonFix ${{ steps.version.outputs.version }}
+          name: Clio ${{ steps.version.outputs.version }}
           body_path: docs/releases/${{ steps.version.outputs.version }}.md
           draft: false
           prerelease: false
