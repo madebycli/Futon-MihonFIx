@@ -80,23 +80,11 @@ class DetailsInteractor @Inject constructor(
 
 	suspend fun updateLocal(subject: MangaDetails?, localManga: LocalManga): MangaDetails? {
 		subject ?: return null
-		return if (subject.id == localManga.manga.id) {
-			if (subject.isLocal) {
-				subject.copy(
-					manga = localManga.manga,
-				)
-			} else {
-				subject.copy(
-					localManga = runCatchingCancellable {
-						localManga.copy(
-							manga = localMangaRepository.getDetails(localManga.manga),
-						)
-					}.getOrNull() ?: subject.local,
-				)
-			}
-		} else {
-			subject
-		}
+		if (subject.id != localManga.manga.id) return subject
+		val updated = if (subject.isLocal) localManga else runCatchingCancellable {
+			localManga.copy(manga = localMangaRepository.getDetails(localManga.manga))
+		}.getOrNull() ?: subject.local ?: localManga
+		return subject.withLocalManga(updated)
 	}
 
 	suspend fun findRemote(seed: Manga) = localMangaRepository.getRemoteManga(seed)

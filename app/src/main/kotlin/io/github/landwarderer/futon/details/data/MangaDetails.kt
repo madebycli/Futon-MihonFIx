@@ -25,6 +25,8 @@ data class MangaDetails(
     val mergeRepeatedChapters: Boolean = DEFAULT_MERGE_REPEATED_CHAPTERS,
     val identityChaptersSource: List<MangaChapter>? = null,
     val downloadedChaptersSource: List<MangaChapter>? = null,
+    val remoteChaptersSource: List<MangaChapter>? = null,
+    val projectedBranch: String? = null,
 ) {
 
     constructor(manga: Manga) : this(
@@ -133,6 +135,8 @@ data class MangaDetails(
             manga = manga.copy(chapters = listed),
             identityChaptersSource = identityChapters,
             downloadedChaptersSource = storedChapters,
+            remoteChaptersSource = remoteChaptersSource ?: manga.chapters.orEmpty(),
+            projectedBranch = branch,
             localManga = localManga?.run {
                 copy(manga = manga.copy(chapters = manga.chapters?.filter { it.id in listedIds }))
             },
@@ -145,6 +149,21 @@ data class MangaDetails(
             copy(manga = manga.copy(chapters = storedChapters).filterChapters(branch))
         },
     )
+
+
+    /** Rebuild cached projections after a completed download or deletion, using original remote URLs. */
+    fun withLocalManga(updated: LocalManga): MangaDetails {
+        val wasProjected = remoteChaptersSource != null
+        val raw = copy(
+            manga = if (isLocal) updated.manga else manga.copy(chapters = remoteChaptersSource ?: manga.chapters),
+            localManga = if (isLocal) null else updated,
+            identityChaptersSource = null,
+            downloadedChaptersSource = null,
+            remoteChaptersSource = null,
+            projectedBranch = null,
+        )
+        return if (wasProjected) raw.filterChapters(projectedBranch) else raw
+    }
 
     private fun mergeChapters(): List<MangaChapter> {
         val chapters = manga.chapters

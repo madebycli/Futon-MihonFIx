@@ -356,4 +356,18 @@ class ChapterGroupsTest {
         assertEquals(-1, separate.currentChapter)
         assertEquals(0, HistoryInfo(details, null, history, false, null).currentChapter)
     }
+
+    @Test
+    fun readerDownloadUpdatesAndDeletionsInvalidateStoredIdentitySnapshots() {
+        val old = chapter(1, 5f, scanlator = "A", uploadDate = 100L)
+        val fresh = chapter(2, 5f, scanlator = "B", uploadDate = 200L)
+        val initial = MangaDetails(manga(listOf(old, fresh))).filterChapters(null)
+        val stored = old.copy(source = LocalMangaSource, url = "file:///stored-old")
+        val local = LocalManga(manga(listOf(stored), LocalMangaSource), File("/saved.cbz"))
+        val downloaded = initial.withLocalManga(local)
+        assertEquals(old.id, downloaded.mapChapters(old.id, 0, null, emptyList(), false, true).single().chapter.id)
+        val removed = downloaded.withLocalManga(local.copy(manga = local.manga.copy(chapters = emptyList())))
+        assertTrue(removed.mapChapters(old.id, 0, null, emptyList(), false, true).isEmpty())
+        assertEquals(old.url, removed.identityChapters.first { it.id == old.id }.url)
+    }
 }
