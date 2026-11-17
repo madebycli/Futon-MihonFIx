@@ -40,4 +40,13 @@
 		tools:drawableStart="@drawable/ic_pin_small"
 		tools:text="@tools:sample/lorem[0]" />
 
+	<TextView
+		android:id="@+id/textView_origin"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:gravity="center_horizontal"
+		android:textAlignment="center"
+		android:textAppearance="?attr/textAppearanceCaption"
+		tools:text="Mihon extension" />
+
 </LinearLayout>

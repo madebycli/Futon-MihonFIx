@@ -6,8 +6,9 @@ import androidx.core.text.bold
 import androidx.core.text.buildSpannedString
 import com.hannesdorfmann.adapterdelegates4.dsl.adapterDelegateViewBinding
 import io.github.landwarderer.futon.R
-import io.github.landwarderer.futon.core.model.getSummary
+import io.github.landwarderer.futon.core.model.getSummaryWithOrigin
 import io.github.landwarderer.futon.core.model.getTitle
+import io.github.landwarderer.futon.core.model.getOriginLabel
 import io.github.landwarderer.futon.core.ui.BaseListAdapter
 import io.github.landwarderer.futon.core.ui.list.AdapterDelegateClickListenerAdapter
 import io.github.landwarderer.futon.core.ui.list.OnListItemClickListener
@@ -111,7 +112,7 @@ fun exploreSourceListItemAD(
 	bind {
 		binding.textViewTitle.text = item.source.getTitle(context)
 		binding.textViewTitle.drawableStart = if (item.source.isPinned) iconPinned else null
-		binding.textViewSubtitle.text = item.source.getSummary(context)
+		binding.textViewSubtitle.text = item.source.getSummaryWithOrigin(context)
 		binding.imageViewIcon.setImageAsync(item.source)
 	}
 }
@@ -134,7 +135,7 @@ fun exploreSourceGridItemAD(
 
 	bind {
 		val title = item.source.getTitle(context)
-		val summary = item.source.getSummary(context)
+		val summary = item.source.getSummaryWithOrigin(context)
 		itemView.setTooltipCompat(
 			buildSpannedString {
 				bold {
@@ -147,6 +148,7 @@ fun exploreSourceGridItemAD(
 			},
 		)
 		binding.textViewTitle.text = title
+		binding.textViewOrigin.textAndVisible = item.source.getOriginLabel(context)
 		binding.textViewTitle.drawableStart = if (item.source.isPinned) iconPinned else null
 		binding.imageViewIcon.setImageAsync(item.source)
 	}

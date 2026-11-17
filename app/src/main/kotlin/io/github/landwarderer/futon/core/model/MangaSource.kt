@@ -112,6 +112,32 @@ fun MangaSource.getLocale(): Locale? = when (val source = unwrap()) {
 	else -> null
 }
 
+enum class SourceOrigin { BUILT_IN, MIHON_EXTENSION }
+
+/** Only classify source types whose provenance is known, including persisted Mihon identities. */
+val MangaSource.sourceOrigin: SourceOrigin?
+    get() = when (val source = unwrap()) {
+        is MangaParserSource, is io.github.landwarderer.futon.novel.data.source.NovelParserSource -> SourceOrigin.BUILT_IN
+        is MihonMangaSource -> SourceOrigin.MIHON_EXTENSION
+        is AnonymousMangaSource -> if (source.name.startsWith("MIHON_") || source.name.startsWith("mihon:")) {
+            SourceOrigin.MIHON_EXTENSION
+        } else null
+        else -> null
+    }
+
+fun MangaSource.getOriginLabel(context: Context): String? = when (sourceOrigin) {
+    SourceOrigin.BUILT_IN -> context.getString(R.string.source_origin_built_in)
+    SourceOrigin.MIHON_EXTENSION -> context.getString(R.string.source_origin_mihon)
+    null -> null
+}
+
+/** Row subtitle retains type/language while exposing a localized, screen-reader-visible origin. */
+fun MangaSource.getSummaryWithOrigin(context: Context): String? {
+    val summary = getSummary(context)
+    val origin = getOriginLabel(context) ?: return summary
+    return if (summary.isNullOrBlank()) origin else context.getString(R.string.source_summary_with_origin, summary, origin)
+}
+
 fun MangaSource.getSummary(context: Context): String? = when (val source = unwrap()) {
 	is MangaParserSource -> {
 		val type = context.getString(source.contentType.titleResId)

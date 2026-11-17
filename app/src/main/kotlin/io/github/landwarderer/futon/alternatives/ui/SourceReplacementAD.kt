@@ -4,6 +4,7 @@ import androidx.core.view.isVisible
 import com.hannesdorfmann.adapterdelegates4.dsl.adapterDelegateViewBinding
 import io.github.landwarderer.futon.R
 import io.github.landwarderer.futon.core.model.getTitle
+import io.github.landwarderer.futon.core.model.getOriginLabel
 import io.github.landwarderer.futon.databinding.ItemSourceReplacementBinding
 import io.github.landwarderer.futon.list.ui.model.ListModel
 import org.koitharu.kotatsu.parsers.model.MangaSource
@@ -22,11 +23,13 @@ fun sourceReplacementAD(
 		binding.textViewSubtitle.text = if (source == null) {
 			context.getString(R.string.handle_remaining_manually_summary)
 		} else {
-			context.getString(
+			val summary = context.getString(
 				R.string.source_match_rate_summary,
 				item.matched,
 				item.total,
 			)
+			source.getOriginLabel(context)?.let { context.getString(R.string.source_summary_with_origin, summary, it) }
+				?: summary
 		}
 		binding.textViewPercent.isVisible = source != null
 		binding.textViewPercent.text = context.getString(R.string.percent_format, item.matchPercent)
