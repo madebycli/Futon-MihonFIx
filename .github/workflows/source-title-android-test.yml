@@ -1,0 +1,59 @@
+name: Source title update Android regression
+on:
+  pull_request:
+    branches: [devel]
+permissions:
+  contents: read
+jobs:
+  room-android-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: android-actions/setup-android@v4
+        with:
+          packages: platform-tools
+      - name: Prepare isolated build mirror
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/source-room-test"
+          tar --exclude='./.git' --exclude='./.gradle' --exclude='*/build' --exclude='./gradle/gradle-daemon-jvm.properties' -cf - . | tar -xf - -C "$RUNNER_TEMP/source-room-test"
+          test ! -e "$RUNNER_TEMP/source-room-test/gradle/gradle-daemon-jvm.properties"
+      - name: Assemble Android test APKs
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/source-room-test"
+          ./gradlew -Dorg.gradle.java.home="$JAVA_HOME" assembleDebug assembleDebugAndroidTest --stacktrace --no-configuration-cache
+          ./gradlew -Dorg.gradle.java.home="$JAVA_HOME" --stop
+      - name: Enable emulator acceleration
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Run Room title-update regression on Android 16
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 36
+          arch: x86_64
+          target: google_apis
+          profile: pixel_7_pro
+          disable-animations: true
+          script: |
+            cd "$RUNNER_TEMP/source-room-test"
+            ./gradlew -Dorg.gradle.java.home="$JAVA_HOME" connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=io.github.landwarderer.futon.core.db.MangaSourcesTitleUpdateTest --stacktrace --no-configuration-cache
+      - name: Upload Android test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: source-title-android-test-results
+          path: ${{ runner.temp }}/source-room-test/app/build/outputs/androidTest-results/connected/**
+          if-no-files-found: warn
+          retention-days: 14
