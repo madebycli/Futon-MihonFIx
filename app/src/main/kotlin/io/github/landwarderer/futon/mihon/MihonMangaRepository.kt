@@ -10,6 +10,7 @@ import eu.kanade.tachiyomi.source.online.HttpSource
 import io.github.landwarderer.futon.core.cache.MemoryContentCache
 import io.github.landwarderer.futon.core.parser.CachingMangaRepository
 import io.github.landwarderer.futon.mihon.compat.MihonRequestContext
+import io.github.landwarderer.futon.mihon.model.MihonModelRules
 import io.github.landwarderer.futon.mihon.model.snapshot
 import io.github.landwarderer.futon.mihon.state.MihonChapterSnapshotStore
 import io.github.landwarderer.futon.mihon.state.MihonSnapshotPersistence
@@ -175,6 +176,14 @@ class MihonMangaRepository(
                 }
             }
             .sortedBy { it.number }
+            .let { list ->
+                // A scanlator is a credit: it is a branch only when groups compete for one chapter number.
+                if (MihonModelRules.scanlatorBranches(list, { it.scanlator }, { it.number })) {
+                    list
+                } else {
+                    list.map { if (it.branch == null) it else it.copy(branch = null) }
+                }
+            }
 
         details.applyDetailFallbacks(sContent)
         rememberMihonManga(details)
