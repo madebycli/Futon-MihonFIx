@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="docs/branding/clio_icon_512.png" width="128" alt="Clio logo">
+
 # Clio
 
 **Clio is a free and open-source manga and light novel reader for Android with built-in online content sources.**
