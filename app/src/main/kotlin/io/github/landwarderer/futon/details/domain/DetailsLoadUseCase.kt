@@ -1,11 +1,6 @@
 package io.github.landwarderer.futon.details.domain
 
 import android.text.Html
-import android.text.SpannableString
-import android.text.Spanned
-import android.text.style.ForegroundColorSpan
-import androidx.core.text.getSpans
-import androidx.core.text.parseAsHtml
 import coil3.request.CachePolicy
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -23,7 +18,6 @@ import io.github.landwarderer.futon.core.parser.CachingMangaRepository
 import io.github.landwarderer.futon.core.parser.MangaDataRepository
 import io.github.landwarderer.futon.core.parser.MangaRepository
 import io.github.landwarderer.futon.core.ui.model.MangaOverride
-import io.github.landwarderer.futon.core.util.ext.sanitize
 import io.github.landwarderer.futon.details.data.MangaDetails
 import io.github.landwarderer.futon.explore.domain.RecoverMangaUseCase
 import io.github.landwarderer.futon.local.data.LocalMangaRepository
@@ -166,22 +160,8 @@ class DetailsLoadUseCase @Inject constructor(
 		}
 	}
 
-	private suspend fun String.parseAsHtml(withImages: Boolean): CharSequence? = if (withImages) {
+	private suspend fun String.parseAsHtml(withImages: Boolean): CharSequence? =
 		runInterruptible(Dispatchers.IO) {
-			parseAsHtml(imageGetter = imageGetter)
-		}.filterSpans()
-	} else {
-		runInterruptible(Dispatchers.IO) {
-			parseAsHtml()
-		}.filterSpans().sanitize()
-	}.trim().nullIfEmpty()
-
-	private fun Spanned.filterSpans(): Spanned {
-		val spannable = SpannableString.valueOf(this)
-		val spans = spannable.getSpans<ForegroundColorSpan>()
-		for (span in spans) {
-			spannable.removeSpan(span)
-		}
-		return spannable
-	}
+			renderDescription(this, if (withImages) imageGetter else null)
+		}.trim().nullIfEmpty()
 }
