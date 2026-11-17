@@ -14,9 +14,9 @@
     <string name="smart_resume_percentage_error">Enter a whole number from 1 to 100.</string>
     <string name="smart_resume_pages_error">Enter a whole number from 0 to 2147483647.</string>
     <string name="smart_resume_wait">Wait for chapter updates</string>
-    <string name="smart_resume_wait_summary">Wait for Futon to check for chapter updates before choosing where to continue.</string>
+    <string name="smart_resume_wait_summary">Wait for Clio to check for chapter updates before choosing where to continue.</string>
     <string name="smart_resume_wait_help_title">About waiting for chapter updates</string>
-    <string name="smart_resume_wait_help">Off: Resume using the chapter list Futon already has. If more chapters appear afterward, your reading position won’t change.\n\nOn: Wait for Futon’s usual chapter update before resuming. This may take longer. Futon may reuse previously downloaded chapter information instead of fetching a fresh list. If the update fails, resume at your saved position.</string>
+    <string name="smart_resume_wait_help">Off: Resume using the chapter list Clio already has. If more chapters appear afterward, your reading position won’t change.\n\nOn: Wait for Futon’s usual chapter update before resuming. This may take longer. Clio may reuse previously downloaded chapter information instead of fetching a fresh list. If the update fails, resume at your saved position.</string>
     <string name="smart_resume_percentage_help">Count pages reached, including the page you’re on. At 90%, page 14 of 15 qualifies; page 13 does not. This does not measure how far you’ve scrolled within a long image.</string>
     <string name="smart_resume_pages_help">Choose how many pages may remain after the page you’re on. Set this to 0 to require reaching the final page. This does not measure how far you’ve scrolled within a long image.</string>
     <string-array name="smart_resume_modes">

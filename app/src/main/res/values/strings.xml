@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <string name="app_name" translatable="false">Futon</string>
+    <string name="app_name" translatable="false">Clio</string>
     <string name="local_storage">Local storage</string>
     <string name="favourites">Favorites</string>
     <string name="history">History</string>
@@ -133,12 +133,12 @@
     <string name="enter_password">Enter password</string>
     <string name="wrong_password">Wrong password</string>
     <string name="protect_application">Protect the app</string>
-    <string name="protect_application_summary">Ask for password when starting Futon</string>
+    <string name="protect_application_summary">Ask for password when starting Clio</string>
     <string name="repeat_password">Repeat the password</string>
     <string name="passwords_mismatch">Mismatching passwords</string>
     <string name="about">About</string>
     <string name="app_version">Version %s</string>
-    <string name="check_for_updates">Check for updates: This checks for newer GitHub release. If you installed Futon from a store, better use the store\'s client for this.</string>
+    <string name="check_for_updates">Check for updates: This checks for newer GitHub release. If you installed Clio from a store, better use the store\'s client for this.</string>
     <string name="no_update_available">No updates available</string>
     <string name="right_to_left">Right-to-left</string>
     <string name="create_category">New category</string>
@@ -335,7 +335,7 @@
     <string name="import_completed_hint">You can delete the original file from storage to save space</string>
     <string name="import_will_start_soon">Import will start soon</string>
     <string name="feed">Feed</string>
-    <string name="manga_error_description_pattern">Error details:&lt;br&gt;&lt;tt&gt;%1$s&lt;/tt&gt;&lt;br&gt;&lt;br&gt;1. Try to &lt;a href="%2$s"&gt;open manga in a web browser&lt;/a&gt; to ensure it is available on its source&lt;br&gt;2. Make sure you are using the &lt;a href="futon://about"&gt;latest version of Futon&lt;/a&gt;&lt;br&gt;3. If it is available, send an error report to the developers.</string>
+    <string name="manga_error_description_pattern">Error details:&lt;br&gt;&lt;tt&gt;%1$s&lt;/tt&gt;&lt;br&gt;&lt;br&gt;1. Try to &lt;a href="%2$s"&gt;open manga in a web browser&lt;/a&gt; to ensure it is available on its source&lt;br&gt;2. Make sure you are using the &lt;a href="futon://about"&gt;latest version of Clio&lt;/a&gt;&lt;br&gt;3. If it is available, send an error report to the developers.</string>
     <string name="history_shortcuts">Show recent manga shortcuts</string>
     <string name="history_shortcuts_summary">Make recent manga available by long pressing on application icon</string>
     <string name="reader_control_ltr_summary">Do not adjust the page switching direction to the reader mode, e. g. pressing the right key always switches to the next page. This option affects only hardware input devices</string>
@@ -675,7 +675,7 @@
     <string name="show_pages_thumbs">Show pages thumbnails</string>
     <string name="show_pages_thumbs_summary">Enable the \"Pages\" tab on the details screen</string>
     <string name="error_no_data_received">No data was received from server</string>
-    <string name="unsupported_backup_message">Please select a proper Futon backup file</string>
+    <string name="unsupported_backup_message">Please select a proper Clio backup file</string>
     <string name="list_ellipsize_pattern" translatable="false">(+%d)</string>
     <!-- Short hours format pattern -->
     <string name="hours_short">%d h</string>
@@ -734,8 +734,8 @@
     <string name="chapters_read">Chapters read</string>
     <string name="chapters_left">Chapters left</string>
     <string name="external_source">External/plugin</string>
-    <string name="plugin_incompatible">Incompatible plugin or internal error. Make sure you are using the latest version of the plugin and Futon</string>
-    <string name="plugin_incompatible_with_cause">Plugin error: %s\n Make sure you are using the latest version of the plugin and Futon</string>
+    <string name="plugin_incompatible">Incompatible plugin or internal error. Make sure you are using the latest version of the plugin and Clio</string>
+    <string name="plugin_incompatible_with_cause">Plugin error: %s\n Make sure you are using the latest version of the plugin and Clio</string>
     <string name="connection_ok">Connection is OK</string>
     <string name="invalid_proxy_configuration">Invalid proxy configuration</string>
     <string name="show_quick_filters">Show quick filters</string>
@@ -873,10 +873,10 @@
     <string name="search_disabled_sources">Search through disabled sources</string>
     <string name="error_details">Error details</string>
     <string name="error_disclaimer_manga">Try to open manga in a web browser to ensure it is available on its source.</string>
-    <string name="error_disclaimer_app_outdated">It looks like your version of Futon is out of date. Please install the latest version to get all available fixes.</string>
+    <string name="error_disclaimer_app_outdated">It looks like your version of Clio is out of date. Please install the latest version to get all available fixes.</string>
     <string name="error_disclaimer_report">You can submit a bug report to the developers. This will help us investigate and fix the issue.</string>
     <string name="link_to_manga_on_s">Link to manga on %s</string>
-    <string name="link_to_manga_in_app">Link to manga in Futon</string>
+    <string name="link_to_manga_in_app">Link to manga in Clio</string>
     <string name="clear_browser_data">Clear browser data</string>
     <string name="clear_browser_data_summary">Clear browser data such as cache and cookies. Warning: Authorization in manga sources may become invalid</string>
     <string name="no_write_permission_to_file">Does not have permission to write a file</string>
@@ -927,7 +927,7 @@
     <string name="discord_token_hint">Paste your Discord Token here</string>
     <string name="discord_rpc_summary">Show your reading status on Discord</string>
     <string name="obtain">Obtain</string>
-    <string name="discord_rpc_description">Reading manga on Futon - a manga reader app</string>
+    <string name="discord_rpc_description">Reading manga on Clio - a manga reader app</string>
     <string name="reading_s">Reading %s</string>
     <string name="read_on_s">Read on %s</string>
     <string name="rpc_skip_nsfw_summary">Do not use RPC for adult content</string>
@@ -1028,7 +1028,7 @@
     <string name="onboarding_back">Back</string>
     <string name="onboarding_get_started">Get Started</string>
     <string name="onboarding_page1_badge">FREE &amp; OPEN SOURCE</string>
-    <string name="onboarding_page1_title">Welcome to Futon</string>
+    <string name="onboarding_page1_title">Welcome to Clio</string>
     <string name="onboarding_page1_subtitle">Your modern, unified manga and light novel reader for Android.</string>
     <string name="onboarding_page1_feature1">Ad-free, fast, and battery-friendly reading</string>
     <string name="onboarding_page1_feature2">Offline downloads &amp; background chapter updates</string>
@@ -1054,7 +1054,9 @@
     <string name="onboarding_page4_feature2">Organize favorites into custom categories</string>
     <string name="onboarding_page4_feature3">Tap Get Started below to begin your journey</string>
     <string name="about_onboarding">Replay Intro Walkthrough</string>
-    <string name="about_onboarding_summary">Learn how to use Futon, dual modes, and source extensions</string>
+    <string name="about_origin">Origin and credits</string>
+    <string name="about_origin_summary">Clio is an independent community fork of Futon MihonFix, which is based on Futon and Kotatsu. It is not affiliated with the original developers. Built with parsers from Kotatsu-Redo and ideas from Kototoro.</string>
+    <string name="about_onboarding_summary">Learn how to use Clio, dual modes, and source extensions</string>
     <string name="spotlight_switcher_tag">Use this to switch between manga and novels</string>
     <string name="spotlight_switcher_got_it">Got it</string>
     <string name="e_ink">E-Ink</string>

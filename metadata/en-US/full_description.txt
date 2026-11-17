@@ -1,6 +1,6 @@
-Futon is a free and open source manga reader for Android.
+Clio is a free and open source manga reader for Android.
 
-Note: Futon is an unofficial fork of Kotatsu
+Note: Clio is an unofficial fork of Futon, which is built on Kotatsu
 
 <strong>Main Features:</strong>
 
