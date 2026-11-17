@@ -184,6 +184,15 @@ abstract class ChaptersPagesViewModel(
 			localStorageChanges
 				.collect { onDownloadComplete(it) }
 		}
+		launchJob(Dispatchers.Default) {
+			// Merging the chapter groups (or undoing it) changes which groups exist: keep the selection valid.
+			detailsOnMergeChange.collect { details ->
+				val groups = details?.chapters ?: return@collect
+				if (groups.isNotEmpty() && selectedBranch.value !in groups) {
+					selectedBranch.value = groups.maxByOrNull { it.value.size }?.key
+				}
+			}
+		}
 	}
 
 	fun setChaptersReversed(newValue: Boolean) {
