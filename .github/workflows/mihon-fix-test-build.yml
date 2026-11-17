@@ -44,18 +44,10 @@ jobs:
           # re-enables D8 interface desugaring and breaks serializers loaded later from extension APKs.
           grep -Eq '^[[:space:]]*minSdk = 26$' app/build.gradle
           ./gradlew testDebugUnitTest \
-            --tests "io.github.landwarderer.futon.mihon.MihonExceptionUnwrapTest" \
             --tests "io.github.landwarderer.futon.reader.domain.*" \
-            --tests "io.github.landwarderer.futon.details.domain.ComixChapterGroupingTest" \
-            --tests "io.github.landwarderer.futon.mihon.ExtensionRepoServiceTest" \
-            --tests "io.github.landwarderer.futon.mihon.TachiyomiApkClassLoaderPolicyTest" \
-            --tests "io.github.landwarderer.futon.mihon.compat.MihonNetworkHelperTest" \
-            --tests "io.github.landwarderer.futon.mihon.compat.MihonSourceApiCompatTest" \
-            --tests "io.github.landwarderer.futon.mihon.compat.MihonModernHostContractTest" \
-            --tests "io.github.landwarderer.futon.mihon.MihonMangaRepositoryTest" \
-            --tests "io.github.landwarderer.futon.mihon.state.MihonSnapshotPersistenceTest" \
-            --tests "io.github.landwarderer.futon.mihon.model.MihonDataConvertersTest" \
-            --tests "io.github.landwarderer.futon.core.network.GitHubRawUrlCompatTest" \
+            --tests "io.github.landwarderer.futon.details.domain.*" \
+            --tests "io.github.landwarderer.futon.mihon.*" \
+            --tests "io.github.landwarderer.futon.core.network.*" \
             --stacktrace \
             --no-build-cache \
             --no-configuration-cache
@@ -178,6 +170,11 @@ jobs:
 
           # ConfigurableSource preference UI is invoked by dynamically loaded extension APKs.
           require_dex_string 'androidx/preference/PreferenceScreen'
+          require_dex_string 'eu/kanade/tachiyomi/source/model/SMangaUpdate'
+          require_dex_string 'okhttp3/brotli/Brotli'
+          require_dex_string 'CaptchaAutoResolveCoordinator'
+          require_dex_string 'TachiyomiApkClassLoaderPolicy'
+          require_dex_string 'org/brotli/dec/BrotliInputStream'
           require_dex_string 'eu/kanade/tachiyomi/source/ConfigurableSource'
 
           # External extension APKs call the host ABI outside R8's static graph. Gate the optimized
