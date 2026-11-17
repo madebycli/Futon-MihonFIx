@@ -33,8 +33,6 @@ import okhttp3.brotli.BrotliInterceptor
 import okhttp3.zstd.Zstd
 import okio.Buffer
 import org.koitharu.kotatsu.parsers.model.MangaSource
-import java.net.URLDecoder
-import java.nio.charset.StandardCharsets
 import java.util.concurrent.ConcurrentHashMap
 
 /** Mihon/Keiyoushi network host with the same default-client ABI and Cloudflare semantics. */
@@ -81,7 +79,9 @@ class MihonNetworkHelper(
             val originalRequest = chain.request()
                 .withSourceRequestContext()
                 .withCloudflareUserAgent()
-            val request = enrichApiRequestHeadersIfNeeded(originalRequest)
+            // Request headers belong to the extension: no browser-like headers are added here (Kototoro's
+            // enrichApiRequestHeadersIfNeeded is deliberately not ported, see MihonNetworkHelperTest).
+            val request = originalRequest
             val response = chain.proceed(request)
             val challengeUrl = request.toChallengeUrl()
             val protection = CloudFlareHelper.checkResponseForProtection(response)
@@ -325,41 +325,6 @@ class MihonNetworkHelper(
             return null
         }
         return runCatching { Buffer().use { buffer -> requestBody.writeTo(buffer); buffer.readUtf8() } }.getOrNull()
-    }
-
-    /** API calls with a clearance get the browser-like headers such endpoints expect (Referer, Origin, XSRF...). */
-    private fun enrichApiRequestHeadersIfNeeded(request: Request): Request {
-        if (!request.url.encodedPath.startsWith("/api/")) return request
-        val cookies = cookieJar.loadForRequest(request.url)
-        if (cookies.none { it.name == "cf_clearance" }) return request
-        val origin = "${request.url.scheme}://${request.url.host}"
-        var modified = false
-        val builder = request.newBuilder()
-        fun setIfBlank(name: String, value: String) {
-            if (request.header(name).isNullOrBlank()) {
-                builder.header(name, value)
-                modified = true
-            }
-        }
-        setIfBlank("Referer", "$origin/")
-        setIfBlank("Origin", origin)
-        setIfBlank("Accept", "application/json, text/plain, */*")
-        setIfBlank("Accept-Language", "en-US,en;q=0.9")
-        setIfBlank("Sec-Fetch-Site", "same-origin")
-        setIfBlank("Sec-Fetch-Mode", "cors")
-        setIfBlank("Sec-Fetch-Dest", "empty")
-        setIfBlank("X-Requested-With", "XMLHttpRequest")
-        if (request.header("X-XSRF-TOKEN").isNullOrBlank()) {
-            val xsrf = cookies.firstOrNull { it.name == "XSRF-TOKEN" }?.value
-            val decodedXsrf = xsrf?.let {
-                runCatching { URLDecoder.decode(it, StandardCharsets.UTF_8.name()) }.getOrDefault(it)
-            }
-            if (!decodedXsrf.isNullOrBlank()) {
-                builder.header("X-XSRF-TOKEN", decodedXsrf)
-                modified = true
-            }
-        }
-        return if (modified) builder.build() else request
     }
 
     private fun maskUserAgent(value: String?): String = value

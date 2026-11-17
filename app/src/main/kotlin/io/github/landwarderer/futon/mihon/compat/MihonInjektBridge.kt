@@ -7,6 +7,7 @@ import android.util.Log
 import androidx.preference.PreferenceManager
 import eu.kanade.tachiyomi.network.NetworkHelper
 import io.github.landwarderer.futon.core.network.CloudflareHostCooldown
+import io.github.landwarderer.futon.core.network.UserAgentProvider
 import io.github.landwarderer.futon.core.network.webview.CloudflareSolveCoordinator
 import io.github.landwarderer.futon.core.network.webview.WebViewClearanceSolver
 import io.github.landwarderer.futon.core.network.webview.WebViewExecutor
@@ -65,6 +66,7 @@ class MihonInjektBridge(
                 webViewExecutor = webViewExecutor,
                 clearanceSolver = clearanceSolver,
                 solveCoordinator = solveCoordinator,
+                defaultUserAgent = UserAgentProvider.get(context.applicationContext),
             )
             Log.d(
                 "MihonInjektBridge",
