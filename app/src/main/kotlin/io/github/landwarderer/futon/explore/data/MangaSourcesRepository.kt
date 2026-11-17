@@ -482,7 +482,11 @@ class MangaSourcesRepository @Inject constructor(
         result.addAll(MangaParserSource.entries)
         result.addAll(io.github.landwarderer.futon.novel.data.source.NovelParserSource.entries)
         result.addAll(mihonExtensionManager.getMihonMangaSources())
-		val knownNames = entities.mapTo(HashSet()) { it.source }
+		val knownNames = HashSet<String>(entities.size * 2)
+		for (entity in entities) {
+			knownNames.add(entity.source)
+			entity.toMangaSource()?.name?.let(knownNames::add)
+		}
 		result.removeAll { it.name in knownNames }
 		return result
 	}
