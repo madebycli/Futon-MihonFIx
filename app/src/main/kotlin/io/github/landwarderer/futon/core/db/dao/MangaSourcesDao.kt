@@ -55,8 +55,8 @@ abstract class MangaSourcesDao {
 	@Query("UPDATE sources SET used_at = :value WHERE source = :source")
 	abstract suspend fun setLastUsed(source: String, value: Long)
 
-	@Query("UPDATE sources SET title = :title WHERE source = :source")
-	abstract suspend fun setTitle(source: String, title: String?)
+	@Query("UPDATE sources SET title = :title WHERE source = :source AND title IS NOT :title")
+	abstract suspend fun setTitle(source: String, title: String?): Int
 
 	@Transaction
 	open suspend fun setPinned(source: String, isPinned: Boolean) {
