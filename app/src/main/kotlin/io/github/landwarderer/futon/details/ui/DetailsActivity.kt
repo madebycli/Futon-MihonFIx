@@ -4,6 +4,7 @@ import android.app.assist.AssistContent
 import android.content.Context
 import android.os.Bundle
 import android.text.SpannedString
+import android.text.TextUtils
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
@@ -72,6 +73,7 @@ import io.github.landwarderer.futon.core.util.ext.end
 import io.github.landwarderer.futon.core.util.ext.enqueueWith
 import io.github.landwarderer.futon.core.util.ext.getQuantityStringSafe
 import io.github.landwarderer.futon.core.util.ext.isAnimationsEnabled
+import io.github.landwarderer.futon.core.ui.text.DescriptionMovementMethod
 import io.github.landwarderer.futon.core.util.ext.isTextTruncated
 import io.github.landwarderer.futon.core.util.ext.joinToStringWithLimit
 import io.github.landwarderer.futon.core.util.ext.mangaSourceExtra
@@ -156,7 +158,7 @@ class DetailsActivity :
 		viewBinding.swipeRefreshLayout.setOnRefreshListener(this)
 		viewBinding.textViewDescription.viewTreeObserver.addOnDrawListener(this)
 		infoBinding.textViewAuthor.movementMethod = LinkMovementMethodCompat.getInstance()
-		viewBinding.textViewDescription.movementMethod = LinkMovementMethodCompat.getInstance()
+		viewBinding.textViewDescription.movementMethod = DescriptionMovementMethod
 		viewBinding.chipsTags.onChipClickListener = this
 		TitleScrollCoordinator(viewBinding.textViewTitle).attach(viewBinding.scrollView)
 		if (settings.isDescriptionExpanded) {
@@ -254,6 +256,7 @@ class DetailsActivity :
 				} else {
 					tv.maxLines = defaultMaxLines
 				}
+				tv.scrollTo(0, 0)
 
                 val btn = viewBinding.buttonDescriptionMore
                 if (tv.maxLines == defaultMaxLines) {
@@ -426,7 +429,13 @@ class DetailsActivity :
 			textViewSubtitle.textAndVisible = manga.altTitles.joinToString("\n")
 			textViewNsfw16.isVisible = manga.contentRating == ContentRating.SUGGESTIVE
 			textViewNsfw18.isVisible = manga.contentRating == ContentRating.ADULT
-			textViewDescription.text = details.description.ifNullOrEmpty { getString(R.string.no_description) }
+			val description = details.description.ifNullOrEmpty { getString(R.string.no_description) }
+			// Details are emitted several times while loading; setting an identical text again would relayout it
+			// (and restart its transition) every time.
+			if (!TextUtils.equals(textViewDescription.text, description)) {
+				textViewDescription.text = description
+				textViewDescription.scrollTo(0, 0)
+			}
 		}
 		with(infoBinding) {
 			val translation = details.getLocale()

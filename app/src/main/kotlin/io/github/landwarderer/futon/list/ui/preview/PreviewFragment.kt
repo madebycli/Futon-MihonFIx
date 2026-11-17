@@ -5,7 +5,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
-import androidx.core.text.method.LinkMovementMethodCompat
+import io.github.landwarderer.futon.core.ui.text.DescriptionMovementMethod
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isVisible
 import androidx.fragment.app.viewModels
@@ -37,7 +37,7 @@ class PreviewFragment : BaseFragment<FragmentPreviewBinding>(), View.OnClickList
 		super.onViewBindingCreated(binding, savedInstanceState)
 		binding.buttonClose.isVisible = activity is MangaListActivity
 		binding.buttonClose.setOnClickListener(this)
-		binding.textViewDescription.movementMethod = LinkMovementMethodCompat.getInstance()
+		binding.textViewDescription.movementMethod = DescriptionMovementMethod
 		binding.chipsTags.onChipClickListener = this
 		binding.textViewAuthor.setOnClickListener(this)
 		binding.imageViewCover.setOnClickListener(this)
