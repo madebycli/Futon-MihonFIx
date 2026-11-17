@@ -31,7 +31,16 @@ jobs:
         run: |
           set -euo pipefail
           cd "$RUNNER_TEMP/source-room-test"
-          ./gradlew -Dorg.gradle.java.home="$JAVA_HOME" assembleDebug assembleDebugAndroidTest --stacktrace --no-configuration-cache
+          RESULT=1
+          for ATTEMPT in 1 2 3; do
+            set +e
+            ./gradlew -Dorg.gradle.java.home="$JAVA_HOME" assembleDebug assembleDebugAndroidTest --info --stacktrace --no-configuration-cache 2>&1 | tee "$RUNNER_TEMP/source-room-build.log"
+            RESULT=${PIPESTATUS[0]}
+            set -e
+            if [ "$RESULT" -eq 0 ]; then break; fi
+            if ! grep -Eq '429|Too Many Requests|could not resolve plugin artifact' "$RUNNER_TEMP/source-room-build.log"; then break; fi
+          done
+          test "$RESULT" -eq 0
           ./gradlew -Dorg.gradle.java.home="$JAVA_HOME" --stop
       - name: Enable emulator acceleration
         run: |
