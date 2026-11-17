@@ -1,0 +1,131 @@
+name: Combined draft PR test APK
+on:
+  push:
+    branches: ['test/all-prs-2026-11-17-apk']
+permissions:
+  contents: read
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: temurin
+      - uses: android-actions/setup-android@v4
+        with:
+          packages: platform-tools
+      - name: Build debug APK in isolated mirror
+        shell: bash
+        run: |
+          set -euo pipefail
+          MIRROR="$RUNNER_TEMP/futon-all-prs"
+          mkdir -p "$MIRROR"
+          tar --exclude='./.git' --exclude='./.gradle' --exclude='*/build' --exclude='./gradle/gradle-daemon-jvm.properties' -cf - . | tar -xf - -C "$MIRROR"
+          test ! -e "$MIRROR/gradle/gradle-daemon-jvm.properties"
+          cd "$MIRROR"
+          exec 9>"$RUNNER_TEMP/futon-gradle.lock"
+          flock 9
+          RESULT=1
+          for ATTEMPT in 1 2 3; do
+            set +e
+            ./gradlew -Dorg.gradle.java.home="$JAVA_HOME" assembleDebug --stacktrace --no-configuration-cache 2>&1 | tee "$RUNNER_TEMP/futon-apk-build.log"
+            RESULT=${PIPESTATUS[0]}
+            set -e
+            if [ "$RESULT" -eq 0 ]; then break; fi
+            if ! grep -Eq '429|Too Many Requests' "$RUNNER_TEMP/futon-apk-build.log"; then break; fi
+          done
+          echo "EXIT=$RESULT" | tee -a "$RUNNER_TEMP/futon-apk-build.log"
+          exit "$RESULT"
+      - name: Inspect actual APK and record provenance
+        shell: bash
+        run: |
+          set -euo pipefail
+          OUT="$GITHUB_WORKSPACE/test-apk"
+          mkdir -p "$OUT"
+          APK="$OUT/Futon-all-PRs-5-6-7-debug.apk"
+          cp "$RUNNER_TEMP/futon-all-prs/app/build/outputs/apk/debug/app-debug.apk" "$APK"
+          AAPT="$(find "$ANDROID_HOME/build-tools" -type f -name aapt | sort -V | tail -n 1)"
+          APKSIGNER="$(find "$ANDROID_HOME/build-tools" -type f -name apksigner | sort -V | tail -n 1)"
+          "$AAPT" dump badging "$APK" > "$OUT/APK-BADGING.txt"
+          "$APKSIGNER" verify --verbose --print-certs "$APK" > "$OUT/APK-SIGNATURE.txt"
+          grep -F "package: name='io.github.landwarderer.futon.debug'" "$OUT/APK-BADGING.txt"
+          grep -F 'Android Debug' "$OUT/APK-SIGNATURE.txt"
+          if grep -Fq 'certificate SHA-256 digest: 12fe17245decb84c98985ddcc08884b874d10a78e4fb747a6ed3e2a42d77b625' "$OUT/APK-SIGNATURE.txt"; then
+            echo "::error::This test APK must use the debug key."
+            exit 1
+          fi
+          cd "$OUT"
+          sha256sum "$(basename "$APK")" | tee SHA256SUMS.txt
+          {
+            echo "Integration commit: $GITHUB_SHA"
+            echo "Branch: test/all-prs-2026-11-17-apk"
+            echo "Base devel: 0e2e4b1f467338ae5e209344d9c042f0ff23a618"
+            echo "PR5: 7ddecd617f040b6c83b45ed60b819cd3c3b90228"
+            echo "PR6: 44469ff1332432a26260a4aaa079e6c53483ac2a"
+            echo "PR7: ce43c6de56100f32a4a8094fcf74123226d9aaaa"
+            echo "applicationId: io.github.landwarderer.futon.debug"
+            echo "Signature: standard Android debug key, not repository release key"
+            echo "APK bytes: $(stat -c %s "$APK")"
+            echo "Device tests: NOT RUN"
+            echo "Release certificate gate: NOT RUN"
+          } | tee BUILD-INFO.txt
+          cat APK-SIGNATURE.txt
+      - name: Upload genuine APK and identity evidence
+        id: upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: Futon-all-PRs-5-6-7-debug-APK
+          path: test-apk/*
+          compression-level: 0
+          retention-days: 14
+          if-no-files-found: error
+      - name: Add download link to summary
+        env:
+          ARTIFACT_URL: ${{ steps.upload.outputs.artifact-url }}
+        run: |
+          echo "Combined debug APK: $ARTIFACT_URL" >> "$GITHUB_STEP_SUMMARY"
+      - name: Full integration tests and instrumented-source compilation
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/futon-all-prs"
+          ./gradlew -Dorg.gradle.java.home="$JAVA_HOME" testDebugUnitTest compileDebugAndroidTestKotlin --continue --stacktrace --no-configuration-cache
+      - name: Record actual XML test counts
+        if: always()
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import glob, json, os, xml.etree.ElementTree as ET
+          counts = dict(tests=0, failures=0, errors=0, skipped=0)
+          failures = []
+          files = glob.glob(os.environ["RUNNER_TEMP"] + "/futon-all-prs/app/build/test-results/testDebugUnitTest/*.xml")
+          for path in files:
+              root = ET.parse(path).getroot()
+              for key in counts:
+                  counts[key] += int(root.attrib.get(key, 0))
+              for case in root.findall("testcase"):
+                  for kind in ("failure", "error"):
+                      element = case.find(kind)
+                      if element is not None:
+                          failures.append(dict(classname=case.get("classname"), name=case.get("name"), kind=kind, message=element.get("message")))
+          result = dict(xml_files=len(files), counts=counts, failures=failures)
+          print(json.dumps(result, indent=2))
+          with open(os.environ["GITHUB_WORKSPACE"] + "/test-apk/TEST-RESULTS.json", "w") as out:
+              json.dump(result, out, indent=2)
+          PY
+      - name: Upload full integration test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Futon-all-PRs-5-6-7-test-reports
+          path: |
+            test-apk/TEST-RESULTS.json
+            ${{ runner.temp }}/futon-all-prs/app/build/test-results/testDebugUnitTest/*.xml
+          if-no-files-found: warn
+          retention-days: 14

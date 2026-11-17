@@ -1,11 +1,6 @@
 package io.github.landwarderer.futon.list.ui.preview
 
 import android.text.Html
-import android.text.SpannableString
-import android.text.Spanned
-import android.text.style.ForegroundColorSpan
-import androidx.core.text.getSpans
-import androidx.core.text.parseAsHtml
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -20,13 +15,13 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.transformLatest
 import kotlinx.coroutines.plus
+import io.github.landwarderer.futon.details.domain.renderDescription
 import io.github.landwarderer.futon.core.model.getPreferredBranch
 import io.github.landwarderer.futon.core.model.parcelable.ParcelableManga
 import io.github.landwarderer.futon.core.nav.AppRouter
 import io.github.landwarderer.futon.core.parser.MangaRepository
 import io.github.landwarderer.futon.core.ui.BaseViewModel
 import io.github.landwarderer.futon.core.util.ext.require
-import io.github.landwarderer.futon.core.util.ext.sanitize
 import io.github.landwarderer.futon.history.data.HistoryRepository
 import io.github.landwarderer.futon.list.domain.MangaListMapper
 import io.github.landwarderer.futon.list.domain.ReadingProgress.Companion.PROGRESS_NONE
@@ -72,8 +67,8 @@ class PreviewViewModel @Inject constructor(
 			if (description.isNullOrEmpty()) {
 				emit(null)
 			} else {
-				emit(description.parseAsHtml().filterSpans().sanitize())
-				emit(description.parseAsHtml(imageGetter = imageGetter).filterSpans())
+				emit(renderDescription(description, null).trim())
+				emit(renderDescription(description, imageGetter).trim())
 			}
 		}.combine(isLoading) { desc, loading ->
 			if (loading) null else desc ?: ""
@@ -88,15 +83,6 @@ class PreviewViewModel @Inject constructor(
 			val repo = repositoryFactory.create(manga.value.source)
 			manga.value = repo.getDetails(manga.value)
 		}
-	}
-
-	private fun Spanned.filterSpans(): CharSequence {
-		val spannable = SpannableString.valueOf(this)
-		val spans = spannable.getSpans<ForegroundColorSpan>()
-		for (span in spans) {
-			spannable.removeSpan(span)
-		}
-		return spannable.trim()
 	}
 
 	data class FooterInfo(

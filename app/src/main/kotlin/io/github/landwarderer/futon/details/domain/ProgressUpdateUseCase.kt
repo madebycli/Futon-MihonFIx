@@ -3,6 +3,7 @@ package io.github.landwarderer.futon.details.domain
 import androidx.room.withTransaction
 import io.github.landwarderer.futon.core.db.MangaDatabase
 import io.github.landwarderer.futon.core.model.getPreferredBranch
+import io.github.landwarderer.futon.details.data.MangaDetails
 import io.github.landwarderer.futon.core.model.isLocal
 import io.github.landwarderer.futon.core.os.NetworkState
 import io.github.landwarderer.futon.core.parser.MangaRepository
@@ -38,7 +39,7 @@ class ProgressUpdateUseCase @Inject constructor(
 		}
 		val chapter = details.findChapterById(history.chapterId)
 			?: return estimateFromCounts(manga, details, history)
-		val chapters = details.chapterListForBranch(chapter.branch)
+		val chapters = MangaDetails(details).chapterListForBranch(chapter.branch)
 		val chapterRepo = if (repo.source == chapter.source) {
 			repo
 		} else {
@@ -48,7 +49,7 @@ class ProgressUpdateUseCase @Inject constructor(
 		if (chaptersCount == 0) {
 			return PROGRESS_NONE
 		}
-		val chapterIndex = chapters.indexOfFirst { x -> x.id == history.chapterId }
+		val chapterIndex = chapters.indexOfChapter(chapter)
 		val pagesCount = chapterRepo.getPages(chapter).size
 		if (pagesCount == 0) {
 			return PROGRESS_NONE

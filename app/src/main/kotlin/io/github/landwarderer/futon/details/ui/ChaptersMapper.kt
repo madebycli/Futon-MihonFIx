@@ -4,6 +4,10 @@ import android.content.Context
 import io.github.landwarderer.futon.R
 import io.github.landwarderer.futon.bookmarks.domain.Bookmark
 import io.github.landwarderer.futon.details.data.MangaDetails
+import io.github.landwarderer.futon.details.domain.ChapterSection
+import io.github.landwarderer.futon.details.domain.getMergeKey
+import io.github.landwarderer.futon.details.domain.indexOfChapter
+import io.github.landwarderer.futon.details.domain.withVolumeSections
 import io.github.landwarderer.futon.details.ui.model.ChapterListItem
 import io.github.landwarderer.futon.details.ui.model.toListItem
 import io.github.landwarderer.futon.list.ui.model.ListHeader
@@ -19,11 +23,15 @@ fun MangaDetails.mapChapters(
 	isDownloadedOnly: Boolean,
 ): List<ChapterListItem> {
 	val remoteChapters = chapterListForBranch(branch)
-	val localChapters = if (hasCombinedComixChapters) {
-        local?.manga?.chapters.orEmpty().sortedBy { it.number }
-    } else {
-        local?.manga?.getChapters(branch).orEmpty()
-    }
+	val localChapters = if (isMerged) {
+		// Downloads of another upload of a listed chapter are not listed again; downloads of chapters the source
+		// no longer has still are.
+		val remoteIds = remoteChapters.mapTo(HashSet(remoteChapters.size)) { it.id }
+		val remoteKeys = remoteChapters.mapTo(HashSet(remoteChapters.size)) { it.getMergeKey() }
+		local?.manga?.chapters.orEmpty().filter { it.id in remoteIds || it.getMergeKey() !in remoteKeys }
+	} else {
+		local?.manga?.getChapters(branch).orEmpty()
+	}
 	if (remoteChapters.isEmpty() && localChapters.isEmpty()) {
 		return emptyList()
 	}
@@ -39,15 +47,24 @@ fun MangaDetails.mapChapters(
 	} else {
 		null
 	}
-	var isUnread = currentChapterId !in ids
+	val currentId = if (isMerged && currentChapterId != 0L && currentChapterId !in ids) {
+		// The history points to another upload of a listed chapter: that listed chapter is the current one.
+		allChapters.firstOrNull { it.id == currentChapterId }
+			?.let { remoteChapters.indexOfChapter(it) }
+			?.takeIf { it >= 0 }
+			?.let { remoteChapters[it].id } ?: currentChapterId
+	} else {
+		currentChapterId
+	}
+	var isUnread = currentId !in ids
 	if (!isDownloadedOnly || local?.manga?.chapters == null) {
 		for (chapter in remoteChapters) {
 			val local = localMap?.remove(chapter.id)
-			if (chapter.id == currentChapterId) {
+			if (chapter.id == currentId) {
 				isUnread = true
 			}
 			result += (local ?: chapter).toListItem(
-				isCurrent = chapter.id == currentChapterId,
+				isCurrent = chapter.id == currentId,
 				isUnread = isUnread,
 				isNew = isUnread && result.size >= newFrom,
 				isDownloaded = local != null,
@@ -58,11 +75,11 @@ fun MangaDetails.mapChapters(
 	}
 	if (!localMap.isNullOrEmpty()) {
 		for (chapter in localMap.values) {
-			if (chapter.id == currentChapterId) {
+			if (chapter.id == currentId) {
 				isUnread = true
 			}
 			result += chapter.toListItem(
-				isCurrent = chapter.id == currentChapterId,
+				isCurrent = chapter.id == currentId,
 				isUnread = isUnread,
 				isNew = false,
 				isDownloaded = !isLocal,
@@ -74,21 +91,20 @@ fun MangaDetails.mapChapters(
 	return result
 }
 
-fun List<ChapterListItem>.withVolumeHeaders(context: Context): MutableList<ListModel> {
-	var prevVolume = 0
-	val result = ArrayList<ListModel>((size * 1.4).toInt())
-	for (item in this) {
-		val chapter = item.chapter
-		if (chapter.volume != prevVolume) {
-			val text = if (chapter.volume == 0) {
-				context.getString(R.string.volume_unknown)
-			} else {
-				context.getString(R.string.volume_, chapter.volume)
-			}
-			result.add(ListHeader(text))
-			prevVolume = chapter.volume
+/** Kototoro's volume/group sections: a header only where the volume changes or a new group name starts. */
+fun List<ChapterListItem>.withVolumeHeaders(context: Context): MutableList<ListModel> =
+	withVolumeSections(this, { it.chapter.volume }, { it.chapter.scanlator }).mapTo(
+		ArrayList<ListModel>((size * 1.4).toInt()),
+	) { section ->
+		when (section) {
+			is ChapterSection.Header -> ListHeader(
+				section.customName ?: if (section.volume <= 0) {
+					context.getString(R.string.volume_unknown)
+				} else {
+					context.getString(R.string.volume_, section.volume)
+				},
+			)
+
+			is ChapterSection.Item -> section.chapter
 		}
-		result.add(item)
 	}
-	return result
-}
