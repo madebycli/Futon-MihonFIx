@@ -6,7 +6,6 @@ import android.content.SharedPreferences
 import android.util.Log
 import androidx.preference.PreferenceManager
 import eu.kanade.tachiyomi.network.NetworkHelper
-import io.github.landwarderer.futon.core.network.CloudflareHostCooldown
 import io.github.landwarderer.futon.core.network.UserAgentProvider
 import io.github.landwarderer.futon.core.network.webview.CloudflareSolveCoordinator
 import io.github.landwarderer.futon.core.network.webview.WebViewClearanceSolver
@@ -29,6 +28,7 @@ class MihonInjektBridge(
     private val context: Context,
     private val httpClient: OkHttpClient,
     private val cookieJar: CookieJar,
+    private val solveCoordinator: CloudflareSolveCoordinator,
     private val webViewExecutor: WebViewExecutor? = null,
 ) {
 
@@ -59,7 +59,6 @@ class MihonInjektBridge(
             // strategy. Keep this separate from Futon's interactive WebViewExecutor so a normal
             // extension request never needs to launch BrowserActivity merely to refresh clearance.
             val clearanceSolver = WebViewClearanceSolver(context.applicationContext, cookieJar)
-            val solveCoordinator = CloudflareSolveCoordinator(CloudflareHostCooldown())
             val networkHelper = MihonNetworkHelper(
                 baseClient = contextualHttpClient,
                 cookieJar = cookieJar,

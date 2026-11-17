@@ -4,6 +4,10 @@ package io.github.landwarderer.futon.core.network.webview
 
 import io.github.landwarderer.futon.core.network.CloudflareHostCooldown
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.withContext
+import javax.inject.Inject
+import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
@@ -13,8 +17,9 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.util.concurrent.ConcurrentHashMap
 
-/** Shares one off-screen Cloudflare solve between concurrent callers for the same host. */
-class CloudflareSolveCoordinator(
+/** One automatic solve per host, shared by native Activity and off-screen Mihon callers. */
+@Singleton
+class CloudflareSolveCoordinator @Inject constructor(
     private val hostCooldown: CloudflareHostCooldown,
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
@@ -40,7 +45,8 @@ class CloudflareSolveCoordinator(
             return try {
                 deferred.await()
             } finally {
-                mutex.withLock {
+                withContext(NonCancellable) {
+                    mutex.withLock {
                     waiters--
                     if (waiters <= 0) {
                         waiters = 0
@@ -48,7 +54,8 @@ class CloudflareSolveCoordinator(
                             active = null
                             if (deferred.isActive) deferred.cancel()
                         }
-                        if (active == null) gates.remove(host, this@HostGate)
+                        // Keep the gate: another caller may already hold its reference before joining.
+                    }
                     }
                 }
             }

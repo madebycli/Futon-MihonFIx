@@ -202,4 +202,19 @@ class ClearanceSolvingTest {
             assertEquals(200, it.code)
         }
     }
+
+    @Test
+    fun oneShotRequestBodiesAreNotAutomaticallyReplayed() {
+        val server = FakeServer(mutableListOf(challenge(), 200 to "must not be sent"))
+        val solves = AtomicInteger()
+        val body = object : okhttp3.RequestBody() {
+            override fun contentType(): okhttp3.MediaType? = null
+            override fun isOneShot() = true
+            override fun writeTo(sink: okio.BufferedSink) { sink.writeUtf8("one-shot") }
+        }
+        val client = clientWith(server, ClearanceSolver { solves.incrementAndGet(); true })
+        client.newCall(Request.Builder().url(url).post(body).build()).execute().close()
+        assertEquals(1, server.requests.get())
+        assertEquals(0, solves.get())
+    }
 }

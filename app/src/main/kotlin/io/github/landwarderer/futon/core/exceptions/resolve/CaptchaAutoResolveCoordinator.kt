@@ -37,6 +37,8 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 import javax.inject.Inject
 import javax.inject.Singleton
+import io.github.landwarderer.futon.core.network.webview.CloudflareSolveCoordinator
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 
 /**
  * Owns the single automatic Cloudflare verification session allowed in the app process.
@@ -49,6 +51,7 @@ import javax.inject.Singleton
 class CaptchaAutoResolveCoordinator @Inject constructor(
 	@ApplicationContext private val context: Context,
 	private val foregroundActivityHolder: ForegroundActivityHolder,
+	private val solveCoordinator: CloudflareSolveCoordinator,
 ) : DefaultActivityLifecycleCallbacks, DefaultLifecycleObserver {
 
 	private val stateMutex = Mutex()
@@ -152,7 +155,8 @@ class CaptchaAutoResolveCoordinator @Inject constructor(
 		if (lastFailure != null && now - lastFailure < RECENT_FAILURE_COOLDOWN_MS) {
 			return false
 		}
-		return resolve(exception)
+		val host = exception.url.toHttpUrlOrNull()?.host ?: return false
+		return solveCoordinator.solve(host) { resolve(exception) }
 	}
 
 	/** Joins the current session for the same source or atomically creates the only allowed session. */
@@ -177,7 +181,13 @@ class CaptchaAutoResolveCoordinator @Inject constructor(
 				showSolvingToast()
 				scope.launch { runSession(claim.session) }
 			}
-			val result = claim.session.result.await()
+			val result = try {
+				claim.session.result.await()
+			} catch (cancelled: kotlinx.coroutines.CancellationException) {
+				// The shared coordinator cancels its owned action only after its last waiter leaves.
+				if (claim.isOwner) claim.session.activityResult.complete(false)
+				throw cancelled
+			}
 			if (claim.session.source == source) {
 				return result
 			}

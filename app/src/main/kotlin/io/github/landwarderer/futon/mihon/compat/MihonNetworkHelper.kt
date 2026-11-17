@@ -15,8 +15,11 @@ import io.github.landwarderer.futon.core.exceptions.InteractiveActionRequiredExc
 import io.github.landwarderer.futon.core.network.CloudFlareInterceptor as FutonCloudFlareInterceptor
 import io.github.landwarderer.futon.core.network.cloudflare.solveClearanceAndRetry
 import io.github.landwarderer.futon.core.network.cookies.sensitiveValueFingerprint
+import io.github.landwarderer.futon.core.network.cookies.diagnosticIdentity
+import io.github.landwarderer.futon.core.network.cookies.diagnosticHeaders
+import io.github.landwarderer.futon.core.network.cookies.diagnosticSetCookie
 import io.github.landwarderer.futon.core.network.webview.CloudflareSolveCoordinator
-import io.github.landwarderer.futon.core.network.webview.WebViewClearanceSolver
+import io.github.landwarderer.futon.core.network.cloudflare.ClearanceSolver
 import io.github.landwarderer.futon.core.network.webview.WebViewExecutor
 import io.github.landwarderer.futon.mihon.model.toMangaSource
 import io.github.landwarderer.futon.mihon.parsers.model.ContentSource
@@ -40,7 +43,7 @@ class MihonNetworkHelper(
     baseClient: OkHttpClient,
     val cookieJar: CookieJar,
     private val webViewExecutor: WebViewExecutor? = null,
-    private val clearanceSolver: WebViewClearanceSolver? = null,
+    private val clearanceSolver: ClearanceSolver? = null,
     private val solveCoordinator: CloudflareSolveCoordinator? = null,
     private val defaultUserAgent: String = UserAgents.CHROME_MOBILE,
 ) : NetworkHelper() {
@@ -90,9 +93,9 @@ class MihonNetworkHelper(
                 Log.w(
                     TAG,
                     "Protection detected: type=${protectionLabel(protection)}, host=${request.url.host}, " +
-                        "code=${response.code}, server=${response.header("server")}, " +
-                        "cf-ray=${response.header("cf-ray")}, cf-mitigated=${response.header("cf-mitigated")}, " +
-                        "url=${request.url}",
+                        "code=${response.code}, server=${sensitiveValueFingerprint(response.header("server"))}, " +
+                        "cf-ray=${sensitiveValueFingerprint(response.header("cf-ray"))}, cf-mitigated=${sensitiveValueFingerprint(response.header("cf-mitigated"))}, " +
+                        "url=${request.url.diagnosticIdentity()}",
                 )
             }
 
@@ -156,29 +159,23 @@ class MihonNetworkHelper(
             val cookieNames = requestCookies.joinToString(",") { it.name }
             Log.d(
                 TAG,
-                "RequestMeta: host=${request.url.host}, ua=${maskUserAgent(request.header("User-Agent"))}, " +
-                    "uaFingerprint=${sensitiveValueFingerprint(request.header("User-Agent"))}, " +
-                    "referer=${request.header("Referer")}, origin=${request.header("Origin")}, " +
+                "RequestMeta: host=${request.url.host}, ${request.diagnosticHeaders()}, " +
                     "hasCfClearance=${cfClearanceCookie != null}, " +
                     "cfClearanceFingerprint=${sensitiveValueFingerprint(cfClearanceCookie)}, cookies=[$cookieNames]",
             )
-            Log.d(TAG, "Request: ${request.method} ${request.url}")
+            Log.d(TAG, "Request: ${request.method} ${request.url.diagnosticIdentity()}")
 
             val response = chain.proceed(request)
             logCloudflareSetCookies(response)
             val responseCode = response.code
-            val contentType = response.header("Content-Type")
+            val contentType = sensitiveValueFingerprint(response.header("Content-Type"))
             Log.d(
                 TAG,
-                "Response: $responseCode, Content-Type: $contentType, cf-ray=${response.header("cf-ray")}, cf-mitigated=${response.header("cf-mitigated")}, server=${response.header("server")}, URL: ${request.url}",
+                "Response: $responseCode, Content-Type: $contentType, cf-ray=${sensitiveValueFingerprint(response.header("cf-ray"))}, cf-mitigated=${sensitiveValueFingerprint(response.header("cf-mitigated"))}, server=${sensitiveValueFingerprint(response.header("server"))}, URL: ${request.url.diagnosticIdentity()}",
             )
 
             if (!response.isSuccessful) {
-                val source = response.body.source()
-                source.request(200)
-                val buffer = source.buffer.clone()
-                val preview = buffer.readUtf8(minOf(200, buffer.size))
-                Log.w(TAG, "Non-successful response ($responseCode) preview: $preview")
+                Log.w(TAG, "Non-successful response status=$responseCode; body omitted")
             }
             response
         }
@@ -215,9 +212,9 @@ class MihonNetworkHelper(
     private fun Request.toChallengeUrl(): String {
         val referer = header("Referer")?.toHttpUrlOrNull()
         if (referer != null && referer.host == url.host) {
-            return referer.newBuilder().query(null).fragment(null).build().toString()
+            return referer.newBuilder().username("").password("").query(null).fragment(null).build().toString()
         }
-        return url.newBuilder().encodedPath("/").query(null).fragment(null).build().toString()
+        return url.newBuilder().username("").password("").encodedPath("/").query(null).fragment(null).build().toString()
     }
 
     private fun getClearanceCookie(request: Request): String? =
@@ -242,7 +239,7 @@ class MihonNetworkHelper(
         if (solver != null) {
             response.close()
             return runCatching { chain.solveClearanceAndRetry(request, solver, solveCoordinator) }
-                .onFailure { Log.w(TAG, "Cloudflare offscreen solver failed for ${request.url.host}", it) }
+                .onFailure { Log.w(TAG, "Cloudflare offscreen solve failed host=${request.url.host} type=${it.javaClass.simpleName}") }
                 .getOrNull()
         }
 
@@ -262,7 +259,7 @@ class MihonNetworkHelper(
         val resolved = runCatching {
             runBlocking { executor.tryResolveCaptcha(exception, LEGACY_RESOLVE_TIMEOUT_MS) }
         }.onFailure {
-            Log.w(TAG, "Legacy Cloudflare resolver failed for ${request.url.host}", it)
+            Log.w(TAG, "Legacy Cloudflare resolver failed host=${request.url.host} type=${it.javaClass.simpleName}")
         }.getOrDefault(false)
         return if (resolved) chain.proceed(request) else null
     }
@@ -327,33 +324,19 @@ class MihonNetworkHelper(
         return runCatching { Buffer().use { buffer -> requestBody.writeTo(buffer); buffer.readUtf8() } }.getOrNull()
     }
 
-    private fun maskUserAgent(value: String?): String = value
-        ?.replace(Regex("""Chrome/\d+(\.\d+)*"""), "Chrome/*")
-        ?.take(140)
-        ?: "<none>"
+    private fun maskUserAgent(value: String?): String = sensitiveValueFingerprint(value)
 
     private fun logCloudflareSetCookies(response: Response) {
         val headers = response.headers("Set-Cookie").filter { it.startsWith("cf_clearance=", ignoreCase = true) }
         if (headers.isEmpty()) return
         Log.i(
             TAG,
-            "Set-Cookie cf_clearance: status=${response.code}, url=${response.request.url}, " +
-                "cf-ray=${response.header("cf-ray")}, headers=${headers.joinToString(" | ", transform = ::summarizeSetCookie)}",
+            "Set-Cookie cf_clearance: status=${response.code}, url=${response.request.url.diagnosticIdentity()}, " +
+                "cf-ray=${sensitiveValueFingerprint(response.header("cf-ray"))}, headers=${headers.joinToString(" | ", transform = ::summarizeSetCookie)}",
         )
     }
 
-    private fun summarizeSetCookie(header: String): String = header
-        .split(";")
-        .mapIndexedNotNull { index, part ->
-            val trimmed = part.trim()
-            when {
-                trimmed.isBlank() -> null
-                index == 0 -> "${trimmed.substringBefore("=")}=${sensitiveValueFingerprint(trimmed.substringAfter("=", ""))}"
-                trimmed.substringBefore("=").lowercase() in SAFE_COOKIE_ATTRIBUTES -> trimmed
-                else -> null
-            }
-        }
-        .joinToString(";")
+    private fun summarizeSetCookie(header: String): String = diagnosticSetCookie(header)
 
     private fun throwUnresolvedChallenge(
         response: Response,
