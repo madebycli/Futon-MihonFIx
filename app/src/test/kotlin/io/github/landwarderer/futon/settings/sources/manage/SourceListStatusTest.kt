@@ -12,19 +12,19 @@ import org.junit.Test
 
 class SourceListStatusTest {
     @Test fun emptySourcesDuringScanRemainLoading() {
-        assertEquals(SourceListStatus.LOADING, sourceListStatus(true, false, true, false))
+        assertEquals(SourceListStatus.LOADING, sourceListStatus(true, false, true))
     }
     @Test fun noSourcesAfterScanOfferTheCatalog() {
-        assertEquals(SourceListStatus.EMPTY, sourceListStatus(true, false, false, false))
+        assertEquals(SourceListStatus.EMPTY, sourceListStatus(true, false, false))
     }
     @Test fun loadedSourcesStayUsableWhileScanning() {
-        assertEquals(SourceListStatus.READY, sourceListStatus(false, false, true, false))
+        assertEquals(SourceListStatus.READY, sourceListStatus(false, false, true))
     }
     @Test fun aSearchWithoutMatchesUsesTheExistingSearchEmptyRow() {
-        assertEquals(SourceListStatus.READY, sourceListStatus(true, true, false, false))
+        assertEquals(SourceListStatus.READY, sourceListStatus(true, true, false))
     }
-    @Test fun aFailedExtensionDoesNotHideAvailableRowsAndOffersRetry() {
-        assertEquals(SourceListStatus.ERROR, sourceListStatus(false, false, false, true))
+    @Test fun aFailedExtensionDoesNotKeepARetryBannerAboveAUsableList() {
+        assertEquals(SourceListStatus.READY, sourceListStatus(false, false, false))
     }
     @Test fun aFailedLoadCanBeRetriedWithoutResettingData() = runTest {
         var attempts = 0

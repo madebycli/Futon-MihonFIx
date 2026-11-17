@@ -2,6 +2,10 @@ name: Source title update Android regression
 on:
   pull_request:
     branches: [devel]
+    paths:
+      - 'app/src/main/kotlin/io/github/landwarderer/futon/core/db/dao/MangaSourcesDao.kt'
+      - 'app/src/androidTest/kotlin/io/github/landwarderer/futon/core/db/MangaSourcesTitleUpdateTest.kt'
+      - '.github/workflows/source-title-android-test.yml'
 permissions:
   contents: read
 jobs:

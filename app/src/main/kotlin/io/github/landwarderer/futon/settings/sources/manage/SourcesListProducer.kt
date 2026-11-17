@@ -94,10 +94,7 @@ class SourcesListProducer @Inject constructor(
 			return
 		}
 		list.value = items
-		status.value = sourceListStatus(
-			items.isEmpty(), currentQuery.isNotEmpty(), mihonExtensionManager.isLoading.value,
-			mihonExtensionManager.failedExtensions.value.isNotEmpty(),
-		)
+		status.value = sourceListStatus(items.isEmpty(), currentQuery.isNotEmpty(), mihonExtensionManager.isLoading.value)
 	}
 
 	private suspend fun buildList(query: String): List<SourceConfigItem> {

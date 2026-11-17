@@ -2,10 +2,13 @@ package io.github.landwarderer.futon.settings.sources.manage
 
 internal enum class SourceListStatus { LOADING, READY, EMPTY, ERROR }
 
-/** Keep searching and extension discovery distinct from a truly empty enabled-source list. */
-internal fun sourceListStatus(isEmpty: Boolean, isSearching: Boolean, isScanning: Boolean, hasFailures: Boolean): SourceListStatus = when {
+/**
+ * Keep searching and extension discovery distinct from a truly empty enabled-source list.
+ * A load failure is reported by the caller (ERROR); a single extension that cannot be loaded is not a list failure,
+ * otherwise the retry banner would stay for good above an otherwise usable list.
+ */
+internal fun sourceListStatus(isEmpty: Boolean, isSearching: Boolean, isScanning: Boolean): SourceListStatus = when {
     isScanning && isEmpty && !isSearching -> SourceListStatus.LOADING
-    hasFailures -> SourceListStatus.ERROR
     !isEmpty || isSearching -> SourceListStatus.READY
     else -> SourceListStatus.EMPTY
 }
