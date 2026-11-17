@@ -14,9 +14,11 @@ import org.junit.runner.RunWith
 class SourceStatePersistenceTest {
     @Test
     fun disabledSourceSurvivesDiscoveryAndIsExcludedBeforeRecentLimit() = runBlocking {
-        val db = Room.inMemoryDatabaseBuilder(
-            ApplicationProvider.getApplicationContext<Context>(), MangaDatabase::class.java,
-        ).allowMainThreadQueries().build()
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val name = "source-state-persistence-test.db"
+        context.deleteDatabase(name)
+        fun open() = Room.databaseBuilder(context, MangaDatabase::class.java, name).allowMainThreadQueries().build()
+        val db = open()
         try {
             val dao = db.getSourcesDao()
             fun source(name: String, enabled: Boolean, lastUsedAt: Long) = MangaSourceEntity(
@@ -28,8 +30,18 @@ class SourceStatePersistenceTest {
             assertEquals(listOf("MIHON_2"), dao.findLastUsedEnabled(1).map { it.source })
             assertEquals(listOf("MIHON_1"), dao.findLastUsed(1).map { it.source })
             assertEquals(false, dao.findAll().single { it.source == "MIHON_1" }.isEnabled)
-        } finally {
             db.close()
+            val reopened = open()
+            try {
+                val restored = reopened.getSourcesDao()
+                assertEquals(false, restored.findAll().single { it.source == "MIHON_1" }.isEnabled)
+                assertEquals(listOf("MIHON_2"), restored.findLastUsedEnabled(1).map { it.source })
+            } finally {
+                reopened.close()
+            }
+        } finally {
+            if (db.isOpen) db.close()
+            context.deleteDatabase(name)
         }
     }
 }
