@@ -67,7 +67,6 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
@@ -248,8 +247,8 @@ class ReaderViewModel @Inject constructor(
     /** Merging the chapter groups changes the list the reader walks through; rebuild it around the open chapter. */
     private fun observeMergeRepeatedChapters() {
         launchJob(Dispatchers.Default) {
-            isMergeRepeatedChapters.drop(1).collect {
-                val details = latestDetails ?: return@collect
+            isMergeRepeatedChapters.collect { enabled ->
+                val details = latestDetails?.copy(mergeRepeatedChapters = enabled) ?: return@collect
                 val chapter = readingState.value?.chapterId?.let(chaptersLoader::peekChapter)
                 selectedBranch.value = if (details.isMerged) null else chapter?.branch ?: selectedBranch.value
                 mangaDetails.value = details.filterChapters(selectedBranch.value)
@@ -515,7 +514,8 @@ class ReaderViewModel @Inject constructor(
                         attempt < MAX_DETAILS_VERIFICATION_RETRIES && cf is CloudFlareProtectedException &&
                             captchaAutoResolveCoordinator.resolveIfEnabled(cf)
                     }
-                    .collect { details ->
+                    .collect { loaded ->
+                        val details = loaded.copy(mergeRepeatedChapters = settings.isMergeRepeatedChapters)
                         loadedDetails = details
                         latestDetails = details
                         if (mangaDetails.value == null) {
@@ -765,10 +765,10 @@ class ReaderViewModel @Inject constructor(
             val chapter = manga.findChapterById(history.chapterId) ?: return null
             // specified branch is requested
             return if (ReaderIntent.EXTRA_BRANCH in savedStateHandle) {
-                if (manga.hasMergedChapterGroups() || chapter.branch == requestedBranch) {
+                if (manga.hasMergedChapterGroups(settings.isMergeRepeatedChapters) || chapter.branch == requestedBranch) {
                     InitialReaderStart(ReaderState(history), originalHistory.takeIf { originalChapter != null })
                 } else {
-                    InitialReaderStart(ReaderState(manga, requestedBranch))
+                    InitialReaderStart(ReaderState(manga, requestedBranch, settings.isMergeRepeatedChapters))
                 }
             } else {
                 InitialReaderStart(ReaderState(history), originalHistory.takeIf { originalChapter != null })
@@ -777,7 +777,7 @@ class ReaderViewModel @Inject constructor(
 
         // start from beginning
         val preferredBranch = requestedBranch ?: manga.getPreferredBranch(null)
-        return InitialReaderStart(ReaderState(manga, preferredBranch))
+        return InitialReaderStart(ReaderState(manga, preferredBranch, settings.isMergeRepeatedChapters))
     }
 
     private data class InitialReaderStart(

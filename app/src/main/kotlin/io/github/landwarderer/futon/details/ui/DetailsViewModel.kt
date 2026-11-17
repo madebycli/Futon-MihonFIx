@@ -97,7 +97,7 @@ class DetailsViewModel @Inject constructor(
 	private val scrobblers: Set<@JvmSuppressWildcards Scrobbler> by lazy { scrobblersProvider.get() }
 
 	init {
-		mangaDetails.value = intent.manga?.let { MangaDetails(it) }
+		mangaDetails.value = intent.manga?.let { MangaDetails(it).copy(mergeRepeatedChapters = settings.isMergeRepeatedChapters) }
 	}
 
 	val history = historyRepository.observeOne(mangaId)
@@ -248,6 +248,7 @@ class DetailsViewModel @Inject constructor(
 	private fun doLoad(force: Boolean) = launchLoadingJob(Dispatchers.IO) {
 		var defaultBranch: DefaultBranch? = null
 		detailsLoadUseCase.invoke(intent, force)
+			.map { it.copy(mergeRepeatedChapters = settings.isMergeRepeatedChapters) }
 			.onEach {
 				if (it.allChapters.isEmpty()) {
 					return@onEach

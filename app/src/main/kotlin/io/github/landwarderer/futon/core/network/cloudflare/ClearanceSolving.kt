@@ -144,6 +144,8 @@ fun Interceptor.Chain.solveClearanceAndRetry(
     /** Polled while waiting; a cancelled caller stops waiting (and the solve stops once no caller waits). */
     isCancelled: () -> Boolean = { call().isCanceled() },
 ): Response? {
+    // A one-shot or duplex body cannot safely be sent a second time.
+    if (request.body?.let { it.isOneShot() || it.isDuplex() } == true) return null
     val solved = runCatching {
         runBlocking {
             coroutineScope {

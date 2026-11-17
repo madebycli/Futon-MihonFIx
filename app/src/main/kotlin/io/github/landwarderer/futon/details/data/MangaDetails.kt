@@ -1,6 +1,6 @@
 package io.github.landwarderer.futon.details.data
 
-import io.github.landwarderer.futon.details.domain.ChapterMergeSetting
+import io.github.landwarderer.futon.details.domain.DEFAULT_MERGE_REPEATED_CHAPTERS
 import io.github.landwarderer.futon.details.domain.mergeRepeated
 import io.github.landwarderer.futon.core.model.getLocale
 import io.github.landwarderer.futon.core.model.isLocal
@@ -22,6 +22,11 @@ data class MangaDetails(
     private val override: MangaOverride?,
     val description: CharSequence?,
     val isLoaded: Boolean,
+    val mergeRepeatedChapters: Boolean = DEFAULT_MERGE_REPEATED_CHAPTERS,
+    val identityChaptersSource: List<MangaChapter>? = null,
+    val downloadedChaptersSource: List<MangaChapter>? = null,
+    val remoteChaptersSource: List<MangaChapter>? = null,
+    val projectedBranch: String? = null,
 ) {
 
     constructor(manga: Manga) : this(
@@ -37,12 +42,21 @@ data class MangaDetails(
 
     val allChapters: List<MangaChapter> by lazy { mergeChapters() }
 
-    /** The chapters per branch (group) as the source reports them. */
+    /** Original identities survive a reader projection that hides alternative uploads. */
+    val identityChapters: List<MangaChapter>
+        get() = identityChaptersSource ?: allChapters
+
+    val storedChapters: List<MangaChapter>
+        get() = downloadedChaptersSource ?: local?.manga?.chapters.orEmpty()
+
+    private val originalBranchCount by lazy { identityChapters.mapTo(HashSet()) { it.branch }.size }
+
+    /** The chapters per branch (group) in this reading projection. */
     private val chaptersByBranch: Map<String?, List<MangaChapter>> by lazy { allChapters.groupBy { it.branch } }
 
     /** The number of chapter groups of the source; the merge option is only offered for several. */
     val branchCount: Int
-        get() = chaptersByBranch.size
+        get() = originalBranchCount
 
     /** One list of all groups, repeated chapters shown once; see [mergeRepeated]. Computed once. */
     private val mergedChapters: List<MangaChapter> by lazy {
@@ -62,7 +76,7 @@ data class MangaDetails(
      * a manga with several groups; it never applies to novels.
      */
     val isMerged: Boolean
-        get() = ChapterMergeSetting.isEnabled && !isNovel && chaptersByBranch.size > 1
+        get() = mergeRepeatedChapters && !isNovel && branchCount > 1
 
     val chapters: Map<String?, List<MangaChapter>>
         get() = if (isMerged) mapOf(null to mergedChapters) else chaptersByBranch
@@ -119,16 +133,39 @@ data class MangaDetails(
         // Reader next/previous uses the one list; the other uploads stay in the details' own chapter groups.
         copy(
             manga = manga.copy(chapters = listed),
+            identityChaptersSource = identityChapters,
+            downloadedChaptersSource = storedChapters,
+            remoteChaptersSource = remoteChaptersSource ?: manga.chapters.orEmpty(),
+            projectedBranch = branch,
             localManga = localManga?.run {
                 copy(manga = manga.copy(chapters = manga.chapters?.filter { it.id in listedIds }))
             },
         )
     } else copy(
-        manga = manga.filterChapters(branch),
+        manga = manga.copy(chapters = identityChapters).filterChapters(branch),
+        identityChaptersSource = identityChapters,
+        downloadedChaptersSource = storedChapters,
+        remoteChaptersSource = remoteChaptersSource ?: manga.chapters.orEmpty(),
+        projectedBranch = branch,
         localManga = localManga?.run {
-            copy(manga = manga.filterChapters(branch))
+            copy(manga = manga.copy(chapters = storedChapters).filterChapters(branch))
         },
     )
+
+
+    /** Rebuild cached projections after a completed download or deletion, using original remote URLs. */
+    fun withLocalManga(updated: LocalManga): MangaDetails {
+        val wasProjected = remoteChaptersSource != null
+        val raw = copy(
+            manga = if (isLocal) updated.manga else manga.copy(chapters = remoteChaptersSource ?: manga.chapters),
+            localManga = if (isLocal) null else updated,
+            identityChaptersSource = null,
+            downloadedChaptersSource = null,
+            remoteChaptersSource = null,
+            projectedBranch = null,
+        )
+        return if (wasProjected) raw.filterChapters(projectedBranch) else raw
+    }
 
     private fun mergeChapters(): List<MangaChapter> {
         val chapters = manga.chapters

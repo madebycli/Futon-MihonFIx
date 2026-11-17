@@ -36,7 +36,7 @@ fun renderDescription(description: String, imageGetter: Html.ImageGetter?): Char
 
 /** Removes the foreground colors of an HTML description and every link that is not `http` or `https`. */
 fun Spanned.filterDescriptionSpans(): Spanned {
-    val spannable = SpannableString.valueOf(this)
+    val spannable = SpannableString(this)
     for (span in spannable.getSpans<ForegroundColorSpan>()) {
         spannable.removeSpan(span)
     }

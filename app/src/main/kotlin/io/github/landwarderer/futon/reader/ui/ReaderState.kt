@@ -20,9 +20,9 @@ data class ReaderState(
 		scroll = history.scroll,
 	)
 
-	constructor(manga: Manga, branch: String?) : this(
+	constructor(manga: Manga, branch: String?, mergeRepeatedChapters: Boolean = true) : this(
 		chapterId = (
-			(if (manga.hasMergedChapterGroups()) MangaDetails(manga).chapterListForBranch(null) else manga.getChapters(branch))
+			(if (manga.hasMergedChapterGroups(mergeRepeatedChapters)) MangaDetails(manga).copy(mergeRepeatedChapters = mergeRepeatedChapters).chapterListForBranch(null) else manga.getChapters(branch))
 				.firstOrNull() ?: manga.chapters?.firstOrNull()
 			)?.id ?: error("Cannot find first chapter"),
 		page = 0,

@@ -44,9 +44,11 @@ fun HistoryInfo(
 		val index = chapters.indexOfFirst { it.id == history.chapterId }
 		if (index >= 0) {
 			index
-		} else {
+		} else if (manga?.isMerged == true) {
 			// Merged groups list another upload of the chapter the history points to.
-			manga?.allChapters?.firstOrNull { it.id == history.chapterId }?.let(chapters::indexOfChapter) ?: -1
+			manga?.identityChapters?.firstOrNull { it.id == history.chapterId }?.let(chapters::indexOfChapter) ?: -1
+		} else {
+			-1
 		}
 	} else {
 		-2
@@ -56,7 +58,7 @@ fun HistoryInfo(
 		currentChapter = currentChapter,
 		history = history,
 		isIncognitoMode = isIncognitoMode,
-		isChapterMissing = history != null && manga?.isLoaded == true && manga.allChapters.none { it.id == history.chapterId },
+		isChapterMissing = history != null && manga?.isLoaded == true && manga.identityChapters.none { it.id == history.chapterId },
 		canDownload = manga?.isLocal == false,
 		estimatedTime = estimatedTime,
 	)

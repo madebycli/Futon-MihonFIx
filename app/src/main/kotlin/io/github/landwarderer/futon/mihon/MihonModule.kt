@@ -9,6 +9,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import io.github.landwarderer.futon.core.network.MangaHttpClient
 import io.github.landwarderer.futon.core.network.webview.WebViewExecutor
+import io.github.landwarderer.futon.core.network.webview.CloudflareSolveCoordinator
 import io.github.landwarderer.futon.mihon.compat.MihonInjektBridge
 import okhttp3.CookieJar
 import okhttp3.OkHttpClient
@@ -24,6 +25,7 @@ object MihonModule {
         @MangaHttpClient okHttpClient: OkHttpClient,
         cookieJar: CookieJar,
         webViewExecutor: WebViewExecutor,
+        solveCoordinator: CloudflareSolveCoordinator,
     ): MihonInjektBridge {
         return try {
             MihonInjektBridge(
@@ -31,6 +33,7 @@ object MihonModule {
                 httpClient = okHttpClient,
                 cookieJar = cookieJar,
                 webViewExecutor = webViewExecutor,
+                solveCoordinator = solveCoordinator,
             )
         } catch (e: Throwable) {
             Log.e("MihonModule", "CRITICAL ERROR: Failed to create MihonInjektBridge!", e)

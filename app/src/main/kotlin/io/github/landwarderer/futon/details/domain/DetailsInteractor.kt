@@ -5,6 +5,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.flowOf
 import io.github.landwarderer.futon.core.model.FavouriteCategory
 import io.github.landwarderer.futon.core.model.isNsfw
@@ -50,6 +51,12 @@ class DetailsInteractor @Inject constructor(
 			}
 	}
 
+	fun observeChapterUpdates(manga: Manga): Flow<ChapterUpdateMarker> =
+		observeNewChapters(manga.id).mapLatest { count ->
+			val track = trackingRepository.getTrackOrNull(manga)
+			ChapterUpdateMarker(count, track?.lastChapterId)
+		}
+
 	fun observeScrobblingInfo(mangaId: Long): Flow<List<ScrobblingInfo>> {
 		return combine(
 			scrobblers.map { it.observeScrobblingInfo(mangaId) },
@@ -73,23 +80,11 @@ class DetailsInteractor @Inject constructor(
 
 	suspend fun updateLocal(subject: MangaDetails?, localManga: LocalManga): MangaDetails? {
 		subject ?: return null
-		return if (subject.id == localManga.manga.id) {
-			if (subject.isLocal) {
-				subject.copy(
-					manga = localManga.manga,
-				)
-			} else {
-				subject.copy(
-					localManga = runCatchingCancellable {
-						localManga.copy(
-							manga = localMangaRepository.getDetails(localManga.manga),
-						)
-					}.getOrNull() ?: subject.local,
-				)
-			}
-		} else {
-			subject
-		}
+		if (subject.id != localManga.manga.id) return subject
+		val updated = if (subject.isLocal) localManga else runCatchingCancellable {
+			localManga.copy(manga = localMangaRepository.getDetails(localManga.manga))
+		}.getOrNull() ?: subject.local ?: localManga
+		return subject.withLocalManga(updated)
 	}
 
 	suspend fun findRemote(seed: Manga) = localMangaRepository.getRemoteManga(seed)

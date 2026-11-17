@@ -6,6 +6,9 @@ import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.withTimeout
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -79,5 +82,39 @@ class CloudflareSolveCoordinatorTest {
             },
         )
         assertEquals(2, calls.get())
+    }
+
+    @Test
+    fun nativeAndMihonCallersJoinTheSameOwnedSolve() = runBlocking {
+        val coordinator = CloudflareSolveCoordinator(CloudflareHostCooldown())
+        val started = CompletableDeferred<Unit>()
+        val release = CompletableDeferred<Unit>()
+        val native = async(start = CoroutineStart.UNDISPATCHED) {
+            coordinator.solve("shared.test") { started.complete(Unit); release.await(); true }
+        }
+        started.await()
+        val mihon = async(start = CoroutineStart.UNDISPATCHED) {
+            coordinator.solve("SHARED.TEST") { error("A second solver must not start") }
+        }
+        release.complete(Unit)
+        assertTrue(native.await())
+        assertTrue(mihon.await())
+    }
+
+    @Test
+    fun cancellingTheLastCallerStopsItsSolveAndAllowsTheNextRequest() = runBlocking {
+        val coordinator = CloudflareSolveCoordinator(CloudflareHostCooldown())
+        val started = CompletableDeferred<Unit>()
+        val stopped = CompletableDeferred<Unit>()
+        val caller = async(start = CoroutineStart.UNDISPATCHED) {
+            coordinator.solve("cancel.test") {
+                started.complete(Unit)
+                try { awaitCancellation() } finally { stopped.complete(Unit) }
+            }
+        }
+        started.await()
+        caller.cancelAndJoin()
+        withTimeout(2_000) { stopped.await() }
+        assertTrue(coordinator.solve("cancel.test") { true })
     }
 }

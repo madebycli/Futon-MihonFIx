@@ -1,0 +1,166 @@
+name: Combined PR preview release
+on:
+  push:
+    branches: ['test/all-prs-2026-11-17-apk']
+permissions:
+  contents: write
+concurrency:
+  group: combined-pr-preview
+  cancel-in-progress: false
+env:
+  VERSION: 9.9.0-pr5-6-7-preview.1
+  VERSION_CODE: '90900'
+  PREVIEW_TAG: preview-pr5-6-7-2026-11-17.1
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: temurin
+      - uses: android-actions/setup-android@v4
+        with:
+          packages: platform-tools
+      - name: Prepare isolated build mirror
+        shell: bash
+        run: |
+          set -euo pipefail
+          MIRROR="$RUNNER_TEMP/futon-preview"
+          mkdir -p "$MIRROR" preview-artifact
+          tar --exclude='./.git' --exclude='./.gradle' --exclude='*/build' --exclude='./gradle/gradle-daemon-jvm.properties' -cf - . | tar -xf - -C "$MIRROR"
+          test ! -e "$MIRROR/gradle/gradle-daemon-jvm.properties"
+      - name: Full unit tests, debug APK and instrumented test compilation
+        run: bash scripts/preview-gradle.sh testDebugUnitTest assembleDebug assembleDebugAndroidTest compileDebugAndroidTestKotlin --continue
+      - name: Preserve and inspect actual debug APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK=preview-artifact/Futon-all-PRs-5-6-7-debug.apk
+          cp "$RUNNER_TEMP/futon-preview/app/build/outputs/apk/debug/app-debug.apk" "$APK"
+          AAPT="$(find "$ANDROID_HOME/build-tools" -type f -name aapt | sort -V | tail -n 1)"
+          APKSIGNER="$(find "$ANDROID_HOME/build-tools" -type f -name apksigner | sort -V | tail -n 1)"
+          "$AAPT" dump badging "$APK" > preview-artifact/DEBUG-BADGING.txt
+          "$APKSIGNER" verify --verbose --print-certs "$APK" > preview-artifact/DEBUG-SIGNATURE.txt
+          grep -F "package: name='io.github.landwarderer.futon.debug'" preview-artifact/DEBUG-BADGING.txt
+          grep -F 'Android Debug' preview-artifact/DEBUG-SIGNATURE.txt
+      - name: Run full release lint as diagnostics
+        continue-on-error: true
+        run: bash scripts/preview-gradle.sh lintRelease
+      - name: Prepare existing repository signing key
+        env:
+          KEYSTORE_B64: ${{ secrets.KEYSTORE_FILE }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$KEYSTORE_B64"
+          test -n "$KEYSTORE_PASSWORD"
+          test -n "$KEY_ALIAS"
+          test -n "$KEY_PASSWORD"
+          KEYSTORE="$RUNNER_TEMP/futon-preview-release.jks"
+          umask 077
+          printf '%s' "$KEYSTORE_B64" | base64 -d > "$KEYSTORE"
+          test -s "$KEYSTORE"
+          echo "KEYSTORE_FILE=$KEYSTORE" >> "$GITHUB_ENV"
+      - name: Build both optimized preview APKs and enforce lintVitalRelease
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash scripts/preview-gradle.sh assembleRelease lintVitalRelease -Pstandalone=false -PversionName="$VERSION" -PversionCode="$VERSION_CODE"
+          cp "$RUNNER_TEMP/futon-preview/app/build/outputs/apk/release/app-release.apk" "preview-artifact/Futon-$VERSION-legacy-update.apk"
+          bash scripts/preview-gradle.sh assembleRelease lintVitalRelease -Pstandalone=true -PversionName="$VERSION" -PversionCode="$VERSION_CODE"
+          cp "$RUNNER_TEMP/futon-preview/app/build/outputs/apk/release/app-release.apk" "preview-artifact/Futon-MihonFix-$VERSION.apk"
+      - name: Verify production identities, existing certificate and all 19 optimized ABI symbols
+        run: bash scripts/verify-release-apks.sh "$GITHUB_WORKSPACE/preview-artifact" "$VERSION" "$VERSION_CODE"
+      - name: Stop Gradle before emulator
+        run: |
+          cd "$RUNNER_TEMP/futon-preview"
+          ./gradlew -Dorg.gradle.java.home="$JAVA_HOME" --stop
+      - name: Enable Android emulator acceleration
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Android 16 description rendering and installation tests
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 36
+          arch: x86_64
+          target: google_apis
+          profile: pixel_7_pro
+          disable-animations: true
+          script: |
+            bash scripts/preview-gradle.sh connectedDebugAndroidTest -Pstandalone=false -Pandroid.testInstrumentationRunnerArguments.class=io.github.landwarderer.futon.details.domain.DescriptionRenderingTest
+            bash scripts/test-install-compat.sh "$GITHUB_WORKSPACE/preview-artifact" "$VERSION"
+      - name: Record actual XML counts
+        if: always()
+        run: python3 scripts/preview-test-counts.py
+      - name: Record exact sources, sizes and checksums
+        shell: bash
+        run: |
+          set -euo pipefail
+          {
+            echo "Combined preview source: $GITHUB_SHA"
+            echo "Branch: test/all-prs-2026-11-17-apk"
+            cat docs/pr-reviews/preview-sources.txt
+            echo "Release APK signing: existing repository release key"
+            echo "Release certificate SHA256: 12fe17245decb84c98985ddcc08884b874d10a78e4fb747a6ed3e2a42d77b625"
+            echo "Standalone: io.github.madebycli.futon.mihonfix"
+            echo "Legacy: io.github.landwarderer.futon"
+            echo "Debug: io.github.landwarderer.futon.debug; Android Debug key"
+            echo "Version: $VERSION ($VERSION_CODE)"
+            echo "Full JVM gate, lintVitalRelease, 19 ABI symbols and Android 16 emulator gate: passed"
+            echo "Full lintRelease: diagnostic; inspect uploaded report"
+            echo "Physical Galaxy S26 Ultra, live Cloudflare and reader interactions: pending"
+            for APK in preview-artifact/*.apk; do stat -c '%n: %s bytes' "$APK"; done
+          } | tee preview-artifact/BUILD-INFO.txt
+          cd preview-artifact
+          sha256sum *.apk | tee SHA256SUMS.txt
+          sha256sum Futon-all-PRs-5-6-7-debug.apk > Futon-all-PRs-5-6-7-debug.apk.sha256
+      - name: Preserve APKs and validation reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: combined-preview-apks-and-evidence
+          path: |
+            preview-artifact/*
+            ${{ runner.temp }}/futon-preview/app/build/test-results/testDebugUnitTest/*.xml
+            ${{ runner.temp }}/futon-preview/app/build/outputs/androidTest-results/connected/**
+            ${{ runner.temp }}/futon-preview/app/build/reports/lint-results-release.*
+            ${{ runner.temp }}/preview-gradle-*.log
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 14
+      - name: Publish preview with direct APK assets
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.PREVIEW_TAG }}
+          target_commitish: ${{ github.sha }}
+          name: Futon MihonFix – PR 5, 6, 7 Preview
+          body_path: docs/pr-reviews/preview-release.md
+          prerelease: true
+          make_latest: false
+          fail_on_unmatched_files: true
+          files: |
+            preview-artifact/*.apk
+            preview-artifact/*.apk.sha256
+            preview-artifact/SHA256SUMS.txt
+            preview-artifact/BUILD-INFO.txt
+            preview-artifact/TEST-RESULTS.json
+            preview-artifact/INSTALL-VALIDATION.txt
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Remove signing key
+        if: always()
+        run: rm -f "$RUNNER_TEMP/futon-preview-release.jks"

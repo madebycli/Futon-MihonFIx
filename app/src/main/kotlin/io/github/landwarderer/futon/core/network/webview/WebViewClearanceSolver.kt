@@ -113,7 +113,7 @@ class WebViewClearanceSolver(
                 val created = try {
                     createWebView(request)
                 } catch (e: Exception) {
-                    android.util.Log.w(TAG, "createWebView failed: $url", e)
+                    android.util.Log.w(TAG, "createWebView failed host=${request.url.host} type=${e.javaClass.simpleName}")
                     settle(false)
                     return@execute
                 }

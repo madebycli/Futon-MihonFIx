@@ -1,8 +1,17 @@
 # Current Futon Compatibility and Comix State
 
-Last refreshed: 2026-10-24
+Last refreshed: 2026-11-17
 
 ## Active work
+
+### Current review implementation, 2026-11-17
+The user requested audit-based improvements to draft PRs #5/#6/#7 and a combined GitHub preview release
+without merging any PR or updating devel. The signed stable release remains unchanged.
+Chapter settings are explicit immutable snapshots; original/stored IDs survive reader projections and storage changes.
+Numeric/volume ordering is retained and documented as a Futon adaptation; Kototoro keys/representative/header algorithms remain.
+See docs/pr-reviews/chapters.md. CI results must be checked for each final head; device validation remains open.
+Earlier work and release instructions below are historical.
+
 
 ### 2026-11-17 update
 - AppFuton/Futon devel 127c51d (45 commits since 9.9) merged directly into `devel` (0e2e4b1, user-authorized, no PR).
