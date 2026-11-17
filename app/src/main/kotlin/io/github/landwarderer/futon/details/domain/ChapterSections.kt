@@ -37,10 +37,11 @@ fun <T> withVolumeSections(
         val groupChanged = custom != null && custom != previousCustom
         if (volumeChanged || groupChanged) {
             result += ChapterSection.Header(chapterVolume, custom)
+            // As in Kototoro, only a header moves the reference point. A chapter without credits stays in the
+            // group above it, and a group that returns after another one gets its heading again.
+            previousVolume = chapterVolume
+            previousCustom = custom
         }
-        // Missing credits end the preceding group, even though they need no empty header.
-        previousVolume = chapterVolume
-        previousCustom = custom
         result += ChapterSection.Item(chapter)
     }
     return result

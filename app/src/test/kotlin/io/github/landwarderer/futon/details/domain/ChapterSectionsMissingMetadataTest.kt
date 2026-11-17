@@ -17,10 +17,10 @@ class ChapterSectionsMissingMetadataTest {
     }
 
     @Test
-    fun blankCreditsDoNotCreateHeadersAndAGroupCanReturn() {
+    fun blankCreditsDoNotCreateHeadersAndStayInTheGroupAbove() {
         val chapters = listOf(Item(1), Item(2, credit = " A "), Item(3, credit = " "),
             Item(4, credit = ""), Item(5, credit = "A"), Item(6, credit = "B"), Item(7, credit = "A"))
-        assertEquals(listOf<Any>(1L, "A", 2L, 3L, 4L, "A", 5L, "B", 6L, "A", 7L), labels(chapters))
+        assertEquals(listOf<Any>(1L, "A", 2L, 3L, 4L, 5L, "B", 6L, "A", 7L), labels(chapters))
         assertEquals(chapters, sections(chapters).filterIsInstance<ChapterSection.Item<Item>>().map { it.chapter })
     }
 
@@ -35,7 +35,7 @@ class ChapterSectionsMissingMetadataTest {
     @Test
     fun reversedRowsUseTheirActualOrderAndNeverCreateBlankCreditHeaders() {
         val chapters = listOf(Item(1, credit = "A"), Item(2), Item(3, credit = "A")).reversed()
-        assertEquals(listOf<Any>("A", 3L, 2L, "A", 1L), labels(chapters))
+        assertEquals(listOf<Any>("A", 3L, 2L, 1L), labels(chapters))
         assertTrue(sections(listOf(Item(1, credit = " "), Item(2))).all { it is ChapterSection.Item })
     }
 }
