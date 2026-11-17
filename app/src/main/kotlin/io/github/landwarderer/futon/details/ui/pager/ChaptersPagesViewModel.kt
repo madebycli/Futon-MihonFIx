@@ -100,8 +100,11 @@ abstract class ChaptersPagesViewModel(
 		valueProducer = { isMergeRepeatedChapters },
 	)
 
-	/** The merge option only makes sense for a manga with several chapter groups. */
-	val showMergeRepeatedChapters = mangaDetails.map { (it?.branchCount ?: 0) > 1 && it?.isNovel == false }
+	/**
+	 * The option is always offered for a manga (not for a novel), so it can be switched before the source reports
+	 * several chapter groups; with a single group it simply changes nothing.
+	 */
+	val showMergeRepeatedChapters = mangaDetails.map { it != null && !it.isNovel }
 		.stateIn(viewModelScope + Dispatchers.IO, SharingStarted.Eagerly, false)
 
 	val isDownloadedOnly = MutableStateFlow(false)
