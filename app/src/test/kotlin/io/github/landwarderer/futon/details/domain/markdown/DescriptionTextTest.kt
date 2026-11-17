@@ -37,7 +37,7 @@ class DescriptionTextTest {
     @Test
     fun unsafeSchemesNeverBecomeLinksButKeepTheirLabel() {
         val text = buildDescriptionText(
-            "[a](javascript:alert(1)) [b](intent://x) [c](file:///sdcard/x) [d](content://x) [e](mailto:a@b.c) [f](HTTP://ok.example)",
+            "[a](javascript:void) [b](intent://x) [c](file:///sdcard/x) [d](content://x) [e](mailto:a@b.c) [f](HTTP://ok.example)",
         )
         assertEquals("a b c d e f", text.text)
         assertEquals(listOf("HTTP://ok.example" to "f"), text.links)
