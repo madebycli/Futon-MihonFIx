@@ -123,17 +123,9 @@ jobs:
             --tests "io.github.landwarderer.futon.core.prefs.HomeBackgroundFontTest" \
             --tests "io.github.landwarderer.futon.core.prefs.NovelAppSettingsTest" \
             --tests "io.github.landwarderer.futon.reader.domain.*" \
-            --tests "io.github.landwarderer.futon.details.domain.ComixChapterGroupingTest" \
-            --tests "io.github.landwarderer.futon.mihon.MihonExceptionUnwrapTest" \
-            --tests "io.github.landwarderer.futon.mihon.ExtensionRepoServiceTest" \
-            --tests "io.github.landwarderer.futon.mihon.TachiyomiApkClassLoaderPolicyTest" \
-            --tests "io.github.landwarderer.futon.mihon.compat.MihonNetworkHelperTest" \
-            --tests "io.github.landwarderer.futon.mihon.compat.MihonSourceApiCompatTest" \
-            --tests "io.github.landwarderer.futon.mihon.compat.MihonModernHostContractTest" \
-            --tests "io.github.landwarderer.futon.mihon.MihonMangaRepositoryTest" \
-            --tests "io.github.landwarderer.futon.mihon.state.MihonSnapshotPersistenceTest" \
-            --tests "io.github.landwarderer.futon.mihon.model.MihonDataConvertersTest" \
-            --tests "io.github.landwarderer.futon.core.network.GitHubRawUrlCompatTest" \
+            --tests "io.github.landwarderer.futon.details.domain.*" \
+            --tests "io.github.landwarderer.futon.mihon.*" \
+            --tests "io.github.landwarderer.futon.core.network.*" \
             --stacktrace \
             --no-build-cache \
             --no-configuration-cache
