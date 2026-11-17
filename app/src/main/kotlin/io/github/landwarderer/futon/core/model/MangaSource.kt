@@ -135,7 +135,7 @@ fun MangaSource.getOriginLabel(context: Context): String? = when (sourceOrigin) 
 fun MangaSource.getSummaryWithOrigin(context: Context): String? {
     val summary = getSummary(context)
     val origin = getOriginLabel(context) ?: return summary
-    return if (summary.isNullOrBlank()) origin else context.getString(R.string.source_summary_with_origin, summary, origin)
+    return if (summary.isNullOrBlank()) origin else context.getString(R.string.source_summary_with_origin, origin, summary)
 }
 
 fun MangaSource.getSummary(context: Context): String? = when (val source = unwrap()) {

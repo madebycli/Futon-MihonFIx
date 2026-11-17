@@ -28,7 +28,7 @@ fun sourceReplacementAD(
 				item.matched,
 				item.total,
 			)
-			source.getOriginLabel(context)?.let { context.getString(R.string.source_summary_with_origin, summary, it) }
+			source.getOriginLabel(context)?.let { context.getString(R.string.source_summary_with_origin, it, summary) }
 				?: summary
 		}
 		binding.textViewPercent.isVisible = source != null
