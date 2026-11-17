@@ -92,6 +92,16 @@ abstract class ChaptersPagesViewModel(
 		valueProducer = { isChaptersGridView },
 	)
 
+	val isMergeRepeatedChapters = settings.observeAsStateFlow(
+		scope = viewModelScope + Dispatchers.IO,
+		key = AppSettings.KEY_MERGE_REPEATED_CHAPTERS,
+		valueProducer = { isMergeRepeatedChapters },
+	)
+
+	/** The merge option only makes sense for a manga with several chapter groups. */
+	val showMergeRepeatedChapters = mangaDetails.map { (it?.branchCount ?: 0) > 1 && it?.isNovel == false }
+		.stateIn(viewModelScope + Dispatchers.IO, SharingStarted.Eagerly, false)
+
 	val isDownloadedOnly = MutableStateFlow(false)
 
 	val newChaptersCount = mangaDetails.flatMapLatest { d ->
@@ -124,9 +134,12 @@ abstract class ChaptersPagesViewModel(
 		}
 	}.stateIn(viewModelScope + Dispatchers.IO, SharingStarted.Lazily, emptyList())
 
+	/** The details again whenever the merge setting changes: the chapter lists depend on it. */
+	private val detailsOnMergeChange = mangaDetails.combine(isMergeRepeatedChapters) { details, _ -> details }
+
 	val chapters = combine(
 		combine(
-			mangaDetails,
+			detailsOnMergeChange,
 			readingState.map { it?.chapterId ?: 0L }.distinctUntilChanged(),
 			selectedBranch,
 			newChaptersCount,
@@ -150,7 +163,7 @@ abstract class ChaptersPagesViewModel(
 	}.stateIn(viewModelScope + Dispatchers.IO, SharingStarted.Eagerly, emptyList())
 
 	val quickFilter = combine(
-		mangaDetails,
+		detailsOnMergeChange,
 		selectedBranch,
 	) { details, branch ->
 		val branches = details?.chapters?.toList()?.sortedWithSafe(
@@ -175,6 +188,10 @@ abstract class ChaptersPagesViewModel(
 
 	fun setChaptersReversed(newValue: Boolean) {
 		settings.isChaptersReverse = newValue
+	}
+
+	fun setMergeRepeatedChapters(newValue: Boolean) {
+		settings.isMergeRepeatedChapters = newValue
 	}
 
 	fun setChaptersInGridView(newValue: Boolean) {

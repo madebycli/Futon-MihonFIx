@@ -8,6 +8,7 @@ import kotlinx.coroutines.sync.withLock
 import io.github.landwarderer.futon.core.exceptions.resolve.CaptchaAutoResolveCoordinator
 import io.github.landwarderer.futon.core.parser.MangaRepository
 import io.github.landwarderer.futon.details.data.MangaDetails
+import io.github.landwarderer.futon.details.domain.indexOfChapter
 import org.koitharu.kotatsu.parsers.model.MangaChapter
 import org.koitharu.kotatsu.parsers.model.MangaPage
 import io.github.landwarderer.futon.reader.ui.pager.ReaderPage
@@ -38,7 +39,11 @@ class ChaptersLoader @Inject constructor(
 	suspend fun loadPrevNextChapter(manga: MangaDetails, currentId: Long, isNext: Boolean): Boolean {
 		val chapters = manga.allChapters
 		val predicate: (MangaChapter) -> Boolean = { it.id == currentId }
-		val index = if (isNext) chapters.indexOfFirst(predicate) else chapters.indexOfLast(predicate)
+		var index = if (isNext) chapters.indexOfFirst(predicate) else chapters.indexOfLast(predicate)
+		if (index == -1) {
+			// The list shows another upload of the current chapter.
+			index = peekChapter(currentId)?.let(chapters::indexOfChapter) ?: -1
+		}
 		if (index == -1) return false
 		val newChapter = chapters.getOrNull(if (isNext) index + 1 else index - 1) ?: return false
 		if (mutex.withLock { newChapter.id in chapterPages }) return false

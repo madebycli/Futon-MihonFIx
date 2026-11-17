@@ -48,7 +48,7 @@ class ProgressUpdateUseCase @Inject constructor(
 		if (chaptersCount == 0) {
 			return PROGRESS_NONE
 		}
-		val chapterIndex = chapters.indexOfFirst { x -> x.id == history.chapterId }
+		val chapterIndex = chapters.indexOfChapter(chapter)
 		val pagesCount = chapterRepo.getPages(chapter).size
 		if (pagesCount == 0) {
 			return PROGRESS_NONE
