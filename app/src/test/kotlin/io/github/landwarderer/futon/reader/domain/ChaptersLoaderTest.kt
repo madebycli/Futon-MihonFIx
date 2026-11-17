@@ -2,7 +2,7 @@ package io.github.landwarderer.futon.reader.domain
 
 import android.content.Context
 import io.github.landwarderer.futon.core.exceptions.resolve.CaptchaAutoResolveCoordinator
-import io.github.landwarderer.futon.core.network.cookies.CloudflareSolveCoordinator
+import io.github.landwarderer.futon.core.network.webview.CloudflareSolveCoordinator
 import io.github.landwarderer.futon.core.ui.util.ForegroundActivityHolder
 import io.github.landwarderer.futon.core.model.TestMangaSource
 import io.github.landwarderer.futon.core.parser.MangaRepository
