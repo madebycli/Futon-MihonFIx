@@ -18,6 +18,8 @@ import io.github.landwarderer.futon.core.util.ext.requireValue
 import io.github.landwarderer.futon.core.util.ext.sortedWithSafe
 import io.github.landwarderer.futon.details.data.MangaDetails
 import io.github.landwarderer.futon.details.domain.DetailsInteractor
+import io.github.landwarderer.futon.details.domain.ChapterUpdateMarker
+import io.github.landwarderer.futon.details.domain.newChapterRepresentativeIds
 import io.github.landwarderer.futon.details.ui.DetailsActivity
 import io.github.landwarderer.futon.details.ui.DetailsViewModel
 import io.github.landwarderer.futon.details.ui.mapChapters
@@ -92,14 +94,28 @@ abstract class ChaptersPagesViewModel(
 		valueProducer = { isChaptersGridView },
 	)
 
+	val isMergeRepeatedChapters = settings.observeAsStateFlow(
+		scope = viewModelScope + Dispatchers.IO,
+		key = AppSettings.KEY_MERGE_REPEATED_CHAPTERS,
+		valueProducer = { isMergeRepeatedChapters },
+	)
+
+	/**
+	 * The option is always offered for a manga (not for a novel), so it can be switched before the source reports
+	 * several chapter groups; with a single group it simply changes nothing.
+	 */
+	val showMergeRepeatedChapters = mangaDetails.map { it != null && !it.isNovel }
+		.stateIn(viewModelScope + Dispatchers.IO, SharingStarted.Eagerly, false)
+
 	val isDownloadedOnly = MutableStateFlow(false)
 
-	val newChaptersCount = mangaDetails.flatMapLatest { d ->
-		if (d?.isLocal == false) {
-			interactor.observeNewChapters(d.id)
-		} else {
-			flowOf(0)
-		}
+	private val chapterUpdates = mangaDetails.flatMapLatest { d ->
+		if (d?.isLocal == false) interactor.observeChapterUpdates(d.toManga()) else flowOf(ChapterUpdateMarker())
+	}.stateIn(viewModelScope + Dispatchers.IO, SharingStarted.Eagerly, ChapterUpdateMarker())
+
+	val newChaptersCount = combine(mangaDetails, chapterUpdates, isMergeRepeatedChapters) { d, marker, enabled ->
+		val projected = d?.copy(mergeRepeatedChapters = enabled)
+		if (projected?.isMerged == true) projected.newChapterRepresentativeIds(marker).size else marker.count
 	}.stateIn(viewModelScope + Dispatchers.IO, SharingStarted.Eagerly, 0)
 
 	val emptyReason: StateFlow<EmptyMangaReason?> = combine(
@@ -124,19 +140,25 @@ abstract class ChaptersPagesViewModel(
 		}
 	}.stateIn(viewModelScope + Dispatchers.IO, SharingStarted.Lazily, emptyList())
 
+	/** The details again whenever the merge setting changes: the chapter lists depend on it. */
+	private val detailsOnMergeChange = mangaDetails.combine(isMergeRepeatedChapters) { details, enabled ->
+		details?.copy(mergeRepeatedChapters = enabled)
+	}
+
 	val chapters = combine(
 		combine(
-			mangaDetails,
+			detailsOnMergeChange,
 			readingState.map { it?.chapterId ?: 0L }.distinctUntilChanged(),
 			selectedBranch,
-			newChaptersCount,
+			chapterUpdates,
 			bookmarks,
 			isChaptersInGridView,
 			isDownloadedOnly,
 		) { manga, currentChapterId, branch, news, bookmarks, grid, downloadedOnly ->
 			manga?.mapChapters(
 				currentChapterId = currentChapterId,
-				newCount = news,
+				newCount = news.count,
+				newChapterIds = if (manga.isMerged) manga.newChapterRepresentativeIds(news) else null,
 				branch = branch,
 				bookmarks = bookmarks,
 				isGrid = grid,
@@ -150,7 +172,7 @@ abstract class ChaptersPagesViewModel(
 	}.stateIn(viewModelScope + Dispatchers.IO, SharingStarted.Eagerly, emptyList())
 
 	val quickFilter = combine(
-		mangaDetails,
+		detailsOnMergeChange,
 		selectedBranch,
 	) { details, branch ->
 		val branches = details?.chapters?.toList()?.sortedWithSafe(
@@ -167,14 +189,32 @@ abstract class ChaptersPagesViewModel(
 	}
 
 	init {
+		launchJob(Dispatchers.Default) {
+			isMergeRepeatedChapters.collect { enabled ->
+				mangaDetails.update { it?.copy(mergeRepeatedChapters = enabled) }
+			}
+		}
 		launchJob(Dispatchers.IO) {
 			localStorageChanges
 				.collect { onDownloadComplete(it) }
+		}
+		launchJob(Dispatchers.Default) {
+			// Merging the chapter groups (or undoing it) changes which groups exist: keep the selection valid.
+			detailsOnMergeChange.collect { details ->
+				val groups = details?.chapters ?: return@collect
+				if (groups.isNotEmpty() && selectedBranch.value !in groups) {
+					selectedBranch.value = groups.maxByOrNull { it.value.size }?.key
+				}
+			}
 		}
 	}
 
 	fun setChaptersReversed(newValue: Boolean) {
 		settings.isChaptersReverse = newValue
+	}
+
+	fun setMergeRepeatedChapters(newValue: Boolean) {
+		settings.isMergeRepeatedChapters = newValue
 	}
 
 	fun setChaptersInGridView(newValue: Boolean) {

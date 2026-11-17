@@ -1,8 +1,10 @@
 package io.github.landwarderer.futon.details.domain
 
 import androidx.room.withTransaction
+import io.github.landwarderer.futon.core.prefs.AppSettings
 import io.github.landwarderer.futon.core.db.MangaDatabase
 import io.github.landwarderer.futon.core.model.getPreferredBranch
+import io.github.landwarderer.futon.details.data.MangaDetails
 import io.github.landwarderer.futon.core.model.isLocal
 import io.github.landwarderer.futon.core.os.NetworkState
 import io.github.landwarderer.futon.core.parser.MangaRepository
@@ -18,6 +20,7 @@ class ProgressUpdateUseCase @Inject constructor(
 	private val database: MangaDatabase,
 	private val localMangaRepository: LocalMangaRepository,
 	private val networkState: NetworkState,
+	private val settings: AppSettings,
 ) {
 
 	suspend operator fun invoke(manga: Manga): Float {
@@ -38,7 +41,7 @@ class ProgressUpdateUseCase @Inject constructor(
 		}
 		val chapter = details.findChapterById(history.chapterId)
 			?: return estimateFromCounts(manga, details, history)
-		val chapters = details.chapterListForBranch(chapter.branch)
+		val chapters = MangaDetails(details).copy(mergeRepeatedChapters = settings.isMergeRepeatedChapters).chapterListForBranch(chapter.branch)
 		val chapterRepo = if (repo.source == chapter.source) {
 			repo
 		} else {
@@ -48,7 +51,7 @@ class ProgressUpdateUseCase @Inject constructor(
 		if (chaptersCount == 0) {
 			return PROGRESS_NONE
 		}
-		val chapterIndex = chapters.indexOfFirst { x -> x.id == history.chapterId }
+		val chapterIndex = chapters.indexOfChapter(chapter)
 		val pagesCount = chapterRepo.getPages(chapter).size
 		if (pagesCount == 0) {
 			return PROGRESS_NONE
@@ -84,7 +87,8 @@ class ProgressUpdateUseCase @Inject constructor(
 	 * a completion the user never reached.
 	 */
 	private suspend fun estimateFromCounts(manga: Manga, details: Manga, history: HistoryEntity): Float {
-		val newTotal = details.getChapters(details.getPreferredBranch(null)).size
+		val newTotal = MangaDetails(details).copy(mergeRepeatedChapters = settings.isMergeRepeatedChapters)
+			.chapterListForBranch(details.getPreferredBranch(null)).size
 			.takeIf { it > 0 } ?: details.chapters?.size ?: 0
 		if (newTotal == 0 || history.chaptersCount <= 0 || !ReadingProgress.isValid(history.percent)) {
 			return PROGRESS_NONE

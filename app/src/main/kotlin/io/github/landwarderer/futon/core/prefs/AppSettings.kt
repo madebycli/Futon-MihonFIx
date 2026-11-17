@@ -18,6 +18,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import io.github.landwarderer.futon.R
 import io.github.landwarderer.futon.core.model.ZoomMode
 import io.github.landwarderer.futon.core.network.DoHProvider
+import io.github.landwarderer.futon.details.domain.DEFAULT_MERGE_REPEATED_CHAPTERS
 import io.github.landwarderer.futon.core.util.ext.connectivityManager
 import io.github.landwarderer.futon.core.util.ext.getEnumValue
 import io.github.landwarderer.futon.core.util.ext.observeChanges
@@ -56,6 +57,7 @@ class AppSettings internal constructor(
 		context,
 		PreferenceManager.getDefaultSharedPreferences(context),
 	)
+
 
 	private val connectivityManager by lazy { context.connectivityManager }
 	private val mangaListBadgesDefault by lazy { ArraySet(context.resources.getStringArray(R.array.values_list_badges)) }
@@ -338,6 +340,11 @@ class AppSettings internal constructor(
 	var isChaptersGridView: Boolean
 		get() = prefs.getBoolean(KEY_GRID_VIEW_CHAPTERS, false)
 		set(value) = prefs.edit { putBoolean(KEY_GRID_VIEW_CHAPTERS, value) }
+
+	/** Shows the chapter groups of a manga as one list; repeated chapters appear once (Kototoro behaviour). */
+	var isMergeRepeatedChapters: Boolean
+		get() = prefs.getBoolean(KEY_MERGE_REPEATED_CHAPTERS, DEFAULT_MERGE_REPEATED_CHAPTERS)
+		set(value) = prefs.edit { putBoolean(KEY_MERGE_REPEATED_CHAPTERS, value) }
 
 	val zoomMode: ZoomMode
 		get() = prefs.getEnumValue(KEY_ZOOM_MODE, ZoomMode.FIT_CENTER)
@@ -970,6 +977,7 @@ class AppSettings internal constructor(
 		const val KEY_PROGRESS_INDICATORS = "progress_indicators"
 		const val KEY_REVERSE_CHAPTERS = "reverse_chapters"
 		const val KEY_GRID_VIEW_CHAPTERS = "grid_view_chapters"
+		const val KEY_MERGE_REPEATED_CHAPTERS = "merge_repeated_chapters"
 		const val KEY_INCOGNITO_NSFW = "incognito_nsfw"
 		const val KEY_PAGES_NUMBERS = "pages_numbers"
 		const val KEY_SCREENSHOTS_POLICY = "screenshots_policy"

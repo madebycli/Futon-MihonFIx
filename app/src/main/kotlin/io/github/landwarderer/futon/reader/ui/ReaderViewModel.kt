@@ -30,7 +30,8 @@ import io.github.landwarderer.futon.core.util.ext.call
 import io.github.landwarderer.futon.core.util.ext.findCloudFlareException
 import io.github.landwarderer.futon.core.util.ext.firstNotNull
 import io.github.landwarderer.futon.core.util.ext.requireValue
-import io.github.landwarderer.futon.details.domain.hasCombinedComixChapters
+import io.github.landwarderer.futon.details.domain.hasMergedChapterGroups
+import io.github.landwarderer.futon.details.domain.indexOfChapter
 import io.github.landwarderer.futon.details.data.MangaDetails
 import io.github.landwarderer.futon.details.domain.DetailsInteractor
 import io.github.landwarderer.futon.details.domain.DetailsLoadUseCase
@@ -222,9 +223,14 @@ class ReaderViewModel @Inject constructor(
         }
     }.stateIn(viewModelScope + Dispatchers.IO, SharingStarted.Eagerly, false)
 
+    /** The details as loaded, with every chapter of every group; [mangaDetails] holds them filtered for reading. */
+    @Volatile
+    private var latestDetails: MangaDetails? = null
+
     init {
         initIncognitoMode()
         loadImpl()
+        observeMergeRepeatedChapters()
         launchJob(Dispatchers.IO) {
             val mangaId = manga.filterNotNull().first().id
             if (!isIncognitoMode.firstNotNull()) {
@@ -236,6 +242,19 @@ class ReaderViewModel @Inject constructor(
     fun reload() {
         loadingJob?.cancel()
         loadImpl()
+    }
+
+    /** Merging the chapter groups changes the list the reader walks through; rebuild it around the open chapter. */
+    private fun observeMergeRepeatedChapters() {
+        launchJob(Dispatchers.Default) {
+            isMergeRepeatedChapters.collect { enabled ->
+                val details = latestDetails?.copy(mergeRepeatedChapters = enabled) ?: return@collect
+                val chapter = readingState.value?.chapterId?.let(chaptersLoader::peekChapter)
+                selectedBranch.value = if (details.isMerged) null else chapter?.branch ?: selectedBranch.value
+                mangaDetails.value = details.filterChapters(selectedBranch.value)
+                notifyStateChanged()
+            }
+        }
     }
 
     fun onPause() {
@@ -335,6 +354,10 @@ class ReaderViewModel @Inject constructor(
             val newChapterId = if (delta != 0) {
                 val allChapters = mangaDetails.requireValue().allChapters
                 var index = allChapters.indexOfFirst { x -> x.id == prevState.chapterId }
+                if (index < 0) {
+                    // The list shows another upload of the opened chapter.
+                    index = chaptersLoader.peekChapter(prevState.chapterId)?.let(allChapters::indexOfChapter) ?: -1
+                }
                 if (index < 0) {
                     return@launchLoadingJob
                 }
@@ -491,8 +514,10 @@ class ReaderViewModel @Inject constructor(
                         attempt < MAX_DETAILS_VERIFICATION_RETRIES && cf is CloudFlareProtectedException &&
                             captchaAutoResolveCoordinator.resolveIfEnabled(cf)
                     }
-                    .collect { details ->
+                    .collect { loaded ->
+                        val details = loaded.copy(mergeRepeatedChapters = settings.isMergeRepeatedChapters)
                         loadedDetails = details
+                        latestDetails = details
                         if (mangaDetails.value == null) {
                             mangaDetails.value = details
                         }
@@ -514,7 +539,7 @@ class ReaderViewModel @Inject constructor(
                                 val mode = runCatchingCancellable {
                                     detectReaderModeUseCase(manga, start.state)
                                 }.getOrDefault(settings.defaultReaderMode)
-                                selectedBranch.value = if (details.hasCombinedComixChapters) null else chapter.branch
+                                selectedBranch.value = if (details.isMerged) null else chapter.branch
                                 readerMode.value = mode
                                 try {
                                     check(chaptersLoader.loadSingleChapter(start.state.chapterId)) {
@@ -649,7 +674,7 @@ class ReaderViewModel @Inject constructor(
         val state = getCurrentState() ?: return
         val chapter = chaptersLoader.peekChapter(state.chapterId) ?: return
         val m = mangaDetails.value ?: return
-        val chapterIndex = m.chapterListForBranch(chapter.branch).indexOfFirst { it.id == chapter.id }
+        val chapterIndex = m.chapterListForBranch(chapter.branch).indexOfChapter(chapter)
         val newState = ReaderUiState(
             mangaName = m.toManga().title,
             chapter = chapter,
@@ -668,12 +693,12 @@ class ReaderViewModel @Inject constructor(
     }
 
     private fun computePercent(chapterId: Long, pageIndex: Int): Float {
-        val branch = chaptersLoader.peekChapter(chapterId)?.branch
-        val chapters = mangaDetails.value?.chapterListForBranch(branch) ?: return PROGRESS_NONE
+        val chapter = chaptersLoader.peekChapter(chapterId)
+        val chapters = mangaDetails.value?.chapterListForBranch(chapter?.branch) ?: return PROGRESS_NONE
         val chaptersCount = chapters.size
-        val chapterIndex = chapters.indexOfFirst { x -> x.id == chapterId }
+        val chapterIndex = chapter?.let(chapters::indexOfChapter) ?: -1
         val pagesCount = chaptersLoader.getPagesCount(chapterId)
-        if (chaptersCount == 0 || pagesCount == 0) {
+        if (chaptersCount == 0 || pagesCount == 0 || chapterIndex < 0) {
             return PROGRESS_NONE
         }
         val pagePercent = (pageIndex + 1) / pagesCount.toFloat()
@@ -740,10 +765,10 @@ class ReaderViewModel @Inject constructor(
             val chapter = manga.findChapterById(history.chapterId) ?: return null
             // specified branch is requested
             return if (ReaderIntent.EXTRA_BRANCH in savedStateHandle) {
-                if (manga.hasCombinedComixChapters() || chapter.branch == requestedBranch) {
+                if (manga.hasMergedChapterGroups(settings.isMergeRepeatedChapters) || chapter.branch == requestedBranch) {
                     InitialReaderStart(ReaderState(history), originalHistory.takeIf { originalChapter != null })
                 } else {
-                    InitialReaderStart(ReaderState(manga, requestedBranch))
+                    InitialReaderStart(ReaderState(manga, requestedBranch, settings.isMergeRepeatedChapters))
                 }
             } else {
                 InitialReaderStart(ReaderState(history), originalHistory.takeIf { originalChapter != null })
@@ -752,7 +777,7 @@ class ReaderViewModel @Inject constructor(
 
         // start from beginning
         val preferredBranch = requestedBranch ?: manga.getPreferredBranch(null)
-        return InitialReaderStart(ReaderState(manga, preferredBranch))
+        return InitialReaderStart(ReaderState(manga, preferredBranch, settings.isMergeRepeatedChapters))
     }
 
     private data class InitialReaderStart(

@@ -1,8 +1,27 @@
 # Current Futon Compatibility and Comix State
 
-Last refreshed: 2026-10-24
+Last refreshed: 2026-11-17
 
 ## Active work
+
+### Current review implementation, 2026-11-17
+The user requested audit-based improvements to draft PRs #5/#6/#7 and a combined GitHub preview release
+without merging any PR or updating devel. The signed stable release remains unchanged.
+Chapter settings are explicit immutable snapshots; original/stored IDs survive reader projections and storage changes.
+Numeric/volume ordering is retained and documented as a Futon adaptation; Kototoro keys/representative/header algorithms remain.
+See docs/pr-reviews/chapters.md. CI results must be checked for each final head; device validation remains open.
+Earlier work and release instructions below are historical.
+
+
+### 2026-11-17 update
+- AppFuton/Futon devel 127c51d (45 commits since 9.9) merged directly into `devel` (0e2e4b1, user-authorized, no PR).
+  Compile + 231 of 233 unit tests passed locally; the 2 failures are live-network `WuxiaworldRepositoryTest`
+  (host not reachable from the build sandbox). Conflict resolution: upstream's Activity-based Cloudflare solver kept;
+  our Mihon pieces (tryResolveCaptcha, MihonCoverFetcher, Mihon page fetching, `source_<id>` prefs) re-applied.
+- Chapter groups follow Kototoro now (PR #5, user decision "exactly like Kototoro", merge mode ON by default).
+  The Comix-only projection (`ComixChapterGrouping`) is removed.
+- Markdown descriptions (Kototoro PR #2, merge 11fdfb3a) and a Mihon/Cloudflare update against Kototoro devel
+  f32242d6 are separate draft PRs. Physical-device validation remains PENDING.
 
 Current task: user-authorized AppFuton upstream sync, Galaxy S26 Ultra installation conflict fix and
 new signed release. See docs/upstream-comix/ANDROID-INSTALL-9.9.md.

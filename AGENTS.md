@@ -33,8 +33,15 @@ Actual parent AppFuton/Futon was subsequently merged via PR #4 at
 GitHub behind count is zero. See `docs/upstream-comix/APPFUTON-SYNC.md`; Mihon fixes remain necessary.
 99 focused tests and debug/instrumented-source compilation passed. Signed 9.8.5 is published, run38437336280 SUCCESS, with unchanged repository certificate.
 Use `devel` as the current main branch; future merges/releases still require task authorization.
-Only modify the host app for external Comix: reliably unique chapter numbers form one complete list,
-while duplicates/uncertain numbers retain groups. No extension fork or new signing key.
+Chapter groups (updated 2026-11-17, user decision): the host shows every source with several chapter groups
+as ONE list using Kototoro algorithms (`withVolumeSections` headers, `mergeRepeated` representatives, "Merge chapter
+groups" menu entry, `merge_repeated_chapters`, ON by default). There is no Comix-specific rule any more; the former
+"external Comix only / no host dedup engine" decision of 2026-10-13 is superseded. Display only: chapters are never
+deleted. Reading-order sorting by volume/number is an explicit retained Futon adaptation for interleaved groups.
+MangaDetails carries immutable merge preferences and original identities; do not reintroduce a process-global flag.
+AppFuton upstream 127c51d is merged into `devel`. No extension fork or new signing key.
+The user authorized a combined GitHub preview release without merging PRs. Keep devel untouched;
+use a preview-prefixed tag and mark it prerelease, never latest. PR merges still require separate authorization.
 
 Focused Mihon and Comix regressions are a hard gate; project-wide legacy release lint remains
 diagnostic in the existing workflow. Verify actual Actions/APK/signature evidence before claiming

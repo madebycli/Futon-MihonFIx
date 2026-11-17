@@ -2,6 +2,7 @@ package io.github.landwarderer.futon.details.ui.model
 
 import io.github.landwarderer.futon.core.model.MangaHistory
 import io.github.landwarderer.futon.details.data.MangaDetails
+import io.github.landwarderer.futon.details.domain.indexOfChapter
 import io.github.landwarderer.futon.details.data.ReadingTime
 
 data class HistoryInfo(
@@ -40,7 +41,15 @@ fun HistoryInfo(
 		manga?.chapterListForBranch(branch)
 	}
 	val currentChapter = if (history != null && !chapters.isNullOrEmpty()) {
-		chapters.indexOfFirst { it.id == history.chapterId }
+		val index = chapters.indexOfFirst { it.id == history.chapterId }
+		if (index >= 0) {
+			index
+		} else if (manga?.isMerged == true) {
+			// Merged groups list another upload of the chapter the history points to.
+			manga?.identityChapters?.firstOrNull { it.id == history.chapterId }?.let(chapters::indexOfChapter) ?: -1
+		} else {
+			-1
+		}
 	} else {
 		-2
 	}
@@ -49,7 +58,7 @@ fun HistoryInfo(
 		currentChapter = currentChapter,
 		history = history,
 		isIncognitoMode = isIncognitoMode,
-		isChapterMissing = history != null && manga?.isLoaded == true && manga.allChapters.none { it.id == history.chapterId },
+		isChapterMissing = history != null && manga?.isLoaded == true && manga.identityChapters.none { it.id == history.chapterId },
 		canDownload = manga?.isLocal == false,
 		estimatedTime = estimatedTime,
 	)
