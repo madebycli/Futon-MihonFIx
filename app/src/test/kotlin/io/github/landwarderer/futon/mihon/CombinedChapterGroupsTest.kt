@@ -16,6 +16,9 @@ import io.github.landwarderer.futon.mihon.model.MihonMangaSource
 import io.github.landwarderer.futon.mihon.model.toDomainContent
 import io.github.landwarderer.futon.mihon.model.toManga
 import io.github.landwarderer.futon.mihon.state.MihonChapterSnapshotStore
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.setMain
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.*
 import org.junit.Test
@@ -30,6 +33,7 @@ class CombinedChapterGroupsTest {
             override fun postToMainThread(runnable: Runnable) = runnable.run()
             override fun isMainThread() = true
         })
+        Dispatchers.setMain(Dispatchers.Default)
         try {
             val numbers = (215..222).map(Int::toFloat) + listOf(222.5f, 223f, 223.9f, 224f)
             val input = numbers.map { number ->
@@ -84,6 +88,7 @@ class CombinedChapterGroupsTest {
             )
         } finally {
             MihonChapterSnapshotStore.clearForTests()
+            Dispatchers.resetMain()
             ArchTaskExecutor.getInstance().setDelegate(null)
         }
     }

@@ -6,7 +6,7 @@ permissions:
   contents: write
 concurrency:
   group: combined-pr-preview
-  cancel-in-progress: false
+  cancel-in-progress: true
 env:
   VERSION: 9.9.0-pr5-6-7-preview.1
   VERSION_CODE: '90900'
