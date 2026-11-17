@@ -16,7 +16,7 @@ import io.github.landwarderer.futon.explore.data.SourcesSortOrder
 import io.github.landwarderer.futon.mihon.MihonExtensionManager
 import io.github.landwarderer.futon.settings.sources.model.SourceConfigItem
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filter
@@ -42,11 +42,13 @@ class SourcesListProducer @Inject constructor(
 	val list = MutableStateFlow(emptyList<SourceConfigItem>())
 	internal val status = MutableStateFlow(SourceListStatus.LOADING)
 
-	private var job = scope.launch(Dispatchers.IO) {
-		loadCurrentQuery()
-	}
+	private val refreshRequests = Channel<Unit>(Channel.CONFLATED)
 
 	init {
+		scope.launch(Dispatchers.IO) {
+			consumeSourceRefreshes(refreshRequests) { loadCurrentQuery() }
+		}
+		refreshRequests.trySend(Unit)
 		combine(
 			settings.observeChanges()
 				.onStart { emit(AppSettings.KEY_TIPS_CLOSED) }
@@ -60,13 +62,8 @@ class SourcesListProducer @Inject constructor(
 			.launchIn(scope)
 	}
 
-	@Synchronized
 	override fun onInvalidated(tables: Set<String>) {
-		val prevJob = job
-		job = scope.launch(Dispatchers.IO) {
-			prevJob.cancelAndJoin()
-			loadCurrentQuery()
-		}
+		refreshRequests.trySend(Unit)
 	}
 
 	fun retry() {
@@ -80,6 +77,7 @@ class SourcesListProducer @Inject constructor(
 	}
 
 	fun setQuery(value: String) {
+		if (this.query == value) return
 		this.query = value
 		onInvalidated(emptySet())
 	}
@@ -87,7 +85,10 @@ class SourcesListProducer @Inject constructor(
 	private suspend fun loadCurrentQuery() {
 		val currentQuery = query
 		if (list.value.isEmpty()) status.value = SourceListStatus.LOADING
-		val items = loadSourceList { buildList(currentQuery) }.getOrElse {
+		val result = loadSourceList { buildList(currentQuery) }
+		// Do not publish a result for a search which has already changed.
+		if (currentQuery != query) return
+		val items = result.getOrElse {
 			// Preserve the last usable rows; expose retry without resetting user choices.
 			status.value = SourceListStatus.ERROR
 			return

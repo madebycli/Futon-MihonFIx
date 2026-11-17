@@ -18,3 +18,11 @@ internal suspend fun <T> loadSourceList(load: suspend () -> T): Result<T> = try 
 } catch (error: Exception) {
     Result.failure(error)
 }
+
+/** Run at most one refresh at a time; a burst while it is running requests just one more pass. */
+internal suspend fun consumeSourceRefreshes(
+    requests: kotlinx.coroutines.channels.ReceiveChannel<Unit>,
+    refresh: suspend () -> Unit,
+) {
+    for (request in requests) refresh()
+}
