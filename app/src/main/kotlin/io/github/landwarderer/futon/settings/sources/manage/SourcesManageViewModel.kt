@@ -29,7 +29,7 @@ class SourcesManageViewModel @Inject constructor(
 	val content = listProducer.list
 	internal val sourceListStatus = listProducer.status
 
-	fun retryLoading() = listProducer.onInvalidated(emptySet())
+	fun retryLoading() = listProducer.retry()
 	val onActionDone = MutableEventFlow<ReversibleAction>()
 	private var commitJob: Job? = null
 

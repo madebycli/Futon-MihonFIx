@@ -69,6 +69,16 @@ class SourcesListProducer @Inject constructor(
 		}
 	}
 
+	fun retry() {
+		scope.launch(Dispatchers.IO) {
+			if (loadSourceList { mihonExtensionManager.loadExtensions() }.isFailure) {
+				status.value = SourceListStatus.ERROR
+			} else {
+				onInvalidated(emptySet())
+			}
+		}
+	}
+
 	fun setQuery(value: String) {
 		this.query = value
 		onInvalidated(emptySet())
@@ -83,7 +93,10 @@ class SourcesListProducer @Inject constructor(
 			return
 		}
 		list.value = items
-		status.value = sourceListStatus(items.isEmpty(), currentQuery.isNotEmpty(), mihonExtensionManager.isLoading.value)
+		status.value = sourceListStatus(
+			items.isEmpty(), currentQuery.isNotEmpty(), mihonExtensionManager.isLoading.value,
+			mihonExtensionManager.failedExtensions.value.isNotEmpty(),
+		)
 	}
 
 	private suspend fun buildList(query: String): List<SourceConfigItem> {

@@ -3,9 +3,10 @@ package io.github.landwarderer.futon.settings.sources.manage
 internal enum class SourceListStatus { LOADING, READY, EMPTY, ERROR }
 
 /** Keep searching and extension discovery distinct from a truly empty enabled-source list. */
-internal fun sourceListStatus(isEmpty: Boolean, isSearching: Boolean, isScanning: Boolean): SourceListStatus = when {
+internal fun sourceListStatus(isEmpty: Boolean, isSearching: Boolean, isScanning: Boolean, hasFailures: Boolean): SourceListStatus = when {
+    isScanning && isEmpty && !isSearching -> SourceListStatus.LOADING
+    hasFailures -> SourceListStatus.ERROR
     !isEmpty || isSearching -> SourceListStatus.READY
-    isScanning -> SourceListStatus.LOADING
     else -> SourceListStatus.EMPTY
 }
 
