@@ -52,7 +52,7 @@ data class MangaDetails(
     private val originalBranchCount by lazy { identityChapters.mapTo(HashSet()) { it.branch }.size }
 
     /** The chapters per branch (group) in this reading projection. */
-    private val chaptersByBranch: Map<String?, List<MangaChapter>> by lazy { allChapters.groupBy { it.branch } }
+    private val chaptersByBranch: Map<String?, List<MangaChapter>> by lazy { identityChapters.groupBy { it.branch } }
 
     /** The number of chapter groups of the source; the merge option is only offered for several. */
     val branchCount: Int
@@ -60,7 +60,7 @@ data class MangaDetails(
 
     /** One list of all groups, repeated chapters shown once; see [mergeRepeated]. Computed once. */
     private val mergedChapters: List<MangaChapter> by lazy {
-        val unique = identityChapters.groupBy { it.branch }.values.flatten().mergeRepeated()
+        val unique = chaptersByBranch.values.flatten().mergeRepeated()
         // The groups are concatenated; bring them in reading order. Volumes only matter when the source has some.
         val hasVolumes = unique.any { it.volume > 0 }
         val comparator = if (hasVolumes) {

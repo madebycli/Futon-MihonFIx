@@ -143,6 +143,7 @@ class MihonMangaRepositoryTest {
         assertEquals((1..10).map { it.toFloat() }, merged.allChapters.map { it.number })
         val separate = merged.copy(mergeRepeatedChapters = false).filterChapters("Group B")
         assertEquals(listOf(6f, 7f), separate.allChapters.map { it.number })
+        assertEquals(setOf("Group A", "Group B"), separate.chapters.keys)
         assertEquals(setOf("Group A", "Group B"), separate.identityChapters.mapNotNull { it.branch }.toSet())
         assertEquals((1..10).map { it.toFloat() },
             separate.copy(mergeRepeatedChapters = true).filterChapters(null).allChapters.map { it.number })
