@@ -354,7 +354,10 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
 			}
 			withResumed {
 				MangaPrefetchService.prefetchLast(this@MainActivity)
-				requestNotificationsPermission()
+				// Let onboarding explain the optional permission before Android asks for it.
+				if (settings.onboardingVersion >= AppSettings.CURRENT_ONBOARDING_VERSION) {
+					requestNotificationsPermission()
+				}
 				startService(Intent(this@MainActivity, LocalIndexUpdateService::class.java))
 				startService(Intent(this@MainActivity, PeriodicalBackupService::class.java))
 				if (settings.isAdBlockEnabled) {
