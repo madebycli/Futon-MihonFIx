@@ -71,8 +71,8 @@ fun io.github.landwarderer.futon.details.data.MangaDetails.newChapterRepresentat
     marker: ChapterUpdateMarker,
 ): Set<Long> {
     if (marker.count <= 0) return emptySet()
-    val anchor = allChapters.firstOrNull { it.id == marker.lastChapterId } ?: return emptySet()
-    val originalBranch = allChapters.filter { it.branch == anchor.branch }
+    val anchor = identityChapters.firstOrNull { it.id == marker.lastChapterId } ?: return emptySet()
+    val originalBranch = identityChapters.filter { it.branch == anchor.branch }
     val anchorIndex = originalBranch.indexOfFirst { it.id == anchor.id }
     if (anchorIndex < 0) return emptySet()
     val originalNew = originalBranch.take(anchorIndex + 1).takeLast(marker.count)

@@ -8,6 +8,12 @@ import io.github.landwarderer.futon.local.domain.model.LocalManga
 import io.github.landwarderer.futon.reader.ui.ReaderState
 import io.github.landwarderer.futon.bookmarks.domain.Bookmark
 import java.time.Instant
+import io.github.landwarderer.futon.core.prefs.AppSettings
+import io.github.landwarderer.futon.core.model.MangaHistory
+import io.github.landwarderer.futon.details.ui.model.HistoryInfo
+import android.content.Context
+import android.content.SharedPreferences
+import org.mockito.Mockito.*
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -295,5 +301,59 @@ class ChapterGroupsTest {
         val rows = details.mapChapters(0L, 1, null, emptyList(), false, false,
             details.newChapterRepresentativeIds(ChapterUpdateMarker(1, old.id)))
         assertEquals(listOf(fresh.id), rows.filter { it.isNew }.map { it.chapter.id })
+    }
+
+    @Test
+    fun aReaderProjectionRetainsOriginalIdsAndTheAbilityToDisableMerging() {
+        val old = chapter(1, 5f, scanlator = "A", uploadDate = 100L)
+        val fresh = chapter(2, 5f, scanlator = "B", uploadDate = 200L)
+        val reader = MangaDetails(manga(listOf(old, fresh))).filterChapters(null)
+        assertTrue(reader.isMerged)
+        assertEquals(2, reader.branchCount)
+        assertEquals(listOf(old.id, fresh.id), reader.identityChapters.map { it.id })
+        assertEquals(listOf(fresh.id), reader.chapterListForBranch("A").map { it.id })
+        val disabled = reader.copy(mergeRepeatedChapters = false).filterChapters("A")
+        assertEquals(listOf(old.id), disabled.allChapters.map { it.id })
+        val rows = reader.mapChapters(old.id, 0, null, emptyList(), false, false)
+        assertEquals(fresh.id, rows.single { it.isCurrent }.chapter.id)
+    }
+
+    @Test
+    fun downloadedOnlyAlsoWorksAfterTheReaderHasProjectedAwayTheStoredUpload() {
+        val old = chapter(1, 5f, scanlator = "A", uploadDate = 100L)
+        val fresh = chapter(2, 5f, scanlator = "B", uploadDate = 200L)
+        val stored = old.copy(source = LocalMangaSource, url = "file:///stored-old")
+        val reader = MangaDetails(manga(listOf(old, fresh))).copy(
+            localManga = LocalManga(manga(listOf(stored), LocalMangaSource), File("/saved.cbz")),
+        ).filterChapters(null)
+        val rows = reader.mapChapters(old.id, 0, null, emptyList(), false, true)
+        assertEquals(old.id, rows.single().chapter.id)
+        assertEquals("file:///stored-old", rows.single().chapter.url)
+    }
+
+    @Test
+    fun restoredPreferencesAreReadWithoutChangingExistingSnapshots() {
+        val prefs = mock(SharedPreferences::class.java)
+        `when`(prefs.getBoolean(AppSettings.KEY_MERGE_REPEATED_CHAPTERS, true)).thenReturn(false)
+        val settings = AppSettings(mock(Context::class.java), prefs)
+        val value = manga(listOf(chapter(1, 1f, scanlator = "A"), chapter(2, 2f, scanlator = "B")))
+        val beforeRestore = MangaDetails(value).copy(mergeRepeatedChapters = settings.isMergeRepeatedChapters)
+        `when`(prefs.getBoolean(AppSettings.KEY_MERGE_REPEATED_CHAPTERS, true)).thenReturn(true)
+        val afterRestore = MangaDetails(value).copy(mergeRepeatedChapters = settings.isMergeRepeatedChapters)
+        assertFalse(beforeRestore.isMerged)
+        assertTrue(afterRestore.isMerged)
+        assertFalse(beforeRestore.isMerged)
+    }
+
+    @Test
+    fun anotherBranchDoesNotInheritHistoryWhenMergeModeIsOff() {
+        val old = chapter(1, 5f, scanlator = "A", uploadDate = 100L)
+        val fresh = chapter(2, 5f, scanlator = "B", uploadDate = 200L)
+        val details = MangaDetails(manga(listOf(old, fresh)))
+        val history = mock(MangaHistory::class.java)
+        `when`(history.chapterId).thenReturn(old.id)
+        val separate = HistoryInfo(details.copy(mergeRepeatedChapters = false), "B", history, false, null)
+        assertEquals(-1, separate.currentChapter)
+        assertEquals(0, HistoryInfo(details, null, history, false, null).currentChapter)
     }
 }

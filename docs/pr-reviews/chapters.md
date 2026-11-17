@@ -17,3 +17,5 @@ The pre-existing numeric/volume ordering is retained as an explicit Futon adapta
 
 Status: implementation added; current CI and device results must be checked before claiming validation.
 No application ID, signing key, Room schema or application dependency changes.
+
+Reader projections retain original and stored chapter identity snapshots, including when every representative belongs to a single group. Restore and cross-branch-history regressions are covered by additional tests.

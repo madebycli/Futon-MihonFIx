@@ -25,12 +25,12 @@ fun MangaDetails.mapChapters(
 	newChapterIds: Set<Long>? = null,
 ): List<ChapterListItem> {
 	val remoteChapters = chapterListForBranch(branch)
-	val downloadedChapters = local?.manga?.chapters.orEmpty()
+	val downloadedChapters = storedChapters
 	if (isMerged && isDownloadedOnly) {
-		val current = allChapters.firstOrNull { it.id == currentChapterId }
+		val current = identityChapters.firstOrNull { it.id == currentChapterId }
 		val currentIndex = current?.let(remoteChapters::indexOfChapter) ?: -1
 		val bookmarkedIds = bookmarks.mapToSet { it.chapterId }
-		val bookmarkKeys = allChapters.filter { it.id in bookmarkedIds }.mapTo(HashSet()) { it.getMergeKey() }
+		val bookmarkKeys = identityChapters.filter { it.id in bookmarkedIds }.mapTo(HashSet()) { it.getMergeKey() }
 		return downloadedChapters.mergeRepeated()
 			.sortedBy { downloaded -> remoteChapters.indexOfChapter(downloaded).takeIf { it >= 0 } ?: Int.MAX_VALUE }
 			.map { downloaded ->
@@ -58,7 +58,7 @@ fun MangaDetails.mapChapters(
 		return emptyList()
 	}
 	val bookmarked = bookmarks.mapToSet { it.chapterId }
-	val bookmarkedKeys: Set<String> = if (isMerged) allChapters.filter { it.id in bookmarked }.mapTo(HashSet()) { it.getMergeKey() } else emptySet()
+	val bookmarkedKeys: Set<String> = if (isMerged) identityChapters.filter { it.id in bookmarked }.mapTo(HashSet()) { it.getMergeKey() } else emptySet()
 	val newFrom = if (newCount == 0 || remoteChapters.isEmpty()) Int.MAX_VALUE else remoteChapters.size - newCount
 	val ids = buildSet(maxOf(remoteChapters.size, localChapters.size)) {
 		remoteChapters.mapTo(this) { it.id }
@@ -72,7 +72,7 @@ fun MangaDetails.mapChapters(
 	}
 	val currentId = if (isMerged && currentChapterId != 0L && currentChapterId !in ids) {
 		// The history points to another upload of a listed chapter: that listed chapter is the current one.
-		allChapters.firstOrNull { it.id == currentChapterId }
+		identityChapters.firstOrNull { it.id == currentChapterId }
 			?.let { remoteChapters.indexOfChapter(it) }
 			?.takeIf { it >= 0 }
 			?.let { remoteChapters[it].id } ?: currentChapterId
