@@ -60,7 +60,7 @@ data class MangaDetails(
 
     /** One list of all groups, repeated chapters shown once; see [mergeRepeated]. Computed once. */
     private val mergedChapters: List<MangaChapter> by lazy {
-        val unique = chaptersByBranch.values.flatten().mergeRepeated()
+        val unique = identityChapters.groupBy { it.branch }.values.flatten().mergeRepeated()
         // The groups are concatenated; bring them in reading order. Volumes only matter when the source has some.
         val hasVolumes = unique.any { it.volume > 0 }
         val comparator = if (hasVolumes) {
