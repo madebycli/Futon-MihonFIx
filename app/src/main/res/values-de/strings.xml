@@ -58,6 +58,9 @@
     <string name="chapters">Kapitel</string>
     <string name="details">Details</string>
     <string name="network_error">Netzwerkfehler</string>
+    <string name="sources_manage_empty">Keine aktiven Quellen. Öffne den Katalog, um Quellen hinzuzufügen.</string>
+    <string name="sources_manage_error">Quellen konnten nicht geladen werden. Bitte erneut versuchen.</string>
+    <string name="sources_manage_open_catalog">Quellenkatalog öffnen</string>
     <string name="error_occurred">Ein Fehler ist aufgetreten</string>
     <string name="history">Verlauf</string>
     <string name="favourites">Favoriten</string>

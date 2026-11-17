@@ -4,6 +4,9 @@
     <string name="local_storage">Local storage</string>
     <string name="favourites">Favorites</string>
     <string name="history">History</string>
+    <string name="sources_manage_empty">No active sources. Open the catalog to add sources.</string>
+    <string name="sources_manage_error">Could not load sources. Try again.</string>
+    <string name="sources_manage_open_catalog">Open source catalog</string>
     <string name="error_occurred">An error occurred</string>
     <string name="network_error">Network error</string>
     <string name="details">Details</string>

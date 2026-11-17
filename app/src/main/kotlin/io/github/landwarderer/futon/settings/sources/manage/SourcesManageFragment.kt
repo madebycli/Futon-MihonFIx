@@ -9,6 +9,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.widget.SearchView
 import androidx.core.view.MenuProvider
+import androidx.core.view.isVisible
 import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.ItemTouchHelper
@@ -80,6 +81,20 @@ class SourcesManageFragment :
 			}
 		}
 		viewModel.content.observe(viewLifecycleOwner, checkNotNull(sourcesAdapter))
+		viewModel.sourceListStatus.observe(viewLifecycleOwner) { status ->
+			binding.sourcesStatus.isVisible = status != SourceListStatus.READY
+			binding.sourcesStatusMessage.setText(when (status) {
+				SourceListStatus.LOADING -> R.string.loading_
+				SourceListStatus.EMPTY -> R.string.sources_manage_empty
+				SourceListStatus.ERROR -> R.string.sources_manage_error
+				SourceListStatus.READY -> R.string.loading_
+			})
+			binding.sourcesStatusAction.isVisible = status == SourceListStatus.EMPTY || status == SourceListStatus.ERROR
+			binding.sourcesStatusAction.setText(if (status == SourceListStatus.ERROR) R.string.retry else R.string.sources_manage_open_catalog)
+			binding.sourcesStatusAction.setOnClickListener {
+				if (status == SourceListStatus.ERROR) viewModel.retryLoading() else router.openSourcesCatalog()
+			}
+		}
 		viewModel.onActionDone.observeEvent(
 			viewLifecycleOwner,
 			ReversibleActionObserver(binding.recyclerView),
