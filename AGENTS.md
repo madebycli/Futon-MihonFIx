@@ -1,4 +1,8 @@
-# Futon - Agent Development Guide
+# Clio (Futon MihonFix) - Agent Development Guide
+
+> **Branding (2026-11-17):** the app is called **Clio**. This is a display-name change only: package IDs
+> (`io.github.madebycli.futon.mihonfix`, `io.github.landwarderer.futon`), signing key, sync accounts/providers, Kotlin
+> package names, the GitHub repository name and release file names (`Futon-MihonFix-*.apk`) stay unchanged.
 
 **Project:** Futon - Free and open-source manga reader for Android  
 **Fork of:** [Kotatsu](https://github.com/KotatsuApp/Kotatsu)  

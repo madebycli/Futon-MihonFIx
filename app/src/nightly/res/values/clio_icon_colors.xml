@@ -1,0 +1,4 @@
+<resources>
+    <!-- Nightly builds use a dark teal backdrop so they can be told apart from release builds. -->
+    <color name="clio_icon_background">#00343D</color>
+</resources>

@@ -1,6 +1,13 @@
 <div align="center">
 
-**Futon is a free and open-source manga and light novel reader for Android with built-in online content sources.**
+<img src="docs/branding/clio_icon_512.png" width="128" alt="Clio logo">
+
+# Clio
+
+**Clio is a free and open-source manga and light novel reader for Android with built-in online content sources.**
+
+*Clio is named after the Greek Muse of history and storytelling. It is an independent community fork of Futon
+(published so far as "Futon MihonFix"), which is built on Kotatsu. It is not affiliated with the original developers.*
 
 ![Android 8.0](https://img.shields.io/badge/android-8.0+-brightgreen) [![Sources count](https://img.shields.io/badge/dynamic/yaml?url=https%3A%2F%2Fraw.githubusercontent.com%2FKotatsu-Redo%2Fkotatsu-parsers-redo%2Frefs%2Fheads%2Fmaster%2F.github%2Fsummary.yaml&query=total&label=manga%20sources&color=%23E9321C)](https://github.com/Kotatsu-Redo/kotatsu-parsers-redo) [![License](https://img.shields.io/github/license/madebycli/Futon-MihonFIx)](https://github.com/madebycli/Futon-MihonFIx/blob/devel/LICENSE) [![GitHub Release](https://img.shields.io/github/v/release/madebycli/Futon-MihonFIx?sort=date&display_name=tag&style=flat)](https://github.com/madebycli/Futon-MihonFIx/releases/latest) [![Discord](https://img.shields.io/discord/1452862077134700628)
 ](https://discord.gg/9sqBHXhwzz)
@@ -119,6 +126,11 @@ For detailed contribution guidelines, see [CONTRIBUTING.md](./CONTRIBUTING.md).
 [![Download APK](https://img.shields.io/badge/Download-APK-brightgreen?logo=github)](https://github.com/madebycli/Futon-MihonFIx/releases/latest)
 
 Download the signed APK from [GitHub Releases](https://github.com/madebycli/Futon-MihonFIx/releases/latest).
+
+> **Name and identity.** The app is called Clio. Its technical identity is unchanged, so it installs as an update over
+> Futon MihonFix and keeps your data: the package IDs (`io.github.madebycli.futon.mihonfix` for the standalone app,
+> `io.github.landwarderer.futon` for the legacy update APK), the signing certificate (see below), the sync accounts
+> and the GitHub repository name stay as they are. Release files are still named `Futon-MihonFix-*.apk`.
 Each stable release includes an APK, its SHA-256 checksum and build information.
 
 ### Localization
@@ -174,7 +186,7 @@ where the content is hosted.
 
 <div align="left">
 
-**Futon is built upon the exceptional work of the [Kotatsu](https://github.com/KotatsuApp/Kotatsu) project.**
+**Clio is built upon [Futon](https://github.com/AppFuton/Futon), which is itself built upon the exceptional work of the [Kotatsu](https://github.com/KotatsuApp/Kotatsu) project.**
 
 We are deeply grateful to:
 
@@ -184,7 +196,7 @@ We are deeply grateful to:
 * **[Kotatsu-Redo](https://github.com/Kotatsu-Redo/kotatsu-parsers-redo)** for continuing parser development and maintenance
 * **[Kototoro](https://github.com/Kototoro-app/Kototoro)** for the Tachiyomi extension integration guide
 
-This project stands on the shoulders of giants. The Kotatsu team's dedication to creating a feature-rich, user-friendly manga reader has provided an incredible foundation for Futon to build upon.
+This project stands on the shoulders of giants. The Kotatsu team's dedication to creating a feature-rich, user-friendly manga reader has provided an incredible foundation for Futon, and in turn for Clio, to build upon.
 
 **Thank you to everyone who contributed to Kotatsu — your work continues to benefit the manga reading community!**
 

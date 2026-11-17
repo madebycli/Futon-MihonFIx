@@ -1,0 +1,4 @@
+<resources>
+    <!-- Debug builds use a dark amber backdrop so they can be told apart from release builds. -->
+    <color name="clio_icon_background">#3D1F00</color>
+</resources>

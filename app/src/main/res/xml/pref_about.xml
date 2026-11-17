@@ -9,6 +9,12 @@
 		android:persistent="false" />
 
 	<Preference
+		android:key="about_origin"
+		android:persistent="false"
+		android:summary="@string/about_origin_summary"
+		android:title="@string/about_origin" />
+
+	<Preference
 		android:key="about_onboarding"
 		android:persistent="false"
 		android:summary="@string/about_onboarding_summary"

@@ -30,7 +30,7 @@ android {
 		applicationId project.findProperty('standalone') == 'true' ?
 			'io.github.madebycli.futon.mihonfix' : 'io.github.landwarderer.futon'
 		manifestPlaceholders.appLabel = project.findProperty('standalone') == 'true' ?
-			'Futon MihonFix' : '@string/app_name'
+			'Clio' : '@string/app_name'
 		// Sync providers and accounts are package identities too, not just the manifest package.
 		resValue 'string', 'account_type_sync', applicationId + '.sync'
 		resValue 'string', 'sync_authority_history', applicationId + '.history'
