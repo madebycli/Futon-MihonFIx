@@ -1,6 +1,6 @@
 package io.github.landwarderer.futon.details.data
 
-import io.github.landwarderer.futon.details.domain.ChapterMergeSetting
+import io.github.landwarderer.futon.details.domain.DEFAULT_MERGE_REPEATED_CHAPTERS
 import io.github.landwarderer.futon.details.domain.mergeRepeated
 import io.github.landwarderer.futon.core.model.getLocale
 import io.github.landwarderer.futon.core.model.isLocal
@@ -22,6 +22,7 @@ data class MangaDetails(
     private val override: MangaOverride?,
     val description: CharSequence?,
     val isLoaded: Boolean,
+    val mergeRepeatedChapters: Boolean = DEFAULT_MERGE_REPEATED_CHAPTERS,
 ) {
 
     constructor(manga: Manga) : this(
@@ -62,7 +63,7 @@ data class MangaDetails(
      * a manga with several groups; it never applies to novels.
      */
     val isMerged: Boolean
-        get() = ChapterMergeSetting.isEnabled && !isNovel && chaptersByBranch.size > 1
+        get() = mergeRepeatedChapters && !isNovel && chaptersByBranch.size > 1
 
     val chapters: Map<String?, List<MangaChapter>>
         get() = if (isMerged) mapOf(null to mergedChapters) else chaptersByBranch

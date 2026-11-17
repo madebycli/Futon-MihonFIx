@@ -6,25 +6,8 @@ package io.github.landwarderer.futon.details.domain
 import io.github.landwarderer.futon.core.model.isNovel
 import org.koitharu.kotatsu.parsers.model.Manga
 import org.koitharu.kotatsu.parsers.model.MangaChapter
-import java.util.concurrent.atomic.AtomicBoolean
 
-/**
- * Process-wide value of the "merge chapter groups" setting.
- *
- * [io.github.landwarderer.futon.core.prefs.AppSettings] keeps it up to date. It is read by
- * [io.github.landwarderer.futon.details.data.MangaDetails], which is built in many places without access to the
- * settings; pure JVM tests set it directly.
- */
-object ChapterMergeSetting {
-
-    const val DEFAULT = true
-
-    private val flag = AtomicBoolean(DEFAULT)
-
-    var isEnabled: Boolean
-        get() = flag.get()
-        set(value) = flag.set(value)
-}
+const val DEFAULT_MERGE_REPEATED_CHAPTERS = true
 
 /** The identity of a chapter across groups: volume and number, else the title, else the chapter itself. */
 fun MangaChapter.getMergeKey(): String = if (number > 0f) {
@@ -77,5 +60,23 @@ fun List<MangaChapter>.indexOfChapter(chapter: MangaChapter): Int {
 }
 
 /** Whether the groups of this manga are shown as one list: the setting is on and there are several groups. */
-fun Manga.hasMergedChapterGroups(): Boolean = ChapterMergeSetting.isEnabled && !isNovel &&
+fun Manga.hasMergedChapterGroups(mergeRepeatedChapters: Boolean = DEFAULT_MERGE_REPEATED_CHAPTERS): Boolean =
+    mergeRepeatedChapters && !isNovel &&
     chapters.orEmpty().mapTo(HashSet()) { it.branch }.size > 1
+
+/** Tracker counts refer to one original branch ending at the recorded last chapter. */
+data class ChapterUpdateMarker(val count: Int = 0, val lastChapterId: Long? = null)
+
+fun io.github.landwarderer.futon.details.data.MangaDetails.newChapterRepresentativeIds(
+    marker: ChapterUpdateMarker,
+): Set<Long> {
+    if (marker.count <= 0) return emptySet()
+    val anchor = allChapters.firstOrNull { it.id == marker.lastChapterId } ?: return emptySet()
+    val originalBranch = allChapters.filter { it.branch == anchor.branch }
+    val anchorIndex = originalBranch.indexOfFirst { it.id == anchor.id }
+    if (anchorIndex < 0) return emptySet()
+    val originalNew = originalBranch.take(anchorIndex + 1).takeLast(marker.count)
+    if (!isMerged) return originalNew.mapTo(HashSet()) { it.id }
+    val keys = originalNew.mapTo(HashSet()) { it.getMergeKey() }
+    return chapterListForBranch(null).filter { it.getMergeKey() in keys }.mapTo(HashSet()) { it.id }
+}

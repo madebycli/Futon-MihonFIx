@@ -18,7 +18,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import io.github.landwarderer.futon.R
 import io.github.landwarderer.futon.core.model.ZoomMode
 import io.github.landwarderer.futon.core.network.DoHProvider
-import io.github.landwarderer.futon.details.domain.ChapterMergeSetting
+import io.github.landwarderer.futon.details.domain.DEFAULT_MERGE_REPEATED_CHAPTERS
 import io.github.landwarderer.futon.core.util.ext.connectivityManager
 import io.github.landwarderer.futon.core.util.ext.getEnumValue
 import io.github.landwarderer.futon.core.util.ext.observeChanges
@@ -58,10 +58,6 @@ class AppSettings internal constructor(
 		PreferenceManager.getDefaultSharedPreferences(context),
 	)
 
-	init {
-		// MangaDetails reads the setting from there; make it right before anything is loaded.
-		ChapterMergeSetting.isEnabled = prefs.getBoolean(KEY_MERGE_REPEATED_CHAPTERS, ChapterMergeSetting.DEFAULT)
-	}
 
 	private val connectivityManager by lazy { context.connectivityManager }
 	private val mangaListBadgesDefault by lazy { ArraySet(context.resources.getStringArray(R.array.values_list_badges)) }
@@ -347,12 +343,8 @@ class AppSettings internal constructor(
 
 	/** Shows the chapter groups of a manga as one list; repeated chapters appear once (Kototoro behaviour). */
 	var isMergeRepeatedChapters: Boolean
-		get() = prefs.getBoolean(KEY_MERGE_REPEATED_CHAPTERS, ChapterMergeSetting.DEFAULT)
-			.also { ChapterMergeSetting.isEnabled = it }
-		set(value) {
-			ChapterMergeSetting.isEnabled = value
-			prefs.edit { putBoolean(KEY_MERGE_REPEATED_CHAPTERS, value) }
-		}
+		get() = prefs.getBoolean(KEY_MERGE_REPEATED_CHAPTERS, DEFAULT_MERGE_REPEATED_CHAPTERS)
+		set(value) = prefs.edit { putBoolean(KEY_MERGE_REPEATED_CHAPTERS, value) }
 
 	val zoomMode: ZoomMode
 		get() = prefs.getEnumValue(KEY_ZOOM_MODE, ZoomMode.FIT_CENTER)

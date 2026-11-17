@@ -1,0 +1,77 @@
+name: Full PR review gates
+on:
+  pull_request:
+    branches: [devel]
+permissions:
+  contents: read
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: temurin
+      - uses: android-actions/setup-android@v4
+        with:
+          packages: platform-tools
+      - name: Full unit suite, debug build and instrumented-source compilation in isolated mirror
+        shell: bash
+        run: |
+          set -euo pipefail
+          MIRROR="$RUNNER_TEMP/futon-review"
+          mkdir -p "$MIRROR"
+          tar --exclude='./.git' --exclude='./.gradle' --exclude='*/build' --exclude='./gradle/gradle-daemon-jvm.properties' -cf - . | tar -xf - -C "$MIRROR"
+          cd "$MIRROR"
+          exec 9>"$RUNNER_TEMP/futon-gradle.lock"
+          flock 9
+          RESULT=1
+          for ATTEMPT in 1 2 3; do
+            set +e
+            ./gradlew -Dorg.gradle.java.home="$JAVA_HOME" testDebugUnitTest assembleDebug compileDebugAndroidTestKotlin --continue --stacktrace --no-configuration-cache 2>&1 | tee "$RUNNER_TEMP/futon-review.log"
+            RESULT=${PIPESTATUS[0]}
+            set -e
+            if [ "$RESULT" -eq 0 ]; then break; fi
+            if ! grep -Eq '429|Too Many Requests' "$RUNNER_TEMP/futon-review.log"; then break; fi
+          done
+          echo "EXIT=$RESULT" | tee -a "$RUNNER_TEMP/futon-review.log"
+          exit "$RESULT"
+      - name: Summarize actual JUnit results
+        if: always()
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import glob, json, os, xml.etree.ElementTree as ET
+          counts = dict(tests=0, failures=0, errors=0, skipped=0)
+          failures = []
+          files = glob.glob(os.environ["RUNNER_TEMP"] + "/futon-review/app/build/test-results/testDebugUnitTest/*.xml")
+          for path in files:
+              root = ET.parse(path).getroot()
+              for key in counts:
+                  counts[key] += int(root.get(key, 0))
+              for case in root.findall("testcase"):
+                  for kind in ("failure", "error"):
+                      fail = case.find(kind)
+                      if fail is not None:
+                          failures.append(dict(classname=case.get("classname"), name=case.get("name"), kind=kind, message=fail.get("message")))
+          result = dict(source=os.environ["GITHUB_SHA"], xml_files=len(files), counts=counts, failures=failures)
+          print(json.dumps(result, indent=2))
+          with open(os.environ["RUNNER_TEMP"] + "/futon-review-results.json", "w") as target:
+              json.dump(result, target, indent=2)
+          with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as target:
+              target.write("JUnit results: " + json.dumps(result) + "\n")
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: full-pr-review-results
+          path: |
+            ${{ runner.temp }}/futon-review-results.json
+            ${{ runner.temp }}/futon-review/app/build/test-results/testDebugUnitTest/*.xml
+            ${{ runner.temp }}/futon-review.log
+          retention-days: 7
+          if-no-files-found: warn

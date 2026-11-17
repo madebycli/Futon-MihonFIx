@@ -5,6 +5,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.flowOf
 import io.github.landwarderer.futon.core.model.FavouriteCategory
 import io.github.landwarderer.futon.core.model.isNsfw
@@ -49,6 +50,12 @@ class DetailsInteractor @Inject constructor(
 				}
 			}
 	}
+
+	fun observeChapterUpdates(manga: Manga): Flow<ChapterUpdateMarker> =
+		observeNewChapters(manga.id).mapLatest { count ->
+			val track = trackingRepository.getTrackOrNull(manga)
+			ChapterUpdateMarker(count, track?.lastChapterId)
+		}
 
 	fun observeScrobblingInfo(mangaId: Long): Flow<List<ScrobblingInfo>> {
 		return combine(

@@ -6,6 +6,7 @@ import io.github.landwarderer.futon.bookmarks.domain.Bookmark
 import io.github.landwarderer.futon.details.data.MangaDetails
 import io.github.landwarderer.futon.details.domain.ChapterSection
 import io.github.landwarderer.futon.details.domain.getMergeKey
+import io.github.landwarderer.futon.details.domain.mergeRepeated
 import io.github.landwarderer.futon.details.domain.indexOfChapter
 import io.github.landwarderer.futon.details.domain.withVolumeSections
 import io.github.landwarderer.futon.details.ui.model.ChapterListItem
@@ -21,8 +22,29 @@ fun MangaDetails.mapChapters(
 	bookmarks: List<Bookmark>,
 	isGrid: Boolean,
 	isDownloadedOnly: Boolean,
+	newChapterIds: Set<Long>? = null,
 ): List<ChapterListItem> {
 	val remoteChapters = chapterListForBranch(branch)
+	val downloadedChapters = local?.manga?.chapters.orEmpty()
+	if (isMerged && isDownloadedOnly) {
+		val current = allChapters.firstOrNull { it.id == currentChapterId }
+		val currentIndex = current?.let(remoteChapters::indexOfChapter) ?: -1
+		val bookmarkedIds = bookmarks.mapToSet { it.chapterId }
+		val bookmarkKeys = allChapters.filter { it.id in bookmarkedIds }.mapTo(HashSet()) { it.getMergeKey() }
+		return downloadedChapters.mergeRepeated()
+			.sortedBy { downloaded -> remoteChapters.indexOfChapter(downloaded).takeIf { it >= 0 } ?: Int.MAX_VALUE }
+			.map { downloaded ->
+				val index = remoteChapters.indexOfChapter(downloaded)
+				downloaded.toListItem(
+					isCurrent = index >= 0 && index == currentIndex,
+					isUnread = currentIndex < 0 || index < 0 || index >= currentIndex,
+					isNew = false,
+					isDownloaded = true,
+					isBookmarked = downloaded.id in bookmarkedIds || downloaded.getMergeKey() in bookmarkKeys,
+					isGrid = isGrid,
+				)
+			}
+	}
 	val localChapters = if (isMerged) {
 		// Downloads of another upload of a listed chapter are not listed again; downloads of chapters the source
 		// no longer has still are.
@@ -36,6 +58,7 @@ fun MangaDetails.mapChapters(
 		return emptyList()
 	}
 	val bookmarked = bookmarks.mapToSet { it.chapterId }
+	val bookmarkedKeys: Set<String> = if (isMerged) allChapters.filter { it.id in bookmarked }.mapTo(HashSet()) { it.getMergeKey() } else emptySet()
 	val newFrom = if (newCount == 0 || remoteChapters.isEmpty()) Int.MAX_VALUE else remoteChapters.size - newCount
 	val ids = buildSet(maxOf(remoteChapters.size, localChapters.size)) {
 		remoteChapters.mapTo(this) { it.id }
@@ -66,9 +89,9 @@ fun MangaDetails.mapChapters(
 			result += (local ?: chapter).toListItem(
 				isCurrent = chapter.id == currentId,
 				isUnread = isUnread,
-				isNew = isUnread && result.size >= newFrom,
+				isNew = isUnread && (newChapterIds?.contains(chapter.id) ?: (!isMerged && result.size >= newFrom)),
 				isDownloaded = local != null,
-				isBookmarked = chapter.id in bookmarked,
+				isBookmarked = chapter.id in bookmarked || (isMerged && chapter.getMergeKey() in bookmarkedKeys),
 				isGrid = isGrid,
 			)
 		}
@@ -83,7 +106,7 @@ fun MangaDetails.mapChapters(
 				isUnread = isUnread,
 				isNew = false,
 				isDownloaded = !isLocal,
-				isBookmarked = chapter.id in bookmarked,
+				isBookmarked = chapter.id in bookmarked || (isMerged && chapter.getMergeKey() in bookmarkedKeys),
 				isGrid = isGrid,
 			)
 		}

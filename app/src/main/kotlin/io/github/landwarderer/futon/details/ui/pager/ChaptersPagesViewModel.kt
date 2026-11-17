@@ -18,6 +18,8 @@ import io.github.landwarderer.futon.core.util.ext.requireValue
 import io.github.landwarderer.futon.core.util.ext.sortedWithSafe
 import io.github.landwarderer.futon.details.data.MangaDetails
 import io.github.landwarderer.futon.details.domain.DetailsInteractor
+import io.github.landwarderer.futon.details.domain.ChapterUpdateMarker
+import io.github.landwarderer.futon.details.domain.newChapterRepresentativeIds
 import io.github.landwarderer.futon.details.ui.DetailsActivity
 import io.github.landwarderer.futon.details.ui.DetailsViewModel
 import io.github.landwarderer.futon.details.ui.mapChapters
@@ -104,12 +106,13 @@ abstract class ChaptersPagesViewModel(
 
 	val isDownloadedOnly = MutableStateFlow(false)
 
-	val newChaptersCount = mangaDetails.flatMapLatest { d ->
-		if (d?.isLocal == false) {
-			interactor.observeNewChapters(d.id)
-		} else {
-			flowOf(0)
-		}
+	private val chapterUpdates = mangaDetails.flatMapLatest { d ->
+		if (d?.isLocal == false) interactor.observeChapterUpdates(d.toManga()) else flowOf(ChapterUpdateMarker())
+	}.stateIn(viewModelScope + Dispatchers.IO, SharingStarted.Eagerly, ChapterUpdateMarker())
+
+	val newChaptersCount = combine(mangaDetails, chapterUpdates, isMergeRepeatedChapters) { d, marker, enabled ->
+		val projected = d?.copy(mergeRepeatedChapters = enabled)
+		if (projected?.isMerged == true) projected.newChapterRepresentativeIds(marker).size else marker.count
 	}.stateIn(viewModelScope + Dispatchers.IO, SharingStarted.Eagerly, 0)
 
 	val emptyReason: StateFlow<EmptyMangaReason?> = combine(
@@ -135,21 +138,24 @@ abstract class ChaptersPagesViewModel(
 	}.stateIn(viewModelScope + Dispatchers.IO, SharingStarted.Lazily, emptyList())
 
 	/** The details again whenever the merge setting changes: the chapter lists depend on it. */
-	private val detailsOnMergeChange = mangaDetails.combine(isMergeRepeatedChapters) { details, _ -> details }
+	private val detailsOnMergeChange = mangaDetails.combine(isMergeRepeatedChapters) { details, enabled ->
+		details?.copy(mergeRepeatedChapters = enabled)
+	}
 
 	val chapters = combine(
 		combine(
 			detailsOnMergeChange,
 			readingState.map { it?.chapterId ?: 0L }.distinctUntilChanged(),
 			selectedBranch,
-			newChaptersCount,
+			chapterUpdates,
 			bookmarks,
 			isChaptersInGridView,
 			isDownloadedOnly,
 		) { manga, currentChapterId, branch, news, bookmarks, grid, downloadedOnly ->
 			manga?.mapChapters(
 				currentChapterId = currentChapterId,
-				newCount = news,
+				newCount = news.count,
+				newChapterIds = if (manga.isMerged) manga.newChapterRepresentativeIds(news) else null,
 				branch = branch,
 				bookmarks = bookmarks,
 				isGrid = grid,
@@ -180,6 +186,11 @@ abstract class ChaptersPagesViewModel(
 	}
 
 	init {
+		launchJob(Dispatchers.Default) {
+			isMergeRepeatedChapters.collect { enabled ->
+				mangaDetails.update { it?.copy(mergeRepeatedChapters = enabled) }
+			}
+		}
 		launchJob(Dispatchers.IO) {
 			localStorageChanges
 				.collect { onDownloadComplete(it) }
