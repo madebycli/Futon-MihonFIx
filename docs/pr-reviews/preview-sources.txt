@@ -1,0 +1,11 @@
+Base devel: 0d033971ab04e1b5b72f4b8d93101f47aaa98b97
+PR #20 fix/issue-12-german-chapter-merge: 45dfd3cf4692f1c2f955adb1df07143f7a123668
+PR #21 fix/issue-10-chapter-section-metadata: f86bb161c7e9308cc8918d234a01abf8b20ab796
+PR #22 fix/issue-11-merge-projection: dcd2b4f5260345e6fe62c70fd03fac5a07b4c57b
+PR #23 fix/issue-9-chapter-heading-accent: a6af7b4f0fe817b4a9a54cf9140bc24c8224f5e1
+PR #24 fix/issue-17-source-persistence: d3c29dcf28d329b1ce00e85afb4ca2187aed9797
+PR #25 fix/issue-13-chapter-tabs: 3a00bc2348e95f7ed6f156be3982ff7c97d887d4
+PR #26 fix/issue-15-source-management-states: 657c9d9d7a27109c1f08753b55bbced8b671529a
+PR #27 fix/issue-18-clio-startup-branding: ac6da3e2876c4e43144e6969cfeedad49b99f210
+PR #28 feat/issue-16-source-origin-label: 0c8544408ba65cea72d38ebdf45bd4a2fd7e8f0e
+PR #29 feat/issue-14-extension-updates: 89e19a886aaea52c88a46d35f07bb74dfe89ff9f

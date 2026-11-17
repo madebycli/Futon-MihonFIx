@@ -1,6 +1,9 @@
 package io.github.landwarderer.futon.onboarding.ui
 
+import android.Manifest
 import android.animation.ValueAnimator
+import androidx.activity.result.contract.ActivityResultContracts
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import android.os.Build
 import android.os.Bundle
 import android.view.HapticFeedbackConstants
@@ -28,6 +31,10 @@ class OnboardingActivity : BaseActivity<ActivityOnboardingBinding>() {
 	@Inject
 	lateinit var settings: AppSettings
 
+	private val notificationPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) {
+		finishOnboarding()
+	}
+	private var notificationPromptShown = false
 	private lateinit var adapter: OnboardingAdapter
 	private var lastSelectedPosition = 0
 
@@ -224,6 +231,25 @@ class OnboardingActivity : BaseActivity<ActivityOnboardingBinding>() {
 	}
 
 	private fun completeOnboarding() {
+		if (notificationPromptShown) return
+		notificationPromptShown = true
+		MaterialAlertDialogBuilder(this)
+			.setTitle(R.string.extension_updates_notifications)
+			.setMessage(R.string.extension_updates_onboarding)
+			.setPositiveButton(R.string.enable) { _, _ ->
+				settings.isExtensionUpdateNotificationsEnabled = true
+				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+					notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+				} else {
+					finishOnboarding()
+				}
+			}
+			.setNegativeButton(android.R.string.cancel) { _, _ -> finishOnboarding() }
+			.setOnCancelListener { finishOnboarding() }
+			.show()
+	}
+
+	private fun finishOnboarding() {
 		settings.onboardingVersion = AppSettings.CURRENT_ONBOARDING_VERSION
 		setResult(RESULT_OK)
 		finish()

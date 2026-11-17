@@ -19,7 +19,7 @@ enum class OnboardingPage(
 	@AttrRes val accentColorAttr: Int = appcompatR.attr.colorPrimary,
 ) {
 	WELCOME(
-		heroIconRes = R.drawable.ic_futon,
+		heroIconRes = R.drawable.ic_launcher_foreground,
 		badgeRes = R.string.onboarding_page1_badge,
 		titleRes = R.string.onboarding_page1_title,
 		subtitleRes = R.string.onboarding_page1_subtitle,

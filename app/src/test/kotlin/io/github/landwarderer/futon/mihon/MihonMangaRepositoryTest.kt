@@ -1,5 +1,6 @@
 package io.github.landwarderer.futon.mihon
 
+import android.content.Context
 import androidx.arch.core.executor.ArchTaskExecutor
 import androidx.arch.core.executor.TaskExecutor
 import eu.kanade.tachiyomi.source.CatalogueSource
@@ -9,6 +10,10 @@ import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import io.github.landwarderer.futon.core.cache.MemoryContentCache
+import io.github.landwarderer.futon.details.data.MangaDetails
+import io.github.landwarderer.futon.details.ui.mapChapters
+import io.github.landwarderer.futon.details.ui.withVolumeHeaders
+import io.github.landwarderer.futon.list.ui.model.ListHeader
 import io.github.landwarderer.futon.mihon.model.MihonMangaSource
 import io.github.landwarderer.futon.mihon.model.toDomainContent
 import io.github.landwarderer.futon.mihon.model.toManga
@@ -107,6 +112,50 @@ class MihonMangaRepositoryTest {
         val reread = requireNotNull(MihonChapterSnapshotStore.get(SOURCE_ID, CHAPTER_URL))
         assertEquals("Original chapter", reread.name)
         assertEquals("private/chapter/path", snapshotPath(reread))
+    }
+
+    @Test
+    fun complementaryMihonGroupsRemainSelectableAndMergeInReadingOrder() = runTest {
+        val input = (1..10).map { number ->
+            SChapter.create().apply {
+                url = "/chapter/$number"
+                name = "Chapter $number"
+                chapter_number = number.toFloat()
+                scanlator = if (number in 6..7) "Group B" else "Group A"
+            }
+        }
+        val source = object : CatalogueSource {
+            override val id = SOURCE_ID + 99
+            override val name = "Complementary groups"
+            override val lang = "en"
+            override val supportsLatest = false
+            override fun getFilterList() = FilterList()
+            override suspend fun getPopularManga(page: Int) = MangasPage(emptyList(), false)
+            override suspend fun getMangaDetails(manga: SManga) = manga
+            override suspend fun getChapterList(manga: SManga) = input.reversed()
+            override suspend fun getPageList(chapter: SChapter) = emptyList<Page>()
+        }
+        val wrapper = MihonMangaSource(source, "test.complementary")
+        val initial = SManga.create().apply {
+            url = "/manga/complementary"
+            title = "Complementary groups"
+            initialized = true
+        }.toDomainContent(wrapper).toManga()
+        val original = MangaDetails(MihonMangaRepository(wrapper, memoryCache()).getDetails(initial))
+        val merged = original.filterChapters(null)
+        assertTrue(merged.isMerged)
+        assertEquals((1..10).map { it.toFloat() }, merged.allChapters.map { it.number })
+        val context = mock(Context::class.java)
+        val rows = merged.mapChapters(0L, 0, null, emptyList(), false, false)
+        val headers = rows.withVolumeHeaders(context).filterIsInstance<ListHeader>()
+        assertEquals(listOf("Group A", "Group B", "Group A"), headers.map { it.getText(context) })
+        assertTrue(headers.all { it.isChapterSection })
+        val separate = merged.copy(mergeRepeatedChapters = false).filterChapters("Group B")
+        assertEquals(listOf(6f, 7f), separate.allChapters.map { it.number })
+        assertEquals(setOf("Group A", "Group B"), separate.chapters.keys)
+        assertEquals(setOf("Group A", "Group B"), separate.identityChapters.mapNotNull { it.branch }.toSet())
+        assertEquals((1..10).map { it.toFloat() },
+            separate.copy(mergeRepeatedChapters = true).filterChapters(null).allChapters.map { it.number })
     }
 
     private fun memoryCache(): MemoryContentCache {

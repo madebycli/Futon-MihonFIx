@@ -3,6 +3,7 @@ package io.github.landwarderer.futon.list.ui.adapter
 import androidx.core.view.isInvisible
 import androidx.core.view.isVisible
 import com.google.android.material.badge.BadgeDrawable
+import com.google.android.material.color.MaterialColors
 import com.hannesdorfmann.adapterdelegates4.dsl.adapterDelegateViewBinding
 import io.github.landwarderer.futon.databinding.ItemHeaderBinding
 import io.github.landwarderer.futon.list.ui.model.ListHeader
@@ -14,6 +15,7 @@ fun listHeaderAD(
 	{ inflater, parent -> ItemHeaderBinding.inflate(inflater, parent, false) },
 ) {
 	var badge: BadgeDrawable? = null
+	val defaultTitleColors = binding.textViewTitle.textColors
 
 	if (listener != null) {
 		binding.buttonMore.setOnClickListener {
@@ -23,6 +25,11 @@ fun listHeaderAD(
 
 	bind {
 		binding.textViewTitle.text = item.getText(context)
+		if (item.isChapterSection) {
+			binding.textViewTitle.setTextColor(MaterialColors.getColor(binding.textViewTitle, androidx.appcompat.R.attr.colorPrimary))
+		} else {
+			binding.textViewTitle.setTextColor(defaultTitleColors)
+		}
 		if (item.buttonTextRes == 0) {
 			binding.buttonMore.isInvisible = true
 			binding.buttonMore.text = null

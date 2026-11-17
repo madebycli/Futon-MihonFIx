@@ -52,7 +52,7 @@ data class MangaDetails(
     private val originalBranchCount by lazy { identityChapters.mapTo(HashSet()) { it.branch }.size }
 
     /** The chapters per branch (group) in this reading projection. */
-    private val chaptersByBranch: Map<String?, List<MangaChapter>> by lazy { allChapters.groupBy { it.branch } }
+    private val chaptersByBranch: Map<String?, List<MangaChapter>> by lazy { identityChapters.groupBy { it.branch } }
 
     /** The number of chapter groups of the source; the merge option is only offered for several. */
     val branchCount: Int
