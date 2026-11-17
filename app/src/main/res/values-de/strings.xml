@@ -660,6 +660,9 @@
     <string name="extension_updates_available">Updates für Erweiterungen verfügbar</string>
     <string name="extension_updates_notifications">Benachrichtigungen zu Erweiterungsupdates</string>
     <string name="extension_updates_onboarding">Clio kann dich benachrichtigen, wenn Updates für installierte Erweiterungen verfügbar sind. Updates werden nie automatisch installiert. Du kannst dies später in der Erweiterungsverwaltung ändern.</string>
+    <string name="source_origin_built_in">Integriert</string>
+    <string name="source_origin_mihon">Mihon-Erweiterung</string>
+    <string name="source_summary_with_origin">%1$s · %2$s</string>
     <string name="merge_chapter_groups">Kapitelgruppen zusammenführen</string>
     <string name="merge_chapter_groups_summary">Alle Gruppen eines Mangas in einer Liste anzeigen; wiederholte Kapitel erscheinen einmal. Es wird nichts gelöscht.</string>
 </resources>

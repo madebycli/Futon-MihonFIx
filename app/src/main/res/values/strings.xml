@@ -1147,4 +1147,7 @@
     <string name="extension_updates_available">Extension updates available</string>
     <string name="extension_updates_notifications">Extension update notifications</string>
     <string name="extension_updates_onboarding">Clio can notify you when updates are available for your installed extensions. Updates are never installed automatically. You can change this later in the extension manager.</string>
+    <string name="source_origin_built_in">Built-in</string>
+    <string name="source_origin_mihon">Mihon extension</string>
+    <string name="source_summary_with_origin">%1$s · %2$s</string>
 </resources>

@@ -9,7 +9,7 @@ import androidx.core.view.isVisible
 import com.hannesdorfmann.adapterdelegates4.dsl.adapterDelegate
 import com.hannesdorfmann.adapterdelegates4.dsl.adapterDelegateViewBinding
 import io.github.landwarderer.futon.R
-import io.github.landwarderer.futon.core.model.getSummary
+import io.github.landwarderer.futon.core.model.getSummaryWithOrigin
 import io.github.landwarderer.futon.core.model.getTitle
 import io.github.landwarderer.futon.core.ui.list.OnTipCloseListener
 import io.github.landwarderer.futon.core.util.ext.drawableStart
@@ -47,7 +47,7 @@ fun sourceConfigItemDelegate2(
 		binding.imageViewRemove.isVisible = item.isEnabled && item.isDisableAvailable
 		binding.imageViewMenu.isVisible = item.isEnabled
 		binding.textViewTitle.drawableStart = if (item.isPinned) iconPinned else null
-		binding.textViewDescription.text = item.source.getSummary(context)
+		binding.textViewDescription.text = item.source.getSummaryWithOrigin(context)
 		binding.imageViewIcon.setImageAsync(item.source)
 	}
 }
