@@ -28,8 +28,10 @@ import dagger.multibindings.ElementsIntoSet
 import io.github.landwarderer.futon.BuildConfig
 import io.github.landwarderer.futon.backups.domain.BackupObserver
 import io.github.landwarderer.futon.core.db.MangaDatabase
+import io.github.landwarderer.futon.core.exceptions.resolve.CaptchaAutoResolveCoordinator
 import io.github.landwarderer.futon.core.exceptions.resolve.CaptchaHandler
 import io.github.landwarderer.futon.core.image.AvifImageDecoder
+import io.github.landwarderer.futon.core.image.JxlImageDecoder
 import io.github.landwarderer.futon.core.image.CbzFetcher
 import io.github.landwarderer.futon.core.image.MangaSourceHeaderInterceptor
 import io.github.landwarderer.futon.core.image.MihonCoverFetcher
@@ -42,6 +44,7 @@ import io.github.landwarderer.futon.core.parser.favicon.FaviconFetcher
 import io.github.landwarderer.futon.core.prefs.AppSettings
 import io.github.landwarderer.futon.core.ui.image.CoilImageGetter
 import io.github.landwarderer.futon.core.ui.util.ActivityRecreationHandle
+import io.github.landwarderer.futon.core.ui.util.ForegroundActivityHolder
 import io.github.landwarderer.futon.core.util.FileSize
 import io.github.landwarderer.futon.core.util.ext.connectivityManager
 import io.github.landwarderer.futon.core.util.ext.isLowRamDevice
@@ -72,167 +75,172 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 interface AppModule {
 
-    @Binds
-    fun bindMangaLoaderContext(mangaLoaderContextImpl: MangaLoaderContextImpl): MangaLoaderContext
+	@Binds
+	fun bindMangaLoaderContext(mangaLoaderContextImpl: MangaLoaderContextImpl): MangaLoaderContext
 
-    @Binds
-    fun bindImageGetter(coilImageGetter: CoilImageGetter): Html.ImageGetter
+	@Binds
+	fun bindImageGetter(coilImageGetter: CoilImageGetter): Html.ImageGetter
 
-    companion object {
+	companion object {
 
-        @Provides
-        @LocalizedAppContext
-        fun provideLocalizedContext(
-            @ApplicationContext context: Context,
-        ): Context = ContextCompat.getContextForLanguage(context)
+		@Provides
+		@LocalizedAppContext
+		fun provideLocalizedContext(
+			@ApplicationContext context: Context,
+		): Context = ContextCompat.getContextForLanguage(context)
 
-        @Provides
-        @Singleton
-        fun provideNetworkState(
-            @ApplicationContext context: Context,
-            settings: AppSettings,
-        ) = NetworkState(context.connectivityManager, settings)
+		@Provides
+		@Singleton
+		fun provideNetworkState(
+			@ApplicationContext context: Context,
+			settings: AppSettings,
+		) = NetworkState(context.connectivityManager, settings)
 
-        @Provides
-        @Singleton
-        fun provideMangaDatabase(
-            @ApplicationContext context: Context,
-        ): MangaDatabase = MangaDatabase(context)
+		@Provides
+		@Singleton
+		fun provideMangaDatabase(
+			@ApplicationContext context: Context,
+		): MangaDatabase = MangaDatabase(context)
 
-        @Provides
-        @Singleton
-        fun provideCoil(
-            @LocalizedAppContext context: Context,
-            @MangaHttpClient okHttpClientProvider: Provider<OkHttpClient>,
-            faviconFetcherFactory: FaviconFetcher.Factory,
-            imageProxyInterceptor: ImageProxyInterceptor,
-            pageFetcherFactory: MangaPageFetcher.Factory,
-            mihonCoverFetcherFactory: MihonCoverFetcher.Factory,
-            coverRestoreInterceptor: CoverRestoreInterceptor,
-            networkStateProvider: Provider<NetworkState>,
-            captchaHandler: CaptchaHandler,
-        ): ImageLoader {
-            val diskCacheFactory = {
-                val rootDir = context.externalCacheDir ?: context.cacheDir
-                DiskCache.Builder()
-                    .directory(rootDir.resolve(CacheDir.THUMBS.dir))
-                    .build()
-            }
-            val okHttpClientLazy = lazy {
-                okHttpClientProvider.get().newBuilder().cache(null).build()
-            }
-            return ImageLoader.Builder(context)
-                .interceptorCoroutineContext(Dispatchers.IO)
-                .diskCache(diskCacheFactory)
-                .logger(if (BuildConfig.DEBUG) DebugLogger() else null)
-                .allowRgb565(context.isLowRamDevice())
-                .eventListener(captchaHandler)
-                .components {
-                    // Must precede Coil's generic network fetcher. Mihon cover requests can require
-                    // extension-owned Referer/cookies/interceptors and their source OkHttpClient.
-                    add(mihonCoverFetcherFactory)
-                    add(
-                        OkHttpNetworkFetcherFactory(
-                            callFactory = okHttpClientLazy::value,
-                            connectivityChecker = { networkStateProvider.get() },
-                        ),
-                    )
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                        add(AnimatedImageDecoder.Factory())
-                    } else {
-                        add(GifDecoder.Factory())
-                    }
-                    add(SvgDecoder.Factory())
-                    add(CbzFetcher.Factory())
-                    add(AvifImageDecoder.Factory())
-                    add(faviconFetcherFactory)
-                    add(MangaPageKeyer())
-                    add(pageFetcherFactory)
-                    add(imageProxyInterceptor)
-                    add(coverRestoreInterceptor)
-                    add(MangaSourceHeaderInterceptor())
-                }.build()
-        }
+		@Provides
+		@Singleton
+		fun provideCoil(
+			@LocalizedAppContext context: Context,
+			@MangaHttpClient okHttpClientProvider: Provider<OkHttpClient>,
+			faviconFetcherFactory: FaviconFetcher.Factory,
+			imageProxyInterceptor: ImageProxyInterceptor,
+			pageFetcherFactory: MangaPageFetcher.Factory,
+			mihonCoverFetcherFactory: MihonCoverFetcher.Factory,
+			coverRestoreInterceptor: CoverRestoreInterceptor,
+			networkStateProvider: Provider<NetworkState>,
+			captchaHandler: CaptchaHandler,
+		): ImageLoader {
+			val diskCacheFactory = {
+				val rootDir = context.externalCacheDir ?: context.cacheDir
+				DiskCache.Builder()
+					.directory(rootDir.resolve(CacheDir.THUMBS.dir))
+					.build()
+			}
+			val okHttpClientLazy = lazy {
+				okHttpClientProvider.get().newBuilder().cache(null).build()
+			}
+			return ImageLoader.Builder(context)
+				.interceptorCoroutineContext(Dispatchers.IO)
+				.diskCache(diskCacheFactory)
+				.logger(if (BuildConfig.DEBUG) DebugLogger() else null)
+				.allowRgb565(context.isLowRamDevice())
+				.eventListener(captchaHandler)
+				.components {
+					// Must precede Coil's generic network fetcher. Mihon cover requests can require
+					// extension-owned Referer/cookies/interceptors and their source OkHttpClient.
+					add(mihonCoverFetcherFactory)
+					add(
+						OkHttpNetworkFetcherFactory(
+							callFactory = okHttpClientLazy::value,
+							connectivityChecker = { networkStateProvider.get() },
+						),
+					)
+					if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+						add(AnimatedImageDecoder.Factory())
+					} else {
+						add(GifDecoder.Factory())
+					}
+					add(SvgDecoder.Factory())
+					add(CbzFetcher.Factory())
+					add(AvifImageDecoder.Factory())
+					add(JxlImageDecoder.Factory())
+					add(faviconFetcherFactory)
+					add(MangaPageKeyer())
+					add(pageFetcherFactory)
+					add(imageProxyInterceptor)
+					add(coverRestoreInterceptor)
+					add(MangaSourceHeaderInterceptor())
+				}.build()
+		}
 
-        @Provides
-        fun provideSearchSuggestions(
-            @ApplicationContext context: Context,
-        ): SearchRecentSuggestions = MangaSuggestionsProvider.createSuggestions(context)
+		@Provides
+		fun provideSearchSuggestions(
+			@ApplicationContext context: Context,
+		): SearchRecentSuggestions = MangaSuggestionsProvider.createSuggestions(context)
 
-        @Provides
-        @ElementsIntoSet
-        fun provideDatabaseObservers(
-            widgetUpdater: WidgetUpdater,
-            appShortcutManager: AppShortcutManager,
-            backupObserver: BackupObserver,
-            syncController: SyncController,
-        ): Set<@JvmSuppressWildcards InvalidationTracker.Observer> = arraySetOf(
-            widgetUpdater,
-            appShortcutManager,
-            backupObserver,
-            syncController,
-        )
+		@Provides
+		@ElementsIntoSet
+		fun provideDatabaseObservers(
+			widgetUpdater: WidgetUpdater,
+			appShortcutManager: AppShortcutManager,
+			backupObserver: BackupObserver,
+			syncController: SyncController,
+		): Set<@JvmSuppressWildcards InvalidationTracker.Observer> = arraySetOf(
+			widgetUpdater,
+			appShortcutManager,
+			backupObserver,
+			syncController,
+		)
 
-        @Provides
-        @ElementsIntoSet
-        fun provideActivityLifecycleCallbacks(
-            appProtectHelper: AppProtectHelper,
-            activityRecreationHandle: ActivityRecreationHandle,
-            screenshotPolicyHelper: ScreenshotPolicyHelper,
-        ): Set<@JvmSuppressWildcards Application.ActivityLifecycleCallbacks> = arraySetOf(
-            appProtectHelper,
-            activityRecreationHandle,
-            screenshotPolicyHelper,
-        )
+		@Provides
+		@ElementsIntoSet
+		fun provideActivityLifecycleCallbacks(
+			appProtectHelper: AppProtectHelper,
+			activityRecreationHandle: ActivityRecreationHandle,
+			screenshotPolicyHelper: ScreenshotPolicyHelper,
+			foregroundActivityHolder: ForegroundActivityHolder,
+			captchaAutoResolveCoordinator: CaptchaAutoResolveCoordinator,
+		): Set<@JvmSuppressWildcards Application.ActivityLifecycleCallbacks> = arraySetOf(
+			appProtectHelper,
+			activityRecreationHandle,
+			screenshotPolicyHelper,
+			foregroundActivityHolder,
+			captchaAutoResolveCoordinator,
+		)
 
-        @Provides
-        @Singleton
-        @LocalStorageChanges
-        fun provideMutableLocalStorageChangesFlow(): MutableSharedFlow<LocalManga?> = MutableSharedFlow()
+		@Provides
+		@Singleton
+		@LocalStorageChanges
+		fun provideMutableLocalStorageChangesFlow(): MutableSharedFlow<LocalManga?> = MutableSharedFlow()
 
-        @Provides
-        @LocalStorageChanges
-        fun provideLocalStorageChangesFlow(
-            @LocalStorageChanges flow: MutableSharedFlow<LocalManga?>,
-        ): SharedFlow<LocalManga?> = flow.asSharedFlow()
+		@Provides
+		@LocalStorageChanges
+		fun provideLocalStorageChangesFlow(
+			@LocalStorageChanges flow: MutableSharedFlow<LocalManga?>,
+		): SharedFlow<LocalManga?> = flow.asSharedFlow()
 
-        @Provides
-        fun provideWorkManager(
-            @ApplicationContext context: Context,
-        ): WorkManager = WorkManager.getInstance(context)
+		@Provides
+		fun provideWorkManager(
+			@ApplicationContext context: Context,
+		): WorkManager = WorkManager.getInstance(context)
 
-        @Provides
-        fun provideDownloadQueueDao(
-            database: MangaDatabase,
-        ): io.github.landwarderer.futon.download.data.dao.DownloadQueueDao = database.getDownloadQueueDao()
+		@Provides
+		fun provideDownloadQueueDao(
+			database: MangaDatabase,
+		): io.github.landwarderer.futon.download.data.dao.DownloadQueueDao = database.getDownloadQueueDao()
 
-        @Provides
-        fun provideMangaDao(
-            database: MangaDatabase,
-        ): io.github.landwarderer.futon.core.db.dao.MangaDao = database.getMangaDao()
+		@Provides
+		fun provideMangaDao(
+			database: MangaDatabase,
+		): io.github.landwarderer.futon.core.db.dao.MangaDao = database.getMangaDao()
 
-        @Provides
-        @Singleton
-        @PageCache
-        fun providePageCache(
-            @ApplicationContext context: Context,
-        ) = LocalStorageCache(
-            context = context,
-            dir = CacheDir.PAGES,
-            defaultSize = FileSize.MEGABYTES.convert(200, FileSize.BYTES),
-            minSize = FileSize.MEGABYTES.convert(20, FileSize.BYTES),
-        )
+		@Provides
+		@Singleton
+		@PageCache
+		fun providePageCache(
+			@ApplicationContext context: Context,
+		) = LocalStorageCache(
+			context = context,
+			dir = CacheDir.PAGES,
+			defaultSize = FileSize.MEGABYTES.convert(200, FileSize.BYTES),
+			minSize = FileSize.MEGABYTES.convert(20, FileSize.BYTES),
+		)
 
-        @Provides
-        @Singleton
-        @FaviconCache
-        fun provideFaviconCache(
-            @ApplicationContext context: Context,
-        ) = LocalStorageCache(
-            context = context,
-            dir = CacheDir.FAVICONS,
-            defaultSize = FileSize.MEGABYTES.convert(8, FileSize.BYTES),
-            minSize = FileSize.MEGABYTES.convert(2, FileSize.BYTES),
-        )
-    }
+		@Provides
+		@Singleton
+		@FaviconCache
+		fun provideFaviconCache(
+			@ApplicationContext context: Context,
+		) = LocalStorageCache(
+			context = context,
+			dir = CacheDir.FAVICONS,
+			defaultSize = FileSize.MEGABYTES.convert(8, FileSize.BYTES),
+			minSize = FileSize.MEGABYTES.convert(2, FileSize.BYTES),
+		)
+	}
 }
