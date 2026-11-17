@@ -6,8 +6,8 @@
 
 **Clio is a free and open-source manga and light novel reader for Android with built-in online content sources.**
 
-*Clio is named after the Greek Muse of history and storytelling. It is an independent community fork of Futon
-(published so far as "Futon MihonFix"), which is built on Kotatsu. It is not affiliated with the original developers.*
+*Clio, formerly Futon MihonFix, is named after the Greek Muse of history and storytelling. It is based on Futon,
+which is built on Kotatsu, and is not affiliated with the original developers.*
 
 ![Android 8.0](https://img.shields.io/badge/android-8.0+-brightgreen) [![Sources count](https://img.shields.io/badge/dynamic/yaml?url=https%3A%2F%2Fraw.githubusercontent.com%2FKotatsu-Redo%2Fkotatsu-parsers-redo%2Frefs%2Fheads%2Fmaster%2F.github%2Fsummary.yaml&query=total&label=manga%20sources&color=%23E9321C)](https://github.com/Kotatsu-Redo/kotatsu-parsers-redo) [![License](https://img.shields.io/github/license/madebycli/Futon-MihonFIx)](https://github.com/madebycli/Futon-MihonFIx/blob/devel/LICENSE) [![GitHub Release](https://img.shields.io/github/v/release/madebycli/Futon-MihonFIx?sort=date&display_name=tag&style=flat)](https://github.com/madebycli/Futon-MihonFIx/releases/latest) [![Discord](https://img.shields.io/discord/1452862077134700628)
 ](https://discord.gg/9sqBHXhwzz)
