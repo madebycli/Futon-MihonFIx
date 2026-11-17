@@ -5,7 +5,7 @@ import androidx.core.view.isVisible
 import androidx.core.view.updatePaddingRelative
 import com.hannesdorfmann.adapterdelegates4.dsl.adapterDelegateViewBinding
 import io.github.landwarderer.futon.R
-import io.github.landwarderer.futon.core.model.getSummary
+import io.github.landwarderer.futon.core.model.getSummaryWithOrigin
 import io.github.landwarderer.futon.core.model.getTitle
 import io.github.landwarderer.futon.core.model.isBroken
 import io.github.landwarderer.futon.core.ui.image.FaviconDrawable
@@ -42,7 +42,7 @@ fun sourceCatalogItemSourceAD(
 
 	bind {
 		binding.textViewTitle.text = item.source.getTitle(context)
-		binding.textViewDescription.text = item.source.getSummary(context)
+		binding.textViewDescription.text = item.source.getSummaryWithOrigin(context)
 		binding.textViewDescription.drawableStart = if (item.source.isBroken) {
 			ContextCompat.getDrawable(context, R.drawable.ic_off_small)
 		} else {

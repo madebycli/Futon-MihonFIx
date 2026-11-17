@@ -1143,4 +1143,7 @@
     <string name="exclude_nsfw_from_shortcuts_summary">Adult manga will not appear in the shortcut menu shown when you long press the app icon</string>
     <string name="update_removed">Update removed</string>
     <string name="recently_read_manga">Recently read manga</string>
+    <string name="source_origin_built_in">Built-in</string>
+    <string name="source_origin_mihon">Mihon extension</string>
+    <string name="source_summary_with_origin">%1$s · %2$s</string>
 </resources>
