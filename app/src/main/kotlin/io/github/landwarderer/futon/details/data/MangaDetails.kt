@@ -145,6 +145,8 @@ data class MangaDetails(
         manga = manga.copy(chapters = identityChapters).filterChapters(branch),
         identityChaptersSource = identityChapters,
         downloadedChaptersSource = storedChapters,
+        remoteChaptersSource = remoteChaptersSource ?: manga.chapters.orEmpty(),
+        projectedBranch = branch,
         localManga = localManga?.run {
             copy(manga = manga.copy(chapters = storedChapters).filterChapters(branch))
         },
