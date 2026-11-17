@@ -45,7 +45,7 @@
                     android:layout_height="104dp"
                     android:layout_gravity="center"
                     android:scaleType="fitCenter"
-                    tools:src="@drawable/ic_futon"
+                    tools:src="@drawable/ic_launcher_foreground"
                     tools:ignore="ContentDescription" />
             </FrameLayout>
         </com.google.android.material.card.MaterialCardView>
@@ -73,7 +73,7 @@
             android:textAppearance="?attr/textAppearanceHeadlineSmall"
             android:textColor="?attr/colorOnSurface"
             android:textStyle="bold"
-            tools:text="Welcome to Futon" />
+            tools:text="Welcome to Clio" />
 
         <!-- Subtitle (Parallax Target) -->
         <TextView
