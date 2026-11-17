@@ -5,6 +5,8 @@ import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.github.landwarderer.futon.core.db.entity.MangaSourceEntity
+import io.github.landwarderer.futon.novel.data.source.NovelParserSource
+import org.koitharu.kotatsu.parsers.model.MangaParserSource
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -44,4 +46,37 @@ class SourceStatePersistenceTest {
             context.deleteDatabase(name)
         }
     }
+    @Test
+    fun disableAllPersistsForBuiltInMangaAndNovelSources() = runBlocking {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val name = "internal-source-disable-all-test.db"
+        context.deleteDatabase(name)
+        fun open() = Room.databaseBuilder(context, MangaDatabase::class.java, name).allowMainThreadQueries().build()
+        val db = open()
+        try {
+            val dao = db.getSourcesDao()
+            val manga = MangaParserSource.entries.first().name
+            val novel = NovelParserSource.entries.first().name
+            fun source(id: String) = MangaSourceEntity(
+                source = id, isEnabled = true, sortKey = 0, addedIn = 1,
+                lastUsedAt = 0, isPinned = false, cfState = 0, title = id,
+            )
+            dao.insertIfAbsent(listOf(source(manga), source(novel)))
+            dao.disableAllSources()
+            dao.insertIfAbsent(listOf(source(manga), source(novel)))
+            db.close()
+            val reopened = open()
+            try {
+                val saved = reopened.getSourcesDao().findAll().associateBy { it.source }
+                assertEquals(false, saved.getValue(manga).isEnabled)
+                assertEquals(false, saved.getValue(novel).isEnabled)
+            } finally {
+                reopened.close()
+            }
+        } finally {
+            if (db.isOpen) db.close()
+            context.deleteDatabase(name)
+        }
+    }
+
 }
