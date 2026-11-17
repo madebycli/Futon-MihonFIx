@@ -1,6 +1,6 @@
 Base devel: 0e2e4b1f467338ae5e209344d9c042f0ff23a618
 PR #5: 88b5c067c16ea15d9c93b86e37d5ca9a51b86138
 PR #6: 01ce90be3e155cf81aab26b29b8bd25ca2c3f86f
-PR #7: 7dd99819794262585558becafa716ef1c58c76c6
+PR #7: 7a10648346efd7e7881e4acbe48ac03b8de5852c
 PR branches: feat/chapters-kototoro-port; feat/description-markdown; feat/mihon-kototoro-parity
 No PR merges into devel; integration branch only.
