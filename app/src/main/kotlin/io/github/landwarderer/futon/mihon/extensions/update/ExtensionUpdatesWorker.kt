@@ -47,8 +47,17 @@ class ExtensionUpdatesWorker @AssistedInject constructor(
             Result.retry()
         } else {
             val packages = newerInstalledPackages(installed, available.map { it.pkgName to it.versionCode })
+            // Several repositories can list one package; announce the newest version of each once.
             val updates = available.filter { it.pkgName in packages }
-            if (updates.isNotEmpty() && settings.isExtensionUpdateNotificationsEnabled) notifyUpdates(updates.map { it.name })
+                .groupBy { it.pkgName }.map { (_, versions) -> versions.maxBy { it.versionCode } }
+            val signature = updateSignature(updates.map { it.pkgName to it.versionCode })
+            if (updates.isEmpty()) {
+                settings.lastNotifiedExtensionUpdates = null
+            } else if (settings.isExtensionUpdateNotificationsEnabled &&
+                signature != settings.lastNotifiedExtensionUpdates && notifyUpdates(updates.map { it.name })
+            ) {
+                settings.lastNotifiedExtensionUpdates = signature
+            }
             settings.lastExtensionUpdateCheck = System.currentTimeMillis()
             Result.success()
         }
@@ -58,12 +67,12 @@ class ExtensionUpdatesWorker @AssistedInject constructor(
         Result.retry()
     }
 
-    private fun notifyUpdates(names: List<String>) {
+    private fun notifyUpdates(names: List<String>): Boolean {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
             ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
-        ) return
+        ) return false
         val manager = NotificationManagerCompat.from(context)
-        if (!manager.areNotificationsEnabled()) return
+        if (!manager.areNotificationsEnabled()) return false
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val system = context.getSystemService(NotificationManager::class.java)
             system.createNotificationChannel(android.app.NotificationChannel(CHANNEL, context.getString(R.string.extension_updates_channel), NotificationManager.IMPORTANCE_DEFAULT))
@@ -78,7 +87,12 @@ class ExtensionUpdatesWorker @AssistedInject constructor(
             .setContentIntent(pending)
             .setAutoCancel(true)
             .build()
-        try { manager.notify(NOTIFICATION_ID, notification) } catch (_: SecurityException) { /* Permission may change. */ }
+        return try {
+            manager.notify(NOTIFICATION_ID, notification)
+            true
+        } catch (_: SecurityException) {
+            false // Permission may change.
+        }
     }
 
     companion object {
@@ -106,3 +120,7 @@ internal fun shouldCheckForUpdates(now: Long, last: Long, interval: Long): Boole
     last <= 0 || now < last || now - last >= interval
 
 internal fun canCompleteUpdateCheck(repositoryErrors: List<String?>): Boolean = repositoryErrors.none { it != null }
+
+/** Identifies one set of pending updates; the order of the list does not matter. */
+internal fun updateSignature(updates: List<Pair<String, Long>>): String =
+    updates.sortedBy { it.first }.joinToString(",") { "${it.first}:${it.second}" }

@@ -899,6 +899,11 @@ class AppSettings internal constructor(
 		get() = prefs.getBoolean(KEY_EXTENSION_UPDATE_NOTIFICATIONS, false)
 		set(value) = prefs.edit { putBoolean(KEY_EXTENSION_UPDATE_NOTIFICATIONS, value) }
 
+	/** The updates the last notification was about, so the same updates are not announced at every check. */
+	var lastNotifiedExtensionUpdates: String?
+		get() = prefs.getString(KEY_EXTENSION_UPDATE_NOTIFIED, null)
+		set(value) = prefs.edit { putString(KEY_EXTENSION_UPDATE_NOTIFIED, value) }
+
 	var lastExtensionUpdateCheck: Long
 		get() = getLongCompat(KEY_EXTENSION_UPDATE_LAST_CHECK, 0L)
 		set(value) = prefs.edit { putLong(KEY_EXTENSION_UPDATE_LAST_CHECK, value) }
@@ -988,6 +993,7 @@ class AppSettings internal constructor(
 		const val KEY_MERGE_REPEATED_CHAPTERS = "merge_repeated_chapters"
 		const val KEY_EXTENSION_UPDATE_NOTIFICATIONS = "extension_update_notifications"
 		const val KEY_EXTENSION_UPDATE_LAST_CHECK = "extension_update_last_check"
+		const val KEY_EXTENSION_UPDATE_NOTIFIED = "extension_update_notified"
 		const val KEY_INCOGNITO_NSFW = "incognito_nsfw"
 		const val KEY_PAGES_NUMBERS = "pages_numbers"
 		const val KEY_SCREENSHOTS_POLICY = "screenshots_policy"

@@ -26,4 +26,11 @@ class ExtensionUpdatesTest {
         assertTrue(shouldCheckForUpdates(1100L, 600L, 500L))
         assertTrue(shouldCheckForUpdates(100L, 600L, 500L))
     }
+
+    @Test
+    fun theSameUpdatesHaveTheSameSignatureWhateverTheirOrder() {
+        assertEquals(updateSignature(listOf("a" to 2L, "b" to 3L)), updateSignature(listOf("b" to 3L, "a" to 2L)))
+        assertNotEquals(updateSignature(listOf("a" to 2L)), updateSignature(listOf("a" to 3L)))
+        assertNotEquals(updateSignature(listOf("a" to 2L)), updateSignature(listOf("a" to 2L, "b" to 1L)))
+    }
 }
