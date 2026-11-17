@@ -4,6 +4,31 @@ All notable changes to this project are documented in this file.
 
 The format is based on "Keep a Changelog" and follows semantic versioning where possible.
 
+## 9.10.0
+Date: 2026-11-17
+
+### Clio
+- The app is now called **Clio** (formerly Futon MihonFix), with a new launcher icon, About page entry and README.
+- Technical identity is unchanged: both package IDs, the release certificate, sync accounts and the update path.
+
+### Chapters
+- Chapter groups are shown as one list exactly like Kototoro: headers only where the volume or group changes,
+  repeated chapters appear once, with a "Merge chapter groups" switch in the chapters menu and in the settings (on by default).
+- The former Comix-only rule is removed.
+
+### Descriptions
+- Source descriptions (Mihon/Keiyoushi extensions) render Markdown: bold, italic, lists, quotes and links; only http(s) links are clickable.
+- The description no longer scrolls or jumps by itself when it is expanded or collapsed.
+
+### Mihon extensions and Cloudflare
+- Updated to the current Kototoro: shared Cloudflare solve-and-retry per host, safer diagnostics logging,
+  race-safe extension runtime, correct page indexes for chapters that repeat the first image.
+
+### AppFuton upstream
+- Merge of AppFuton/Futon 127c51d (45 commits): double-page reader rework, JPEG XL, E-Ink flash, source presets,
+  library pinning and filters, source replacement and alternatives, tracker and download fixes, custom themes.
+- Database migration 30 to 31: after the update the app cannot go back to 9.9.0 without losing data.
+
 ## 9.9.0
 Date: 2026-10-24
 
