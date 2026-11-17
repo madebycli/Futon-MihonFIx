@@ -34,6 +34,9 @@ abstract class MangaSourcesDao {
 	@Query("SELECT * FROM sources ORDER BY used_at DESC LIMIT :limit")
 	abstract suspend fun findLastUsed(limit: Int): List<MangaSourceEntity>
 
+	@Query("SELECT * FROM sources WHERE enabled = 1 ORDER BY used_at DESC LIMIT :limit")
+	abstract suspend fun findLastUsedEnabled(limit: Int): List<MangaSourceEntity>
+
 	@Query("SELECT * FROM sources ORDER BY pinned DESC, sort_key")
 	abstract fun observeAll(): Flow<List<MangaSourceEntity>>
 

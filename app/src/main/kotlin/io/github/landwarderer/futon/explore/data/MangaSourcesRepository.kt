@@ -109,7 +109,8 @@ class MangaSourcesRepository @Inject constructor(
 
 	suspend fun getTopSources(limit: Int): List<MangaSource> {
 		assimilateNewSources()
-		return dao.findLastUsed(limit).toSources(settings.isNsfwContentDisabled, null)
+		val recent = if (settings.isAllSourcesEnabled) dao.findLastUsed(limit) else dao.findLastUsedEnabled(limit)
+		return recent.toSources(settings.isNsfwContentDisabled, null)
 	}
 
 	suspend fun getDisabledSources(): Set<MangaSource> {

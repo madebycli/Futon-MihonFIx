@@ -1,0 +1,35 @@
+package io.github.landwarderer.futon.core.db
+
+import android.content.Context
+import androidx.room.Room
+import androidx.test.core.app.ApplicationProvider
+import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.github.landwarderer.futon.core.db.entity.MangaSourceEntity
+import kotlinx.coroutines.runBlocking
+import org.junit.Assert.assertEquals
+import org.junit.Test
+import org.junit.runner.RunWith
+
+@RunWith(AndroidJUnit4::class)
+class SourceStatePersistenceTest {
+    @Test
+    fun disabledSourceSurvivesDiscoveryAndIsExcludedBeforeRecentLimit() = runBlocking {
+        val db = Room.inMemoryDatabaseBuilder(
+            ApplicationProvider.getApplicationContext<Context>(), MangaDatabase::class.java,
+        ).allowMainThreadQueries().build()
+        try {
+            val dao = db.getSourcesDao()
+            fun source(name: String, enabled: Boolean, lastUsedAt: Long) = MangaSourceEntity(
+                source = name, isEnabled = enabled, sortKey = 0, addedIn = 1,
+                lastUsedAt = lastUsedAt, isPinned = false, cfState = 0, title = name,
+            )
+            dao.insertIfAbsent(listOf(source("MIHON_1", false, 200L), source("MIHON_2", true, 100L)))
+            dao.insertIfAbsent(listOf(source("MIHON_1", true, 300L)))
+            assertEquals(listOf("MIHON_2"), dao.findLastUsedEnabled(1).map { it.source })
+            assertEquals(listOf("MIHON_1"), dao.findLastUsed(1).map { it.source })
+            assertEquals(false, dao.findAll().single { it.source == "MIHON_1" }.isEnabled)
+        } finally {
+            db.close()
+        }
+    }
+}
