@@ -79,4 +79,43 @@ class SourceStatePersistenceTest {
         }
     }
 
+    @Test
+    fun individualInternalDisablesRemainSavedAlongsideEnabledSourcesAndAfterAllAreDisabled() = runBlocking {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val name = "internal-source-manual-disable-test.db"
+        context.deleteDatabase(name)
+        fun open() = Room.databaseBuilder(context, MangaDatabase::class.java, name).allowMainThreadQueries().build()
+        val db = open()
+        try {
+            val dao = db.getSourcesDao()
+            val manga = MangaParserSource.entries.take(2).map { it.name }
+            val novel = NovelParserSource.entries.first().name
+            val ids = manga + novel
+            assertEquals(3, ids.distinct().size)
+            fun source(id: String) = MangaSourceEntity(
+                source = id, isEnabled = true, sortKey = 0, addedIn = 1,
+                lastUsedAt = 0, isPinned = false, cfState = 0, title = id,
+            )
+            val discovered = ids.map(::source)
+            dao.insertIfAbsent(discovered)
+            for ((index, id) in ids.withIndex()) {
+                dao.setEnabled(id, false)
+                dao.insertIfAbsent(discovered)
+                val states = dao.findAll().associate { it.source to it.isEnabled }
+                assertEquals(ids.take(index + 1).associateWith { false }, states.filterKeys { it in ids.take(index + 1) })
+                assertEquals(ids.drop(index + 1).associateWith { true }, states.filterKeys { it in ids.drop(index + 1) })
+            }
+            db.close()
+            val reopened = open()
+            try {
+                assertEquals(emptyList<String>(), reopened.getSourcesDao().findAllEnabledNames())
+            } finally {
+                reopened.close()
+            }
+        } finally {
+            if (db.isOpen) db.close()
+            context.deleteDatabase(name)
+        }
+    }
+
 }
