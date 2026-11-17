@@ -126,6 +126,7 @@ fun List<ChapterListItem>.withVolumeHeaders(context: Context): MutableList<ListM
 				} else {
 					context.getString(R.string.volume_, section.volume)
 				},
+				isChapterSection = true,
 			)
 
 			is ChapterSection.Item -> section.chapter

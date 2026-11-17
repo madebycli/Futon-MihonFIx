@@ -26,14 +26,19 @@ fun <T> withVolumeSections(
     scanlator: (T) -> String?,
 ): List<ChapterSection<T>> {
     if (!shouldShowVolumeHeaders(chapters, volume, scanlator)) return chapters.map { ChapterSection.Item(it) }
-    var previousVolume = -1
+    val hasVolumes = chapters.any { volume(it) > 0 }
+    var previousVolume: Int? = null
     var previousCustom: String? = null
     val result = ArrayList<ChapterSection<T>>((chapters.size * 1.4).toInt())
     for (chapter in chapters) {
-        val custom = scanlator(chapter)?.takeIf { it.isNotBlank() }
+        val custom = scanlator(chapter)?.trim()?.takeIf { it.isNotEmpty() }
         val chapterVolume = volume(chapter)
-        if (chapterVolume != previousVolume || (custom != null && custom != previousCustom)) {
+        val volumeChanged = hasVolumes && chapterVolume != previousVolume
+        val groupChanged = custom != null && custom != previousCustom
+        if (volumeChanged || groupChanged) {
             result += ChapterSection.Header(chapterVolume, custom)
+            // As in Kototoro, only a header moves the reference point. A chapter without credits stays in the
+            // group above it, and a group that returns after another one gets its heading again.
             previousVolume = chapterVolume
             previousCustom = custom
         }

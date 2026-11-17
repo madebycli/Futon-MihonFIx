@@ -36,7 +36,7 @@ class OnboardingPageTest {
 	fun testPageResourcesArePopulated() {
 		for (page in OnboardingPage.entries) {
 			if (page == OnboardingPage.WELCOME) {
-				assertEquals(R.drawable.ic_futon, page.heroIconRes)
+				assertEquals(R.drawable.ic_launcher_foreground, page.heroIconRes)
 			} else {
 				assertNull(page.heroIconRes)
 			}

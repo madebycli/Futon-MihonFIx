@@ -7,6 +7,9 @@ import android.view.ViewGroup
 import androidx.appcompat.view.ActionMode
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isVisible
+import androidx.lifecycle.DefaultLifecycleObserver
+import androidx.lifecycle.LifecycleOwner
+import kotlinx.coroutines.flow.FlowCollector
 import com.google.android.material.tabs.TabLayout
 import com.google.android.material.tabs.TabLayoutMediator
 import dagger.hilt.android.AndroidEntryPoint
@@ -22,7 +25,6 @@ import io.github.landwarderer.futon.core.ui.sheet.AdaptiveSheetBehavior.Companio
 import io.github.landwarderer.futon.core.ui.sheet.AdaptiveSheetCallback
 import io.github.landwarderer.futon.core.ui.sheet.BaseAdaptiveSheet
 import io.github.landwarderer.futon.core.ui.util.ActionModeListener
-import io.github.landwarderer.futon.core.ui.util.MenuInvalidator
 import io.github.landwarderer.futon.core.ui.util.RecyclerViewOwner
 import io.github.landwarderer.futon.core.ui.util.ReversibleActionObserver
 import io.github.landwarderer.futon.core.util.ext.doOnPageChanged
@@ -48,6 +50,8 @@ class ChaptersPagesSheet : BaseAdaptiveSheet<SheetChaptersPagesBinding>(),
 	lateinit var settings: AppSettings
 
 	private val viewModel by ChaptersPagesViewModel.ActivityVMLazy(this)
+	private var chapterMenuProvider: ChapterPagesMenuProvider? = null
+	private var actionModeSheetLocked = false
 
 	override fun onCreateViewBinding(inflater: LayoutInflater, container: ViewGroup?): SheetChaptersPagesBinding {
 		return SheetChaptersPagesBinding.inflate(inflater, container, false)
@@ -77,11 +81,24 @@ class ChaptersPagesSheet : BaseAdaptiveSheet<SheetChaptersPagesBinding>(),
 		binding.pager.setCurrentItem(defaultTab, false)
 		binding.tabs.isVisible = adapter.itemCount > 1
 
-		val menuProvider = ChapterPagesMenuProvider(viewModel, this, binding.pager, settings)
+		val menuProvider = ChapterPagesMenuProvider(viewModel, this, binding.pager, settings) {
+			binding.toolbar.invalidateMenu()
+		}
+		chapterMenuProvider = menuProvider
+		viewLifecycleOwner.lifecycle.addObserver(object : DefaultLifecycleObserver {
+			override fun onDestroy(owner: LifecycleOwner) {
+				menuProvider.dispose()
+				chapterMenuProvider = null
+				if (actionModeSheetLocked) {
+					actionModeSheetLocked = false
+					unlock()
+				}
+			}
+		})
 		onBackPressedDispatcher.addCallback(viewLifecycleOwner, menuProvider)
 		binding.toolbar.addMenuProvider(menuProvider)
 
-		val menuInvalidator = MenuInvalidator(binding.toolbar)
+		val menuInvalidator = FlowCollector<Any?> { menuProvider.requestMenuRefresh() }
 		viewModel.isChaptersReversed.observe(viewLifecycleOwner, menuInvalidator)
 		viewModel.isChaptersInGridView.observe(viewLifecycleOwner, menuInvalidator)
 		viewModel.isDownloadedOnly.observe(viewLifecycleOwner, menuInvalidator)
@@ -89,6 +106,9 @@ class ChaptersPagesSheet : BaseAdaptiveSheet<SheetChaptersPagesBinding>(),
 		viewModel.showMergeRepeatedChapters.observe(viewLifecycleOwner, menuInvalidator)
 
 		actionModeDelegate?.addListener(this, viewLifecycleOwner)
+		if (actionModeDelegate?.isActionModeStarted == true) {
+			view?.post(::lockForActionModeIfActive)
+		}
 		addSheetCallback(this, viewLifecycleOwner)
 
 		viewModel.newChaptersCount.observe(viewLifecycleOwner, ::onNewChaptersChanged)
@@ -117,11 +137,21 @@ class ChaptersPagesSheet : BaseAdaptiveSheet<SheetChaptersPagesBinding>(),
 
 	override fun onActionModeStarted(mode: ActionMode) {
 		viewBinding?.toolbar?.menuView?.isVisible = false
-		view?.post(::expandAndLock)
+		view?.post(::lockForActionModeIfActive)
+	}
+
+	private fun lockForActionModeIfActive() {
+		if (!actionModeSheetLocked && actionModeDelegate?.isActionModeStarted == true && viewBinding != null) {
+			actionModeSheetLocked = true
+			expandAndLock()
+		}
 	}
 
 	override fun onActionModeFinished(mode: ActionMode) {
-		unlock()
+		if (actionModeSheetLocked) {
+			actionModeSheetLocked = false
+			unlock()
+		}
 		val state = behavior?.state ?: STATE_EXPANDED
 		viewBinding?.toolbar?.menuView?.isVisible = state != STATE_COLLAPSED
 	}
@@ -159,7 +189,7 @@ class ChaptersPagesSheet : BaseAdaptiveSheet<SheetChaptersPagesBinding>(),
 	}
 
 	private fun onPageChanged(position: Int) {
-		viewBinding?.toolbar?.invalidateMenu()
+		chapterMenuProvider?.requestMenuRefresh() ?: viewBinding?.toolbar?.invalidateMenu()
 		settings.lastDetailsTab = position
 	}
 

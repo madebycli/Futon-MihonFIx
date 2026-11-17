@@ -4,6 +4,8 @@ import io.github.landwarderer.futon.core.model.AnonymousMangaSource
 import io.github.landwarderer.futon.core.model.LocalMangaSource
 import io.github.landwarderer.futon.details.data.MangaDetails
 import io.github.landwarderer.futon.details.ui.mapChapters
+import io.github.landwarderer.futon.details.ui.withVolumeHeaders
+import io.github.landwarderer.futon.list.ui.model.ListHeader
 import io.github.landwarderer.futon.local.domain.model.LocalManga
 import io.github.landwarderer.futon.reader.ui.ReaderState
 import io.github.landwarderer.futon.bookmarks.domain.Bookmark
@@ -67,6 +69,21 @@ class ChapterGroupsTest {
             listOf<Any>("WebToon", 1L, 2L, "Official · WebToon", 3L, "Saucerer", 4L, "WebToon", 5L),
             sections(items).labels(),
         )
+    }
+
+
+    @Test
+    fun chapterGroupHeadingsAreMarkedForAccentOnlyAtGroupBoundaries() {
+        val chapters = listOf(
+            chapter(1, 1f, scanlator = "A"), chapter(2, 2f, scanlator = "A"),
+            chapter(3, 3f, scanlator = "B"), chapter(4, 4f, scanlator = "A"),
+        )
+        val context = mock(Context::class.java)
+        val items = MangaDetails(manga(chapters)).mapChapters(0L, 0, null, emptyList(), false, false)
+        val headers = items.withVolumeHeaders(context).filterIsInstance<ListHeader>()
+        assertEquals(listOf("A", "B", "A"), headers.map { it.getText(context) })
+        assertTrue(headers.all { it.isChapterSection })
+        assertFalse(ListHeader("ordinary heading").isChapterSection)
     }
 
     // --- Kototoro ChaptersDeduplicationTest: mergeRepeated ------------------------------------------------------
