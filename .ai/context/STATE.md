@@ -13,6 +13,18 @@ See docs/pr-reviews/chapters.md. CI results must be checked for each final head;
 Earlier work and release instructions below are historical.
 
 
+### Verified signed 9.11.0 publication (2026-11-18)
+Clio 9.11.0 / 91100, user-authorized stable release: https://github.com/madebycli/Futon-MihonFIx/releases/tag/v9.11.0
+Source 63c623a39be97f5054ea00d15cd99b1d397133a6 on release/v9.11.0, run 44206202924 SUCCESS (all steps), published 2026-11-18T00:36:50Z.
+Merged into devel first: PRs #20 to #29 (issues #9 to #18, tracker #19, all closed): German merge strings, section metadata,
+merge projection, accent headings, source persistence (Futon upstream behaviour), tab visibility, source-management states,
+origin labels, startup branding, extension update check.
+Both APKs use the existing repository certificate 12fe17245decb84c98985ddcc08884b874d10a78e4fb747a6ed3e2a42d77b625.
+Standalone Futon-MihonFix-9.11.0.apk SHA256 e64168f6fd604cfeb3c6b6be616549a29d2b92746eac4625a7411b9b3790b539;
+legacy Futon-9.11.0-legacy-update.apk SHA256 1bb8d72ae72fde1e35cfbb969ea3cea5c6c01762c08237930d38e7a2b6650794.
+Android 16 emulator install/upgrade/coexistence passed (INSTALL-VALIDATION.txt). Physical-device validation of 9.10.0 and
+9.11.0 is PENDING; full lintRelease stays diagnostic.
+
 ### Verified signed 9.10.0 publication (2026-11-17)
 Clio 9.10.0 / 91000 (formerly Futon MihonFix), user-authorized stable release: https://github.com/madebycli/Futon-MihonFIx/releases/tag/v9.10.0
 Source 6e7b6b3e4ce80c1fd9a3267fa75c442e40cd2748 on release/v9.10.0, run 44124286818 SUCCESS (all steps), published 2026-11-17T16:48:51Z.
