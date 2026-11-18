@@ -4,6 +4,28 @@ All notable changes to this project are documented in this file.
 
 The format is based on "Keep a Changelog" and follows semantic versioning where possible.
 
+## 9.11.0
+Date: 2026-11-18
+
+### Sources
+- Sources you disabled stay disabled after a restart, a rescan or an extension update. Default sources are only
+  chosen on a fresh install. This was a behaviour of the Futon upstream, now fixed here.
+- Source management shows loading, empty and error states with a retry or catalogue action instead of a blank screen.
+- Source lists mark each source as "Built-in" or "Mihon extension".
+
+### Chapters
+- Group headings use the theme accent; chapters without a group name no longer produce empty headings.
+- Complementary Mihon groups stay selectable when "Merge chapter groups" is off and merge into one reading order when it is on.
+- The Pages, Chapters and Bookmarks tabs stay visible after menu changes and searches.
+- German translations for the merge controls.
+
+### Mihon extensions
+- Startup check for updates of installed extensions (throttled to every 12 hours). Optional notification, offered in
+  the onboarding and in the extension manager menu. Updates are never installed automatically.
+
+### Clio
+- The welcome screen and the Android 12+ splash use the Clio mark; About reads "formerly Futon MihonFix".
+
 ## 9.10.0
 Date: 2026-11-17
 

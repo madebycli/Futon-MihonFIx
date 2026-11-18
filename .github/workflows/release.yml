@@ -126,6 +126,10 @@ jobs:
             --tests "io.github.landwarderer.futon.details.domain.*" \
             --tests "io.github.landwarderer.futon.mihon.*" \
             --tests "io.github.landwarderer.futon.core.network.*" \
+            --tests "io.github.landwarderer.futon.core.model.*" \
+            --tests "io.github.landwarderer.futon.explore.data.*" \
+            --tests "io.github.landwarderer.futon.settings.sources.*" \
+            --tests "io.github.landwarderer.futon.details.ui.*" \
             --stacktrace \
             --no-build-cache \
             --no-configuration-cache
