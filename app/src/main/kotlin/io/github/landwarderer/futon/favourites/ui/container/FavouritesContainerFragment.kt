@@ -25,6 +25,7 @@ import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.RecyclerView
+import androidx.viewpager2.widget.ViewPager2
 import com.google.android.material.tabs.TabLayoutMediator
 import dagger.hilt.android.AndroidEntryPoint
 import io.github.landwarderer.futon.R
@@ -171,12 +172,33 @@ class FavouritesContainerFragment : BaseFragment<FragmentFavouritesContainerBind
 
 	private fun bindAppBarOffset(bind: Boolean) {
 		val appBar = (activity as? AppBarOwner)?.appBar ?: return
+		val pager = viewBinding?.pager
 		if (bind && !isAppBarOffsetBound) {
 			appBar.addOnOffsetChangedListener(appBarOffsetListener)
+			pager?.registerOnPageChangeCallback(pageChangeCallback)
 			isAppBarOffsetBound = true
 		} else if (!bind && isAppBarOffsetBound) {
 			appBar.removeOnOffsetChangedListener(appBarOffsetListener)
+			pager?.unregisterOnPageChangeCallback(pageChangeCallback)
 			isAppBarOffsetBound = false
+		}
+	}
+
+	/**
+	 * The lists of the pager keep a fixed top padding: the room of the search bar and the tabs. When the search bar
+	 * is scrolled away and another category is opened at its top, that room would show as a gap between the tabs and
+	 * the list, so the search bar comes back. A category that is already scrolled down is left as it is.
+	 */
+	private val pageChangeCallback = object : ViewPager2.OnPageChangeCallback() {
+		override fun onPageSelected(position: Int) {
+			val pager = viewBinding?.pager ?: return
+			pager.post {
+				val appBar = (activity as? AppBarOwner)?.appBar ?: return@post
+				val list = (findCurrentFragment() as? RecyclerViewOwner)?.recyclerView
+				if (list == null || !list.canScrollVertically(-1)) {
+					appBar.setExpanded(true, true)
+				}
+			}
 		}
 	}
 
