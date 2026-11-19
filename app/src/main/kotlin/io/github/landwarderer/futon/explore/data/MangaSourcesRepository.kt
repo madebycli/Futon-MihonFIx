@@ -3,6 +3,7 @@ package io.github.landwarderer.futon.explore.data
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.util.Log
 import android.content.IntentFilter
 import androidx.core.content.ContextCompat
 import androidx.room.withTransaction
@@ -243,8 +244,10 @@ class MangaSourcesRepository @Inject constructor(
 		observeAllEnabled(),
 		observeSortOrder(),
 	) { skipNsfw, allEnabled, order ->
-		dao.observeAll(!allEnabled, order).map {
-			it.toSources(skipNsfw, order)
+		// A Mihon source row only resolves to its source once its extension is loaded, so the rows are resolved
+		// again whenever the extensions change; otherwise the list stays without them until the next database write.
+		dao.observeAll(!allEnabled, order).combine(mihonExtensionManager.installedExtensions) { entities, _ ->
+			entities.toSources(skipNsfw, order)
 		}
 	}.flattenLatest()
 		.onStart { assimilateNewSources() }
@@ -342,6 +345,7 @@ class MangaSourcesRepository @Inject constructor(
 	}
 
 	suspend fun setSourcesEnabledExclusive(sources: Set<MangaSource>) {
+		Log.i(TAG, "setSourcesEnabledExclusive keep=${sources.size}")
 		assimilateNewSources()
 		db.withTransaction {
 			for (s in allMangaSources) {
@@ -352,6 +356,7 @@ class MangaSourcesRepository @Inject constructor(
 
 	suspend fun disableAllSources() {
 		assimilateNewSources()
+		Log.i(TAG, "disableAllSources")
 		db.withTransaction {
 			dao.disableAllSources()
 		}
@@ -399,6 +404,7 @@ class MangaSourcesRepository @Inject constructor(
 		}
 		try {
 			val existingSources = dao.findAll()
+			Log.i(TAG, "assimilate existing=${existingSources.size} enabled=${existingSources.count { it.isEnabled }}")
 			val seedDefaults = shouldSeedDefaultMangaSources(existingSources.isEmpty(), settings.sourcesVersion)
 
 			// Initial cache population from database
@@ -424,6 +430,11 @@ class MangaSourcesRepository @Inject constructor(
 				)
 			}
 			dao.insertIfAbsent(entities)
+			Log.i(
+				TAG,
+				"assimilate new=${entities.size} mihon=${entities.count { it.source.startsWith("MIHON_") }} " +
+					"mihonEnabled=${entities.count { it.source.startsWith("MIHON_") && it.isEnabled }} seed=$seedDefaults",
+			)
 
 			// Seed built-in defaults only on a fresh database, never after a user disables sources.
 			if (seedDefaults) {
@@ -469,6 +480,7 @@ class MangaSourcesRepository @Inject constructor(
 	}
 
 	private suspend fun setSourcesEnabledImpl(sources: Collection<MangaSource>, isEnabled: Boolean) {
+		Log.i(TAG, "setSourcesEnabled count=${sources.size} enabled=$isEnabled first=${sources.firstOrNull()?.name}")
 		if (sources.size == 1) { // fast path
 			dao.setEnabled(sources.first().name, isEnabled)
 			return
@@ -619,6 +631,8 @@ class MangaSourcesRepository @Inject constructor(
 		return io.github.landwarderer.futon.novel.data.source.NovelParserSource.fromName(this)
 	}
 }
+
+private const val TAG = "MangaSources"
 
 /** A populated database represents existing user choices, including an intentionally empty active list. */
 internal fun shouldSeedDefaultMangaSources(isDatabaseEmpty: Boolean, sourcesVersion: Int): Boolean =
