@@ -14,6 +14,7 @@ import coil3.ImageLoader
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.drop
 import io.github.landwarderer.futon.R
+import io.github.landwarderer.futon.core.ui.util.BottomOverlay
 import io.github.landwarderer.futon.core.ui.util.TopOverlay
 import io.github.landwarderer.futon.core.exceptions.resolve.SnackbarErrorObserver
 import io.github.landwarderer.futon.core.nav.router
@@ -99,7 +100,7 @@ class FeedFragment :
 			left = barsInsets.left,
 			top = paddingVertical + TopOverlay.of(v),
 			right = barsInsets.right,
-			bottom = barsInsets.bottom + paddingVertical,
+			bottom = barsInsets.bottom + paddingVertical + BottomOverlay.of(v),
 		)
 		return insets.consumeAll(typeMask)
 	}

@@ -49,6 +49,7 @@ import io.github.landwarderer.futon.core.prefs.AppSettings
 import io.github.landwarderer.futon.core.prefs.HomeBackgroundFont
 import io.github.landwarderer.futon.core.prefs.NavItem
 import io.github.landwarderer.futon.core.ui.BaseActivity
+import io.github.landwarderer.futon.core.ui.util.BottomOverlay
 import io.github.landwarderer.futon.core.ui.util.FadingAppbarMediator
 import io.github.landwarderer.futon.core.ui.util.TopOverlay
 import io.github.landwarderer.futon.core.ui.util.FontCache
@@ -599,7 +600,11 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
 	private fun updateContainerBottomMargin() {
 		val bottomNavBar = viewBinding.bottomNav ?: return
 		val gapBelowBar = (bottomNavBar.layoutParams as? MarginLayoutParams)?.bottomMargin ?: 0
-		val newMargin = if (bottomNavBar.isPinned && bottomNavBar.isShownOrShowing) {
+		// The floating bar never pushes the content up, pinned or not: the lists scroll behind it and get its height
+		// as bottom padding (BottomOverlay), so their last item can be scrolled above the bar.
+		val isFloating = settings.isNavFloating
+		BottomOverlay.set(viewBinding.container, if (isFloating) bottomNavBar.height else 0)
+		val newMargin = if (!isFloating && bottomNavBar.isPinned && bottomNavBar.isShownOrShowing) {
 			bottomNavBar.height + gapBelowBar
 		} else {
 			0
