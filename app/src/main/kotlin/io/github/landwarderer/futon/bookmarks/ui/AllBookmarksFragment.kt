@@ -14,6 +14,7 @@ import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.GridLayoutManager
 import dagger.hilt.android.AndroidEntryPoint
 import io.github.landwarderer.futon.R
+import io.github.landwarderer.futon.core.ui.util.TopOverlay
 import io.github.landwarderer.futon.bookmarks.domain.Bookmark
 import io.github.landwarderer.futon.bookmarks.ui.adapter.BookmarksAdapter
 import io.github.landwarderer.futon.core.exceptions.resolve.SnackbarErrorObserver
@@ -116,7 +117,7 @@ class AllBookmarksFragment :
 		val basePadding = resources.getDimensionPixelOffset(R.dimen.list_spacing_normal)
 		viewBinding?.recyclerView?.setPadding(
 			barsInsets.left + basePadding,
-			barsInsets.top + basePadding,
+			barsInsets.top + basePadding + TopOverlay.of(v),
 			barsInsets.right + basePadding,
 			barsInsets.bottom + basePadding,
 		)

@@ -18,4 +18,5 @@
 	<item name="nav_suggestions" type="id" />
 	<item name="nav_bookmarks" type="id" />
 	<item name="roundFab" type="id" />
+	<item name="tag_top_overlay" type="id" />
 </resources>

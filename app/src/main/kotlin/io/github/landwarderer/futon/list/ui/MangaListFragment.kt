@@ -18,6 +18,7 @@ import coil3.ImageLoader
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import io.github.landwarderer.futon.R
+import io.github.landwarderer.futon.core.ui.util.TopOverlay
 import io.github.landwarderer.futon.core.exceptions.resolve.ExceptionResolver
 import io.github.landwarderer.futon.core.exceptions.resolve.SnackbarErrorObserver
 import io.github.landwarderer.futon.core.model.isLocal
@@ -133,9 +134,14 @@ abstract class MangaListFragment :
 		val typeMask = WindowInsetsCompat.Type.systemBars()
 		val barsInsets = insets.getInsets(typeMask)
 		val basePadding = v.resources.getDimensionPixelOffset(R.dimen.list_spacing_normal)
+		val topOverlay = TopOverlay.of(v)
+		viewBinding?.swipeRefreshLayout?.setProgressViewEndTarget(
+			false,
+			topOverlay + (SWIPE_REFRESH_TARGET_DP * v.resources.displayMetrics.density).toInt(),
+		)
 		viewBinding?.recyclerView?.setPadding(
 			left = barsInsets.left + basePadding,
-			top = basePadding,
+			top = basePadding + topOverlay,
 			right = barsInsets.right + basePadding,
 			bottom = barsInsets.bottom + basePadding,
 		)
@@ -376,5 +382,11 @@ abstract class MangaListFragment :
 			invalidateSpanGroupIndexCache()
 			invalidateSpanIndexCache()
 		}
+	}
+
+	private companion object {
+
+		/** The default end of the pull-to-refresh circle of SwipeRefreshLayout, in dp. */
+		const val SWIPE_REFRESH_TARGET_DP = 64
 	}
 }
