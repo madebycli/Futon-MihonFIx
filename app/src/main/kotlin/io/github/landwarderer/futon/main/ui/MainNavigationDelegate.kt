@@ -15,6 +15,7 @@ import androidx.core.view.size
 import androidx.core.view.updateLayoutParams
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.navigation.NavigationBarView
@@ -49,7 +50,13 @@ import io.github.landwarderer.futon.tracker.ui.updates.UpdatesFragment
 import java.util.LinkedList
 import com.google.android.material.R as materialR
 
-private const val TAG_PRIMARY = "primary"
+/**
+ * One tag per tab. The tab fragments are created when first opened and then kept, only hidden, so that switching tabs
+ * shows the previous content at once instead of building the screen and loading it again. This follows the way
+ * Kototoro (Navigation 3 entries with their own ViewModelStore and saved state) and Komikku (Voyager TabNavigator with
+ * a ScreenModel per tab and saveableState) keep a top-level tab alive.
+ */
+private const val TAG_PRIMARY_PREFIX = "primary:"
 
 class MainNavigationDelegate(
 	private val navBar: NavigationBarView,
@@ -64,8 +71,11 @@ class MainNavigationDelegate(
 		NavigationRailFabBinding.bind(it)
 	}
 
+	/** The tab that is shown: the one tab fragment that is not hidden. */
 	val primaryFragment: Fragment?
-		get() = fragmentManager.findFragmentByTag(TAG_PRIMARY)
+		get() = fragmentManager.fragments.firstOrNull { it.isTab() && !it.isHidden }
+
+	private fun Fragment.isTab() = tag?.startsWith(TAG_PRIMARY_PREFIX) == true
 
 	init {
 		navBar.setOnItemSelectedListener(this)
@@ -115,6 +125,7 @@ class MainNavigationDelegate(
 			createMenu(settings.mainNavItems, navBar.menu)
 		}
 		observeSettings(lifecycleOwner)
+		syncTabLifecycles()
 		val fragment = primaryFragment
 		if (fragment != null) {
 			onFragmentChanged(fragment, fromUser = false)
@@ -213,16 +224,7 @@ class MainNavigationDelegate(
 				LocalListFragment::class.java
 			}
 			if (fragmentManager.isStateSaved || fragmentClass.isInstance(primaryFragment)) return
-			val fragment = instantiateFragment(fragmentClass)
-			val args = buildBundle(1) {
-				putBoolean(AppRouter.KEY_IS_BOTTOMTAB, true)
-			}
-			fragment.enterTransition = MaterialFadeThrough()
-			fragmentManager.beginTransaction()
-				.setReorderingAllowed(true)
-				.replace(R.id.container, fragmentClass, args, TAG_PRIMARY)
-				.runOnCommit { onFragmentChanged(fragment, fromUser = false) }
-				.commit()
+			showTab(fragmentClass, fromUser = false)
 		}
 	}
 
@@ -242,17 +244,50 @@ class MainNavigationDelegate(
 		if (fragmentManager.isStateSaved || fragmentClass.isInstance(primaryFragment)) {
 			return false
 		}
-		val fragment = instantiateFragment(fragmentClass)
-		val args = buildBundle(1) {
-			putBoolean(AppRouter.KEY_IS_BOTTOMTAB, true)
-		}
-		fragment.enterTransition = MaterialFadeThrough()
-		fragmentManager.beginTransaction()
-			.setReorderingAllowed(true)
-			.replace(R.id.container, fragmentClass, args, TAG_PRIMARY)
-			.runOnCommit { onFragmentChanged(fragment, fromUser = true) }
-			.commit()
+		showTab(fragmentClass, fromUser = true)
 		return true
+	}
+
+	/** Shows the tab of [fragmentClass], creating it on the first visit, and hides the tab that was shown. */
+	private fun showTab(fragmentClass: Class<out Fragment>, fromUser: Boolean) {
+		val tag = TAG_PRIMARY_PREFIX + fragmentClass.name
+		val current = primaryFragment
+		val existing = fragmentManager.findFragmentByTag(tag)
+		val target = existing ?: instantiateFragment(fragmentClass).also {
+			it.arguments = buildBundle(1) {
+				putBoolean(AppRouter.KEY_IS_BOTTOMTAB, true)
+			}
+			it.enterTransition = MaterialFadeThrough()
+			it.exitTransition = MaterialFadeThrough()
+		}
+		val transaction = fragmentManager.beginTransaction().setReorderingAllowed(true)
+		if (current != null && current !== target) {
+			// STARTED, not RESUMED: a hidden tab keeps its content up to date but does not own the menu or the toolbar.
+			transaction.hide(current).setMaxLifecycle(current, Lifecycle.State.STARTED)
+		}
+		if (existing != null) {
+			transaction.show(existing).setMaxLifecycle(existing, Lifecycle.State.RESUMED)
+		} else {
+			transaction.add(R.id.container, target, tag)
+		}
+		transaction
+			.runOnCommit { onFragmentChanged(target, fromUser = fromUser) }
+			.commit()
+	}
+
+	/**
+	 * After the activity was recreated every restored tab fragment is brought back to RESUMED, hidden or not. Hidden
+	 * tabs are held at STARTED again, as when they were hidden.
+	 */
+	private fun syncTabLifecycles() {
+		if (fragmentManager.isStateSaved) return
+		val tabs = fragmentManager.fragments.filter { it.isTab() }
+		if (tabs.none { it.isHidden }) return
+		val transaction = fragmentManager.beginTransaction()
+		for (tab in tabs) {
+			transaction.setMaxLifecycle(tab, if (tab.isHidden) Lifecycle.State.STARTED else Lifecycle.State.RESUMED)
+		}
+		transaction.commitNow()
 	}
 
 	private fun onNavigationItemReselected() {
