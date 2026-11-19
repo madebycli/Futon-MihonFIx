@@ -14,7 +14,13 @@ import io.github.landwarderer.futon.mihon.model.MihonMangaSource
 import io.github.landwarderer.futon.mihon.model.toDomainContent
 import io.github.landwarderer.futon.mihon.model.toManga
 import io.github.landwarderer.futon.mihon.state.MihonChapterSnapshotStore
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
+import java.util.concurrent.atomic.AtomicInteger
+import coil3.request.CachePolicy
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
@@ -147,6 +153,74 @@ class MihonMangaRepositoryTest {
         assertEquals(setOf("Group A", "Group B"), separate.identityChapters.mapNotNull { it.branch }.toSet())
         assertEquals((1..10).map { it.toFloat() },
             separate.copy(mergeRepeatedChapters = true).filterChapters(null).allChapters.map { it.number })
+    }
+
+    private fun countingSource(
+        sourceId: Long,
+        gate: CompletableDeferred<Unit>? = null,
+        failFirstChapterLists: Int = 0,
+    ) = object : CatalogueSource {
+        val chapterListCalls = AtomicInteger()
+        override val id = sourceId
+        override val name = "Counting source"
+        override val lang = "en"
+        override val supportsLatest = false
+        override fun getFilterList() = FilterList()
+        override suspend fun getPopularManga(page: Int) = MangasPage(emptyList(), false)
+        override suspend fun getMangaDetails(manga: SManga) = manga
+        override suspend fun getChapterList(manga: SManga): List<SChapter> {
+            val call = chapterListCalls.incrementAndGet()
+            gate?.await()
+            if (call <= failFirstChapterLists) throw IllegalStateException("Chapter list is incomplete")
+            return listOf(SChapter.create().apply {
+                url = "/chapter/1"
+                name = "Chapter 1"
+                chapter_number = 1f
+            })
+        }
+        override suspend fun getPageList(chapter: SChapter) = emptyList<Page>()
+    }
+
+    private fun detailsSeed(wrapper: MihonMangaSource) = SManga.create().apply {
+        url = "/manga/counting"
+        title = "Counting"
+        initialized = true
+    }.toDomainContent(wrapper).toManga()
+
+    @Test
+    fun aSecondDetailsLoadJoinsTheOneInProgress() = runTest {
+        val gate = CompletableDeferred<Unit>()
+        val source = countingSource(SOURCE_ID + 200, gate)
+        val wrapper = MihonMangaSource(source, "test.counting")
+        val repository = MihonMangaRepository(wrapper, memoryCache())
+        val seed = detailsSeed(wrapper)
+        val first = async(Dispatchers.Default) { repository.getDetails(seed, CachePolicy.WRITE_ONLY) }
+        val second = async(Dispatchers.Default) { repository.getDetails(seed, CachePolicy.WRITE_ONLY) }
+        // Real time: runTest would skip a delay, and the second caller needs a moment to reach the running load.
+        withContext(Dispatchers.Default) {
+            while (source.chapterListCalls.get() == 0) delay(10)
+            delay(500)
+        }
+        gate.complete(Unit)
+        assertEquals(1, first.await().chapters?.size)
+        assertEquals(1, second.await().chapters?.size)
+        assertEquals(1, source.chapterListCalls.get())
+    }
+
+    @Test
+    fun anIncompleteChapterListIsReadAgain() = runTest {
+        val source = countingSource(SOURCE_ID + 201, failFirstChapterLists = 2)
+        val wrapper = MihonMangaSource(source, "test.retry")
+        val details = MihonMangaRepository(wrapper, memoryCache()).getDetails(detailsSeed(wrapper))
+        assertEquals(1, details.chapters?.size)
+        assertEquals(3, source.chapterListCalls.get())
+    }
+
+    @Test
+    fun transientFailuresAreRecognisedThroughTheirCauses() {
+        assertTrue(RuntimeException("x", java.io.IOException("net")).isTransientDetailsFailure())
+        assertTrue(IllegalStateException("Chapter list is incomplete").isTransientDetailsFailure())
+        assertTrue(!IllegalArgumentException("bad url").isTransientDetailsFailure())
     }
 
     private fun memoryCache(): MemoryContentCache {

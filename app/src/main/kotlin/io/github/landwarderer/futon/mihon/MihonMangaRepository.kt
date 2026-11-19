@@ -25,7 +25,11 @@ import io.github.landwarderer.futon.mihon.model.toMangaListFilterOptions
 import io.github.landwarderer.futon.mihon.model.toMangaPage
 import io.github.landwarderer.futon.mihon.model.toMihonChapter
 import io.github.landwarderer.futon.mihon.model.toMihonManga
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.JsonObject
 import okhttp3.OkHttpClient
@@ -124,7 +128,30 @@ class MihonMangaRepository(
         }
     }
 
-    override suspend fun getDetailsImpl(manga: Manga): Manga = withContext(Dispatchers.IO) {
+    /** Details loads in progress, by manga url. */
+    private val detailsInFlight = ConcurrentHashMap<String, CompletableDeferred<Manga>>()
+
+    /**
+     * Some extensions (Comix reads the chapter list through a WebView) refuse a second [mihonSource] update of the same
+     * manga while one is running. A second caller, such as the details screen opened again, joins the running load.
+     */
+    override suspend fun getDetailsImpl(manga: Manga): Manga {
+        val mine = CompletableDeferred<Manga>()
+        val running = detailsInFlight.putIfAbsent(manga.url, mine)
+        if (running != null) return running.await()
+        try {
+            val details = loadDetails(manga)
+            mine.complete(details)
+            return details
+        } catch (e: Throwable) {
+            mine.completeExceptionally(e)
+            throw e
+        } finally {
+            detailsInFlight.remove(manga.url, mine)
+        }
+    }
+
+    private suspend fun loadDetails(manga: Manga): Manga = withContext(Dispatchers.IO) {
         val sContent = mangaSnapshots.get(manga.url)?.snapshot()
             ?: snapshotPersistence?.getManga(source.sourceId, manga.url)?.also(::rememberMihonManga)
             ?: manga.toContent(source).toMihonManga()
@@ -145,21 +172,7 @@ class MihonMangaRepository(
             }
         }
 
-        val update = try {
-            fetchUpdate()
-        } catch (e: Exception) {
-            val ioException = when {
-                e is java.io.IOException -> e
-                e.cause is java.io.IOException -> e.cause as java.io.IOException
-                else -> null
-            }
-            if (ioException != null) {
-                kotlinx.coroutines.delay(500)
-                fetchUpdate()
-            } else {
-                throw e
-            }
-        }
+        val update = fetchUpdateWithRetry { fetchUpdate() }
 
         snapshotPersistence?.putChapters(source.sourceId, update.chapters)
         val details = update.manga
@@ -514,4 +527,36 @@ class MihonMangaRepository(
 internal fun wrappedMihonPageIndex(url: String): Int? {
     if (!url.startsWith("mihon://")) return null
     return Regex("""[?&]index=(-?\d+)""").find(url)?.groupValues?.get(1)?.toIntOrNull()
+}
+
+/**
+ * Runs [load] again after a short pause when it failed for a reason that usually passes: a network error, or an
+ * extension that stopped reading a paged chapter list early ("Chapter list is incomplete").
+ */
+internal suspend fun <T> fetchUpdateWithRetry(maxRetries: Int = 2, load: suspend () -> T): T {
+    var attempt = 0
+    while (true) {
+        try {
+            return load()
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            if (attempt >= maxRetries || !e.isTransientDetailsFailure()) throw e
+            attempt++
+            delay(500L * attempt)
+        }
+    }
+}
+
+internal fun Throwable.isTransientDetailsFailure(): Boolean {
+    var current: Throwable? = this
+    var depth = 0
+    while (current != null && depth < 5) {
+        if (current is java.io.IOException || current.message?.contains("incomplete", ignoreCase = true) == true) {
+            return true
+        }
+        current = current.cause
+        depth++
+    }
+    return false
 }
