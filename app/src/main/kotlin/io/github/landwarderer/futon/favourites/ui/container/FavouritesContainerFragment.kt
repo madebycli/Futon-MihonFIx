@@ -203,6 +203,6 @@ class FavouritesContainerFragment : BaseFragment<FragmentFavouritesContainerBind
 
 		const val FLOATING_TABS_MARGIN_DP = 12
 		const val FLOATING_TABS_GAP_DP = 4
-		const val FLOATING_TABS_ELEVATION_DP = 4
+		const val FLOATING_TABS_ELEVATION_DP = 6
 	}
 }
