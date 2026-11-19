@@ -103,6 +103,9 @@ class FloatingNavBarController(
 		syncEntries()
 		bottomNav.background = null
 		bottomNav.elevation = 0f
+		// The shadows of the bar and of the button fall below this view, into the gap above the screen edge.
+		bottomNav.clipChildren = false
+		bottomNav.clipToPadding = false
 		// Kototoro keeps the floating bar clear of the system navigation and the screen edges.
 		bottomNav.setPadding(insetLeft, 0, insetRight, 0)
 		bottomNav.updateLayoutParams<MarginLayoutParams> {
@@ -115,6 +118,8 @@ class FloatingNavBarController(
 	private fun applyDocked() {
 		floatingRow?.setAdjacentView(null)
 		bottomNav.floatingRow = null
+		bottomNav.clipChildren = true
+		bottomNav.clipToPadding = true
 		if (settings.isNavLayeredSurface) {
 			bottomNav.updateLayoutParams<MarginLayoutParams> {
 				marginStart = dp(LAYERED_MARGIN_HORIZONTAL_DP) + insetLeft
