@@ -302,7 +302,7 @@ launch 8
 shot 29_floating_light
 
 adb logcat -d > "$OUT/logcat.txt"
-grep -E "FATAL EXCEPTION|AndroidRuntime" -A20 "$OUT/logcat.txt" > "$OUT/crashes.txt" || true
+grep -A25 "FATAL EXCEPTION" "$OUT/logcat.txt" | grep -B2 -A22 "Process: $PKG" > "$OUT/crashes.txt" || true
 if [ -s "$OUT/crashes.txt" ]; then fail "crash in logcat (see crashes.txt)"; fi
 log "done; failures: ${#FAILURES[@]}"
 for f in "${FAILURES[@]}"; do log " - $f"; done
