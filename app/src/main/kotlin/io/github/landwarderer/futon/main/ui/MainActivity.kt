@@ -146,9 +146,6 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
 		fadingAppbarMediator =
 			FadingAppbarMediator(viewBinding.appbar, viewBinding.layoutSearch ?: viewBinding.searchBar)
 		defaultSearchBarElevation = viewBinding.searchBar.elevation
-		viewBinding.appbar.updateLayoutParams<CoordinatorLayout.LayoutParams> {
-			behavior = appBarBehavior
-		}
 		viewBinding.appbar.addOnLayoutChangeListener { _, _, top, _, bottom, _, oldTop, _, oldBottom ->
 			if (bottom - top != oldBottom - oldTop) updateTopOverlay()
 		}
@@ -382,6 +379,7 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
 	}
 
 	private fun onLoadingStateChanged(isLoading: Boolean) {
+		navBarController?.setResumeEnabled(!isLoading)
 		val fab = viewBinding.fab ?: viewBinding.navRail?.headerView ?: return
 		fab.isEnabled = !isLoading
 	}
@@ -413,7 +411,6 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
 	}
 
 	private var defaultSearchBarElevation = 0f
-	private val appBarBehavior = SettlingAppBarBehavior()
 	private var defaultSearchBarOutline: ViewOutlineProvider? = null
 
 	/** A rounded outline over the whole view, as the search bar is drawn. */
@@ -429,7 +426,6 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
 	 */
 	private fun applyTopBarStyle() {
 		val isFloating = settings.isTopBarFloating
-		appBarBehavior.isSettleEnabled = isFloating
 		val searchBar = viewBinding.searchBar
 		if (defaultSearchBarOutline == null) {
 			defaultSearchBarOutline = searchBar.outlineProvider
@@ -496,14 +492,7 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
 	}
 
 	private fun adjustSearchUI(isOpened: Boolean) {
-		val appBarScrollFlags = if (isOpened) {
-			SCROLL_FLAG_NO_SCROLL
-		} else {
-			SCROLL_FLAG_SCROLL or SCROLL_FLAG_ENTER_ALWAYS or SCROLL_FLAG_SNAP
-		}
-		viewBinding.insetsHolder.updateLayoutParams<AppBarLayout.LayoutParams> {
-			scrollFlags = appBarScrollFlags
-		}
+		updateAppBarScrolling(isNavPinned, isOpened)
 		adjustFabVisibility(isSearchOpened = isOpened)
 		bottomNav?.showOrHide(!isOpened)
 		updateContainerBottomMargin()
@@ -580,22 +569,26 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
 			.attachToRecyclerView(viewBinding.recyclerViewSearch)
 	}
 
+	private var isNavPinned = false
+
 	private fun setNavbarPinned(isPinned: Boolean) {
-		val bottomNavBar = viewBinding.bottomNav
-		bottomNavBar?.isPinned = isPinned
-		for (view in viewBinding.appbar.children) {
-			val lp = view.layoutParams as? AppBarLayout.LayoutParams ?: continue
-			val scrollFlags = if (isPinned) {
-				lp.scrollFlags and SCROLL_FLAG_SCROLL.inv()
-			} else {
-				lp.scrollFlags or SCROLL_FLAG_SCROLL
-			}
-			if (scrollFlags != lp.scrollFlags) {
-				lp.scrollFlags = scrollFlags
-				view.layoutParams = lp
+		isNavPinned = isPinned
+		viewBinding.bottomNav?.isPinned = isPinned
+		updateAppBarScrolling(isPinned, viewBinding.searchView.isShowing)
+		updateContainerBottomMargin()
+	}
+
+	private fun updateAppBarScrolling(pinned: Boolean, searchOpen: Boolean) {
+		val flags = if (pinned || searchOpen) SCROLL_FLAG_NO_SCROLL else
+			SCROLL_FLAG_SCROLL or SCROLL_FLAG_ENTER_ALWAYS or SCROLL_FLAG_SNAP
+		for (child in viewBinding.appbar.children) {
+			val params = child.layoutParams as AppBarLayout.LayoutParams
+			if (params.scrollFlags != flags) {
+				params.scrollFlags = flags
+				child.layoutParams = params
 			}
 		}
-		updateContainerBottomMargin()
+		if (pinned || searchOpen) viewBinding.appbar.setExpanded(true, false)
 	}
 
 	private fun updateContainerBottomMargin() {
@@ -604,7 +597,8 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
 		// The floating bar never pushes the content up, pinned or not: the lists scroll behind it and get its height
 		// as bottom padding (BottomOverlay), so their last item can be scrolled above the bar.
 		val isFloating = settings.isNavFloating
-		BottomOverlay.set(viewBinding.container, if (isFloating) bottomNavBar.height else 0)
+		val overlay = if (isFloating && bottomNavBar.isShownOrShowing) navBarController?.listOverlayHeight ?: 0 else 0
+		BottomOverlay.set(viewBinding.container, overlay)
 		val newMargin = if (!isFloating && bottomNavBar.isPinned && bottomNavBar.isShownOrShowing) {
 			bottomNavBar.height + gapBelowBar
 		} else {

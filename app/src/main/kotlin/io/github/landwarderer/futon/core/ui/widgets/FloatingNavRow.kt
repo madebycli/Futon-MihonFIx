@@ -67,6 +67,7 @@ class FloatingNavRow(context: Context) : ViewGroup(context) {
 		val title: CharSequence,
 		@DrawableRes val icon: Int,
 		val badge: Int?,
+		val badgeDescription: CharSequence?,
 	)
 
 	/** How the bar looks; the lengths are in dp. */
@@ -90,6 +91,7 @@ class FloatingNavRow(context: Context) : ViewGroup(context) {
 	var onItemClick: ((Int) -> Unit)? = null
 
 	private val density = resources.displayMetrics.density
+	private var stacked = false
 	private var adjacentView: View? = null
 	private var entries: List<Entry> = emptyList()
 	private var selectedId: Int = View.NO_ID
@@ -107,7 +109,7 @@ class FloatingNavRow(context: Context) : ViewGroup(context) {
 
 	/** The height of the bar and of the view beside it, in pixels. */
 	val barHeightPx: Int
-		get() = dp(style.barHeight)
+		get() = max(dp(style.barHeight), dp(48) + if (style.isFullWidth) 2 * dp(4) else 0)
 
 	fun setStyle(value: Style) {
 		if (value == style) return
@@ -167,19 +169,26 @@ class FloatingNavRow(context: Context) : ViewGroup(context) {
 		val available = (width - paddingLeft - paddingRight).coerceAtLeast(0)
 		val barHeight = barHeightPx
 		val adjacent = adjacentView?.takeIf { it.isVisible }
-		val newSpec = FloatingNavLayoutSpec.resolve(
+		fun spacing(fabWidth: Float?) = FloatingNavLayoutSpec.resolve(
 			availableWidth = available / density,
 			itemCount = entries.size,
-			fabWidth = if (adjacent != null) style.barHeight.toFloat() else null,
+			fabWidth = fabWidth,
 			showLabels = style.labelMode != NavLabelMode.NONE,
 			isExpressivePill = style.labelMode == NavLabelMode.SELECTED_BESIDE,
 		)
+		val horizontal = spacing(if (adjacent != null) barHeight / density else null)
+		val itemGaps = if (style.isFullWidth) 2 * dp(4) else
+			dp(horizontal.horizontalPadding) * 2 + dp(horizontal.itemSpacing) * (entries.size - 1).coerceAtLeast(0)
+		val minBarWidth = dp(FloatingNavLayoutSpec.ITEM_TOUCH_TARGET) * entries.size + itemGaps
+		stacked = adjacent != null && available < minBarWidth + barHeight + dp(horizontal.fabGap) +
+			dp(horizontal.outerHorizontalPadding) * 2
+		val newSpec = if (stacked) spacing(null) else horizontal
 		if (newSpec != spec) {
 			spec = newSpec
 			bar.bind()
 		}
 		val adjacentSpace = if (adjacent != null) barHeight + dp(spec.fabGap) else 0
-		val maxBarWidth = (available - dp(spec.outerHorizontalPadding) * 2 - adjacentSpace).coerceAtLeast(0)
+		val maxBarWidth = (available - dp(spec.outerHorizontalPadding) * 2 - (if (stacked) 0 else adjacentSpace)).coerceAtLeast(0)
 		val barHeightSpec = MeasureSpec.makeMeasureSpec(barHeight, MeasureSpec.EXACTLY)
 		if (style.isFullWidth) {
 			bar.measure(MeasureSpec.makeMeasureSpec(maxBarWidth, MeasureSpec.EXACTLY), barHeightSpec)
@@ -187,30 +196,34 @@ class FloatingNavRow(context: Context) : ViewGroup(context) {
 			bar.measure(MeasureSpec.makeMeasureSpec(maxBarWidth, MeasureSpec.AT_MOST), barHeightSpec)
 		}
 		adjacent?.measure(barHeightSpec, barHeightSpec)
-		setMeasuredDimension(width, barHeight + paddingTop + paddingBottom)
+		setMeasuredDimension(width, barHeight + paddingTop + paddingBottom + (if (stacked) adjacentSpace else 0))
 	}
 
 	override fun onLayout(changed: Boolean, l: Int, t: Int, r: Int, b: Int) {
 		val adjacent = adjacentView?.takeIf { it.isVisible }
 		val gap = if (adjacent != null) dp(spec.fabGap) else 0
-		val total = bar.measuredWidth + gap + (adjacent?.measuredWidth ?: 0)
+		val total = bar.measuredWidth + if (stacked) 0 else gap + (adjacent?.measuredWidth ?: 0)
 		val available = r - l - paddingLeft - paddingRight
 		// Kototoro centres the wrapping bar together with the button; the full-width bar starts at the margin.
-		val start = paddingLeft + if (style.isFullWidth) dp(spec.outerHorizontalPadding) else (available - total) / 2
-		val top = paddingTop
+		val start = paddingStart + if (style.isFullWidth) dp(spec.outerHorizontalPadding) else (available - total) / 2
+		val top = paddingTop + if (stacked) (adjacent?.measuredHeight ?: 0) + gap else 0
 		val isRtl = layoutDirection == LAYOUT_DIRECTION_RTL
 		if (isRtl) {
 			val end = r - l - start
 			bar.layout(end - bar.measuredWidth, top, end, top + bar.measuredHeight)
-			adjacent?.layout(
+			if (!stacked) adjacent?.layout(
 				end - total, top, end - total + adjacent.measuredWidth, top + adjacent.measuredHeight,
 			)
 		} else {
 			bar.layout(start, top, start + bar.measuredWidth, top + bar.measuredHeight)
-			adjacent?.let {
+			if (!stacked) adjacent?.let {
 				val x = start + bar.measuredWidth + gap
 				it.layout(x, top, x + it.measuredWidth, top + it.measuredHeight)
 			}
+		}
+		if (stacked && adjacent != null) {
+			val x = if (isRtl) bar.left else bar.right - adjacent.measuredWidth
+			adjacent.layout(x, paddingTop, x + adjacent.measuredWidth, paddingTop + adjacent.measuredHeight)
 		}
 	}
 
@@ -245,6 +258,13 @@ class FloatingNavRow(context: Context) : ViewGroup(context) {
 			setWillNotDraw(false)
 			clipChildren = false
 			applyShape()
+		}
+
+		override fun onInitializeAccessibilityNodeInfo(info: AccessibilityNodeInfo) {
+			super.onInitializeAccessibilityNodeInfo(info)
+			info.collectionInfo = AccessibilityNodeInfo.CollectionInfo.obtain(
+				1, items.size, false, AccessibilityNodeInfo.CollectionInfo.SELECTION_MODE_SINGLE,
+			)
 		}
 
 		fun applyShape() {
@@ -319,6 +339,10 @@ class FloatingNavRow(context: Context) : ViewGroup(context) {
 				var total = 0
 				for (item in items) {
 					item.measure(MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED), itemHeightSpec)
+					val room = (maxWidth - gaps - dp(FloatingNavLayoutSpec.ITEM_TOUCH_TARGET) * (items.size - 1)).coerceAtLeast(0)
+					if (item.isSelected && item.measuredWidth > room) {
+						item.measure(MeasureSpec.makeMeasureSpec(room, MeasureSpec.EXACTLY), itemHeightSpec)
+					}
 					total += item.measuredWidth
 				}
 				val minWidth = dp(FloatingNavLayoutSpec.ITEM_TOUCH_TARGET)
@@ -545,7 +569,7 @@ class FloatingNavRow(context: Context) : ViewGroup(context) {
 			ImageViewCompat.setImageTintList(icon, ColorStateList.valueOf(contentColor))
 			label.setTextColor(contentColor)
 			label.text = entry.title
-			contentDescription = entry.title
+			contentDescription = listOfNotNull(entry.title, entry.badgeDescription).joinToString(", ")
 			this.isSelected = isSelected
 			val mode = style.labelMode
 			val isBeside = mode == NavLabelMode.SELECTED_BESIDE
@@ -702,16 +726,17 @@ class FloatingNavRow(context: Context) : ViewGroup(context) {
 			super.dispatchDraw(canvas)
 			val badge = entry?.badge ?: return
 			// The Material badge at the top end of the icon: a 6 dp dot, or a number on a 16 dp high pill.
-			val iconRight = content.left + icon.right.toFloat() + icon.translationX
+			val rtl = layoutDirection == LAYOUT_DIRECTION_RTL
+			val iconEnd = content.left + (if (rtl) icon.left else icon.right) + icon.translationX
 			val iconTop = content.top + icon.top + icon.translationY
 			if (badge <= 0) {
 				val r = dp(3).toFloat()
-				canvas.drawCircle(iconRight - r, iconTop + r, r, badgePaint)
+				canvas.drawCircle(iconEnd + (if (rtl) r else -r), iconTop + r, r, badgePaint)
 			} else {
 				val text = if (badge > 999) "999+" else badge.toString()
 				val h = dp(16).toFloat()
 				val w = maxOf(h, badgeTextPaint.measureText(text) + dp(8))
-				val left = iconRight - dp(6)
+				val left = if (rtl) iconEnd + dp(6) - w else iconEnd - dp(6)
 				val rect = RectF(left, iconTop - dp(4), left + w, iconTop - dp(4) + h)
 				canvas.drawRoundRect(rect, h / 2, h / 2, badgePaint)
 				val baseline = rect.centerY() - (badgeTextPaint.descent() + badgeTextPaint.ascent()) / 2
@@ -723,6 +748,9 @@ class FloatingNavRow(context: Context) : ViewGroup(context) {
 			super.onInitializeAccessibilityNodeInfo(info)
 			info.className = "android.widget.Tab"
 			info.isSelected = isItemSelected
+			info.collectionItemInfo = AccessibilityNodeInfo.CollectionItemInfo.obtain(
+				0, 1, (parent as ViewGroup).indexOfChild(this), 1, false, isItemSelected,
+			)
 		}
 	}
 
