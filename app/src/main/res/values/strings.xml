@@ -645,6 +645,8 @@
     <string name="nav_accent_summary">Show the icon and the label of the selected section in the accent color</string>
     <string name="nav_opacity">Opacity of the bar</string>
     <string name="nav_height_summary">The bar gets at least this high; it never gets lower than its icons and labels need</string>
+    <string name="top_bar_floating">Floating top bar</string>
+    <string name="top_bar_floating_summary">Lists scroll behind the search bar and the tabs, which float above them with a shadow</string>
     <string name="nav_floating">Floating navigation bar</string>
     <string name="nav_floating_summary">A compact rounded bar that floats above the content</string>
     <string name="nav_full_width">Full width</string>

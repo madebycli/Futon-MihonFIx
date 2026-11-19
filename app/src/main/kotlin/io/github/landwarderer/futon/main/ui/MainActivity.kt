@@ -11,6 +11,7 @@ import android.view.ViewGroup.MarginLayoutParams
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.view.ActionMode
+import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.view.MenuProvider
@@ -47,6 +48,7 @@ import io.github.landwarderer.futon.core.prefs.HomeBackgroundFont
 import io.github.landwarderer.futon.core.prefs.NavItem
 import io.github.landwarderer.futon.core.ui.BaseActivity
 import io.github.landwarderer.futon.core.ui.util.FadingAppbarMediator
+import io.github.landwarderer.futon.core.ui.util.TopOverlay
 import io.github.landwarderer.futon.core.ui.util.FontCache
 import io.github.landwarderer.futon.core.ui.util.MenuInvalidator
 import io.github.landwarderer.futon.core.ui.widgets.SlidingBottomNavigationView
@@ -140,6 +142,12 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
 		viewBinding.navRail?.headerView?.findViewById<View>(R.id.railFab)?.setOnClickListener(this)
 		fadingAppbarMediator =
 			FadingAppbarMediator(viewBinding.appbar, viewBinding.layoutSearch ?: viewBinding.searchBar)
+		defaultContainerBehavior = (viewBinding.container.layoutParams as CoordinatorLayout.LayoutParams).behavior
+		defaultSearchBarElevation = viewBinding.searchBar.elevation
+		viewBinding.appbar.addOnLayoutChangeListener { _, _, top, _, bottom, _, oldTop, _, oldBottom ->
+			if (bottom - top != oldBottom - oldTop) updateTopOverlay()
+		}
+		applyTopBarStyle()
 
 		navigationDelegate = MainNavigationDelegate(
 			navBar = checkNotNull(bottomNav ?: viewBinding.navRail),
@@ -210,6 +218,9 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
 					navBarController?.apply()
 					adjustFabVisibility()
 					updateContainerBottomMargin()
+				}.launchIn(lifecycleScope)
+				settings.observe(AppSettings.KEY_TOP_BAR_FLOATING).onEach {
+					applyTopBarStyle()
 				}.launchIn(lifecycleScope)
 				viewModel.onShowOnboarding.observeEvent(this@MainActivity) {
 					onboardingLauncher.launch(Intent(this@MainActivity, OnboardingActivity::class.java))
@@ -393,6 +404,32 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
 		}
 	} catch (e: IllegalStateException) {
 		e.printStackTraceDebug("MainActivity::onFirstStart")
+	}
+
+	private var defaultContainerBehavior: CoordinatorLayout.Behavior<*>? = null
+	private var defaultSearchBarElevation = 0f
+
+	/**
+	 * The floating top bar: the lists no longer start below the app bar (its scrolling behaviour is taken off the
+	 * container) but behind it, and get its height as top padding through [TopOverlay], so they still start below the
+	 * search bar and then scroll behind it. The search bar gets a shadow. How the app bar hides and comes back on
+	 * scroll does not change.
+	 */
+	private fun applyTopBarStyle() {
+		val isFloating = settings.isTopBarFloating
+		viewBinding.container.updateLayoutParams<CoordinatorLayout.LayoutParams> {
+			behavior = if (isFloating) null else defaultContainerBehavior
+		}
+		viewBinding.searchBar.elevation = if (isFloating) {
+			TOP_BAR_ELEVATION_DP * resources.displayMetrics.density
+		} else {
+			defaultSearchBarElevation
+		}
+		updateTopOverlay()
+	}
+
+	private fun updateTopOverlay() {
+		TopOverlay.set(viewBinding.container, if (settings.isTopBarFloating) viewBinding.appbar.height else 0)
 	}
 
 	private fun adjustAppbar(topFragment: Fragment) {
@@ -609,5 +646,11 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
 		}
 		addTransitionListener(listener)
 		awaitClose { removeTransitionListener(listener) }
+	}
+
+	private companion object {
+
+		/** Shadow of the search bar while the top bar floats. */
+		const val TOP_BAR_ELEVATION_DP = 4
 	}
 }
