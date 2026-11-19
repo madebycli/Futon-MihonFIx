@@ -14,7 +14,29 @@ FAILURES=()
 log() { echo "[$(date +%T)] $*" | tee -a "$OUT/run.log"; }
 fail() { log "FAIL: $*"; FAILURES+=("$*"); }
 
-shot() { adb exec-out screencap -p > "$OUT/$1.png" && log "screenshot $1"; }
+# The CI emulator sometimes shows "<app> isn't responding" for a system app; such a dialog covers the screen and
+# swallows the taps, so it is answered with "Wait" before every screenshot and tap.
+dismiss_system_dialogs() {
+	adb shell uiautomator dump /sdcard/ui-dlg.xml > /dev/null 2>&1
+	adb pull /sdcard/ui-dlg.xml "$OUT/.dlg.xml" > /dev/null 2>&1 || return 0
+	if grep -q "isn&apos;t responding\|isn't responding\|keeps stopping" "$OUT/.dlg.xml"; then
+		log "system dialog on screen: $(grep -o 'text="[^"]*responding[^"]*"\|text="[^"]*stopping[^"]*"' "$OUT/.dlg.xml" | head -1)"
+		local xy
+		xy=$(python3 - "$OUT/.dlg.xml" <<'PY'
+import re, sys, xml.etree.ElementTree as ET
+root = ET.parse(sys.argv[1]).getroot()
+for n in root.iter('node'):
+	if n.get('text') in ('Wait', 'Close app'):
+		x1, y1, x2, y2 = map(int, re.findall(r'\d+', n.get('bounds')))
+		print((x1 + x2) // 2, (y1 + y2) // 2)
+		break
+PY
+)
+		[ -n "$xy" ] && adb shell input tap $xy
+		sleep 1
+	fi
+}
+shot() { dismiss_system_dialogs; adb exec-out screencap -p > "$OUT/$1.png" && log "screenshot $1"; }
 uidump() {
 	adb shell uiautomator dump /sdcard/ui.xml > /dev/null 2>&1
 	adb pull /sdcard/ui.xml "$OUT/$1.xml" > /dev/null 2>&1
@@ -23,6 +45,7 @@ fragments() { adb shell dumpsys activity "$ACTIVITY" > "$OUT/$1.dumpsys.txt" 2>&
 
 # Taps the first node whose content-desc or text is $1 (exactly). Returns 1 when there is none.
 tap_node() {
+	dismiss_system_dialogs
 	adb shell uiautomator dump /sdcard/ui.xml > /dev/null 2>&1
 	adb pull /sdcard/ui.xml "$OUT/.last-ui.xml" > /dev/null 2>&1
 	local xy
@@ -107,6 +130,7 @@ launch() {
 
 log "device: $(adb shell getprop ro.product.model) API $(adb shell getprop ro.build.version.sdk) density $(adb shell wm density)"
 adb root > /dev/null; sleep 3; adb wait-for-device
+adb shell settings put global hide_error_dialogs 1
 APK=$(ls app/build/outputs/apk/debug/*.apk | head -1)
 log "installing $APK"
 adb install -r -g "$APK" | tee -a "$OUT/run.log"
@@ -223,7 +247,8 @@ for round in 1 2 3; do
 	for tab in History Favorites Explore; do
 		tap_node "$tab" || continue
 		sleep 0.4
-		shot "14_tabs_r${round}_$tab"
+		# No dialog check here: the picture has to be the first moment after the switch.
+		adb exec-out screencap -p > "$OUT/14_tabs_r${round}_$tab.png"; log "screenshot 14_tabs_r${round}_$tab"
 	done
 done
 fragments 15_tabs_after_switching
