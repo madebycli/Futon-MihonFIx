@@ -555,12 +555,11 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
 			if (modeSwitcherSpotlight != null) return@post
 
 			val contentRoot = findViewById<ViewGroup>(android.R.id.content) ?: return@post
-			val overlay = ModeSwitcherSpotlightOverlay(this, target) { demoToggle ->
+			// The spotlight only points at the switch. It used to flip the mode once as a demo, which left a new user
+			// in the novel mode, where no manga source (and no Mihon extension) is listed.
+			val overlay = ModeSwitcherSpotlightOverlay(this, target) { _ ->
 				settings.isModeSwitcherSpotlightShown = true
 				modeSwitcherSpotlight = null
-				if (demoToggle) {
-					viewModel.toggleAppMode()
-				}
 			}
 			modeSwitcherSpotlight = overlay
 			overlay.showIn(contentRoot)
