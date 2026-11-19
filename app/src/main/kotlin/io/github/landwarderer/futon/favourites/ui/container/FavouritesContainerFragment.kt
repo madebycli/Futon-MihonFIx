@@ -18,6 +18,7 @@ import com.google.android.material.shape.RelativeCornerSize
 import com.google.android.material.shape.ShapeAppearanceModel
 import io.github.landwarderer.futon.core.ui.util.TopOverlay
 import io.github.landwarderer.futon.main.ui.owners.AppBarOwner
+import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isGone
 import androidx.core.view.isVisible
@@ -155,8 +156,15 @@ class FavouritesContainerFragment : BaseFragment<FragmentFavouritesContainerBind
 	}
 
 	private val appBarOffsetListener = AppBarLayout.OnOffsetChangedListener { _, verticalOffset ->
-		// The floating tabs leave and come back together with the search bar, as the plain row did.
-		viewBinding?.tabs?.translationY = verticalOffset.toFloat()
+		// The floating tabs move up together with the search bar, as the plain row did, but stop below the status
+		// bar like the original row instead of sliding under the clock and the icons.
+		val tabs = viewBinding?.tabs ?: return@OnOffsetChangedListener
+		val statusBar = ViewCompat.getRootWindowInsets(tabs)
+			?.getInsets(WindowInsetsCompat.Type.statusBars())?.top ?: 0
+		val gap = (FLOATING_TABS_GAP_DP * resources.displayMetrics.density).toInt()
+		val top = (tabs.layoutParams as ViewGroup.MarginLayoutParams).topMargin
+		val lowest = -(top - statusBar - gap).coerceAtLeast(0)
+		tabs.translationY = verticalOffset.coerceAtLeast(lowest).toFloat()
 	}
 	private var isAppBarOffsetBound = false
 	private var defaultIndicator: Drawable? = null
