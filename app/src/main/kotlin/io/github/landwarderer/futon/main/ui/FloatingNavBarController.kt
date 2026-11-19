@@ -125,7 +125,8 @@ class FloatingNavBarController(
 		floatingRow?.setAdjacentView(null)
 		bottomNav.floatingRow = null
 		bottomNav.clipChildren = true
-		bottomNav.clipToPadding = true
+		// The round button's shadow may fall into the padding of the system navigation.
+		bottomNav.clipToPadding = false
 		if (settings.isNavLayeredSurface) {
 			bottomNav.updateLayoutParams<MarginLayoutParams> {
 				marginStart = dp(LAYERED_MARGIN_HORIZONTAL_DP) + insetLeft
