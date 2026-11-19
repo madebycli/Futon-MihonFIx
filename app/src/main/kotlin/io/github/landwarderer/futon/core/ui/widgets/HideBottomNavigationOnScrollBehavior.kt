@@ -79,7 +79,7 @@ class HideBottomNavigationOnScrollBehavior @JvmOverloads constructor(
 	) {
 		super.onNestedPreScroll(coordinatorLayout, child, target, dx, dy, consumed, type)
 		if (!isPinned) {
-			child.translationY = (child.translationY + (dy * dyRatio)).coerceIn(0F, child.height.toFloat())
+			child.translationY = (child.translationY + (dy * dyRatio)).coerceIn(0F, slideRangeOf(child))
 		}
 	}
 
@@ -90,7 +90,7 @@ class HideBottomNavigationOnScrollBehavior @JvmOverloads constructor(
 		type: Int,
 	) {
 		if (!isPinned && (lastStartedType == ViewCompat.TYPE_TOUCH || type == ViewCompat.TYPE_NON_TOUCH)) {
-			animateBottomNavigationVisibility(child, child.translationY < child.height / 2)
+			animateBottomNavigationVisibility(child, child.translationY < slideRangeOf(child) / 2)
 		}
 	}
 
@@ -105,8 +105,11 @@ class HideBottomNavigationOnScrollBehavior @JvmOverloads constructor(
 		}
 		offsetAnimator?.setFloatValues(
 			child.translationY,
-			if (isVisible) 0F else child.height.toFloat(),
+			if (isVisible) 0F else slideRangeOf(child),
 		)
 		offsetAnimator?.start()
 	}
+
+	private fun slideRangeOf(child: NavigationBarView): Float =
+		((child as? SlidingBottomNavigationView)?.slideRange ?: child.height).toFloat()
 }

@@ -635,6 +635,14 @@
     <string name="suggestions_unavailable_text">Suggestions feature is disabled</string>
     <string name="check_for_new_chapters_disabled">Checking for new chapters is disabled</string>
     <string name="show_labels_in_navbar">Show labels in navigation bar</string>
+    <string name="nav_labels_selected_only">Label only on the selected item</string>
+    <string name="nav_labels_selected_only_summary">The other items of the navigation bar show only their icon.</string>
+    <string name="nav_floating">Floating navigation bar</string>
+    <string name="nav_floating_summary">A rounded bar that floats above the content instead of being docked to the screen edge.</string>
+    <string name="nav_corner_radius">Corner radius of the bar</string>
+    <string name="nav_spacing">Spacing around the bar</string>
+    <string name="main_fab_round">Round continue button with cover</string>
+    <string name="main_fab_round_summary">A round button with the cover of the last manga, next to the navigation bar on every main screen. It replaces the Continue button in History.</string>
     <string name="pages_saving">Saving pages</string>
     <string name="ask_for_dest_dir_every_time">Ask for the destination dir every time</string>
     <string name="default_page_save_dir">Default page save directory</string>

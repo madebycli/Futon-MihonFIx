@@ -43,6 +43,15 @@ class MainViewModel @Inject constructor(
 		)
 
 
+	/** The manga the continue button opens, for the cover on the round button. */
+	val lastReadManga = historyRepository.observeLast()
+		.withErrorHandling()
+		.stateIn(
+			scope = viewModelScope + Dispatchers.IO,
+			started = SharingStarted.WhileSubscribed(5000),
+			initialValue = null,
+		)
+
 	val feedCounter = trackingRepository.observeUnreadUpdatesCount()
 		.withErrorHandling()
 		.stateIn(viewModelScope + Dispatchers.IO, SharingStarted.Lazily, 0)

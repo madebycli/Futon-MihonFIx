@@ -147,6 +147,26 @@ class AppSettings internal constructor(
 	val isNavBarPinned: Boolean
 		get() = prefs.getBoolean(KEY_NAV_PINNED, false)
 
+	/** The navigation bar floats above the content as a rounded bar, instead of being docked to the screen edge. */
+	val isNavFloating: Boolean
+		get() = prefs.getBoolean(KEY_NAV_FLOATING, false)
+
+	/** Only the selected item of the navigation bar shows its label. */
+	val isNavLabelsSelectedOnly: Boolean
+		get() = prefs.getBoolean(KEY_NAV_LABELS_SELECTED_ONLY, false)
+
+	/** Corner radius of the floating navigation bar, in dp. */
+	val navCornerRadius: Int
+		get() = prefs.getInt(KEY_NAV_CORNER_RADIUS, 28)
+
+	/** Gap between the floating navigation bar and the screen edges, in dp. */
+	val navSpacing: Int
+		get() = prefs.getInt(KEY_NAV_SPACING, 12)
+
+	/** The continue button is a round button with the cover of the last manga, shown on every main screen. */
+	val isMainFabRound: Boolean
+		get() = prefs.getBoolean(KEY_MAIN_FAB_ROUND, false)
+
 	val isMainFabEnabled: Boolean
 		get() = prefs.getBoolean(KEY_MAIN_FAB, true)
 
@@ -1075,6 +1095,11 @@ class AppSettings internal constructor(
 		const val KEY_NAV_MAIN = "nav_main"
 		const val KEY_NAV_LABELS = "nav_labels"
 		const val KEY_NAV_PINNED = "nav_pinned"
+		const val KEY_NAV_FLOATING = "nav_floating"
+		const val KEY_NAV_LABELS_SELECTED_ONLY = "nav_labels_selected_only"
+		const val KEY_NAV_CORNER_RADIUS = "nav_corner_radius"
+		const val KEY_NAV_SPACING = "nav_spacing"
+		const val KEY_MAIN_FAB_ROUND = "main_fab_round"
 		const val KEY_MAIN_FAB = "main_fab"
 		const val KEY_32BIT_COLOR = "enhanced_colors"
 		const val KEY_SOURCES_ORDER = "sources_sort_order"

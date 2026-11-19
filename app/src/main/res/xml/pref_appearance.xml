@@ -140,6 +140,43 @@
 
         <SwitchPreferenceCompat
             android:defaultValue="false"
+            android:key="nav_labels_selected_only"
+            android:summary="@string/nav_labels_selected_only_summary"
+            android:title="@string/nav_labels_selected_only" />
+
+        <SwitchPreferenceCompat
+            android:defaultValue="false"
+            android:key="nav_floating"
+            android:summary="@string/nav_floating_summary"
+            android:title="@string/nav_floating" />
+
+        <io.github.landwarderer.futon.settings.utils.SliderPreference
+            android:dependency="nav_floating"
+            android:key="nav_corner_radius"
+            android:stepSize="2"
+            android:title="@string/nav_corner_radius"
+            android:valueFrom="0"
+            android:valueTo="32"
+            app:defaultValue="28" />
+
+        <io.github.landwarderer.futon.settings.utils.SliderPreference
+            android:dependency="nav_floating"
+            android:key="nav_spacing"
+            android:stepSize="2"
+            android:title="@string/nav_spacing"
+            android:valueFrom="0"
+            android:valueTo="24"
+            app:defaultValue="12" />
+
+        <SwitchPreferenceCompat
+            android:defaultValue="false"
+            android:dependency="main_fab"
+            android:key="main_fab_round"
+            android:summary="@string/main_fab_round_summary"
+            android:title="@string/main_fab_round" />
+
+        <SwitchPreferenceCompat
+            android:defaultValue="false"
             android:key="nav_pinned"
             android:summary="@string/pin_navigation_ui_summary"
             android:title="@string/pin_navigation_ui" />

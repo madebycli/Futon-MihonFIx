@@ -561,6 +561,14 @@
     <string name="last_read">Zuletzt gelesen</string>
     <string name="automatic">Automatisch</string>
     <string name="show_labels_in_navbar">Beschriftungen in der Navigationsleiste anzeigen</string>
+    <string name="nav_labels_selected_only">Beschriftung nur beim ausgewählten Eintrag</string>
+    <string name="nav_labels_selected_only_summary">Die anderen Einträge der Navigationsleiste zeigen nur ihr Symbol.</string>
+    <string name="nav_floating">Schwebende Navigationsleiste</string>
+    <string name="nav_floating_summary">Eine abgerundete Leiste, die über dem Inhalt schwebt, statt am Bildschirmrand zu kleben.</string>
+    <string name="nav_corner_radius">Rundung der Leiste</string>
+    <string name="nav_spacing">Abstand um die Leiste</string>
+    <string name="main_fab_round">Runder Weiterlesen-Knopf mit Cover</string>
+    <string name="main_fab_round_summary">Ein runder Knopf mit dem Cover des zuletzt gelesenen Mangas neben der Navigationsleiste, auf jedem Hauptbildschirm. Er ersetzt den Weiter-Knopf im Verlauf.</string>
     <string name="pages_saving">Seiten werden gespeichert</string>
     <string name="ask_for_dest_dir_every_time">Jedes Mal nach dem Zielverzeichnis fragen</string>
     <string name="default_page_save_dir">Standard Speicherordner für Seiten</string>

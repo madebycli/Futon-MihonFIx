@@ -54,6 +54,10 @@ class SlidingBottomNavigationView @JvmOverloads constructor(
 			}
 		}
 
+	/** How far the bar slides to leave the screen: its height plus the gap below it when it floats. */
+	val slideRange: Int
+		get() = measureHeight() + ((layoutParams as? android.view.ViewGroup.MarginLayoutParams)?.bottomMargin ?: 0)
+
 	val isShownOrShowing: Boolean
 		get() = isVisible && currentState == STATE_UP
 
@@ -154,7 +158,7 @@ class SlidingBottomNavigationView @JvmOverloads constructor(
 		clearAnimation()
 
 		currentState = STATE_DOWN
-		val target = measureHeight()
+		val target = slideRange
 		if (target == 0) {
 			return
 		}

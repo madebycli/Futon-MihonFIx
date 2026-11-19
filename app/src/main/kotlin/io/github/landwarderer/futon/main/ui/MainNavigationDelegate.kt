@@ -281,11 +281,16 @@ class MainNavigationDelegate(
 	}
 
 	private fun observeSettings(lifecycleOwner: LifecycleOwner) {
-		settings.observe(AppSettings.KEY_TRACKER_ENABLED, AppSettings.KEY_SUGGESTIONS, AppSettings.KEY_NAV_LABELS)
+		settings.observe(
+			AppSettings.KEY_TRACKER_ENABLED,
+			AppSettings.KEY_SUGGESTIONS,
+			AppSettings.KEY_NAV_LABELS,
+			AppSettings.KEY_NAV_LABELS_SELECTED_ONLY,
+		)
 			.onEach {
 				setItemVisibility(R.id.nav_suggestions, settings.isSuggestionsEnabled)
 				setItemVisibility(R.id.nav_feed, settings.isTrackerEnabled)
-				setNavbarIsLabeled(settings.isNavLabelsVisible)
+				setNavbarIsLabeled(settings.isNavLabelsVisible || settings.isNavLabelsSelectedOnly)
 			}.launchIn(lifecycleOwner.lifecycleScope)
 	}
 
@@ -311,7 +316,10 @@ class MainNavigationDelegate(
 		if (!value) {
 			setNavbarIsExpanded(false)
 		}
-		navBar.labelVisibilityMode = if (value) {
+		navBar.labelVisibilityMode = if (value && settings.isNavLabelsSelectedOnly) {
+			// Only the selected item shows its label, the others show their icon.
+			NavigationBarView.LABEL_VISIBILITY_SELECTED
+		} else if (value) {
 			NavigationBarView.LABEL_VISIBILITY_LABELED
 		} else {
 			NavigationBarView.LABEL_VISIBILITY_UNLABELED
