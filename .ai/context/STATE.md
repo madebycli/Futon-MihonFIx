@@ -13,6 +13,16 @@ See docs/pr-reviews/chapters.md. CI results must be checked for each final head;
 Earlier work and release instructions below are historical.
 
 
+### Verified signed 9.11.1 publication (2026-11-19)
+Clio 9.11.1 / 91101, user-authorized stable release: https://github.com/madebycli/Clio/releases/tag/v9.11.1 (the repository is now named Clio).
+Source 66f835acab121e3d7c0504575c0e0ba78010fad0 on release/v9.11.1, run 44502011064 SUCCESS, published 2026-11-19T10:22:06Z.
+Merged into devel first: PR #30 (Mihon source settings and icons, list view by default, update button, chapter loading).
+Standalone Futon-MihonFix-9.11.1.apk SHA256 9fbc3677ab2340430382893b00d3cc93d661e6d609f07b2553cc42aaf34cb158;
+legacy Futon-9.11.1-legacy-update.apk SHA256 80de0ef781341cc20a1af41b798df87e141f8c782d7f74fcf7981d56459d81ea.
+The Android 16 emulator installation check hung on the shared runner (about an hour) and was removed from the release job together
+with the diagnostic lint step; signed APK identity, certificate and optimized Mihon ABI are still verified. BUILD-INFO.txt says the
+emulator check was not run. Physical-device validation of 9.11.0 and 9.11.1 is PENDING.
+
 ### Verified signed 9.11.0 publication (2026-11-18)
 Clio 9.11.0 / 91100, user-authorized stable release: https://github.com/madebycli/Futon-MihonFIx/releases/tag/v9.11.0
 Source 63c623a39be97f5054ea00d15cd99b1d397133a6 on release/v9.11.0, run 44206202924 SUCCESS (all steps), published 2026-11-18T00:36:50Z.
