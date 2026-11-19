@@ -3,6 +3,7 @@ package io.github.landwarderer.futon.explore.ui.adapter
 import android.view.View
 import androidx.core.content.ContextCompat
 import androidx.core.text.bold
+import androidx.core.view.isVisible
 import androidx.core.text.buildSpannedString
 import com.hannesdorfmann.adapterdelegates4.dsl.adapterDelegateViewBinding
 import io.github.landwarderer.futon.R
@@ -107,6 +108,7 @@ fun exploreSourceListItemAD(
 ) {
 
 	AdapterDelegateClickListenerAdapter(this, listener).attach(itemView)
+	binding.buttonUpdate.setOnClickListener { listener.onItemClick(item, it) }
 	val iconPinned = ContextCompat.getDrawable(context, R.drawable.ic_pin_small)
 
 	bind {
@@ -114,6 +116,8 @@ fun exploreSourceListItemAD(
 		binding.textViewTitle.drawableStart = if (item.source.isPinned) iconPinned else null
 		binding.textViewSubtitle.text = item.source.getSummaryWithOrigin(context)
 		binding.imageViewIcon.setImageAsync(item.source)
+		binding.buttonUpdate.isVisible = item.updatePackage != null
+		binding.buttonUpdate.isEnabled = !item.isUpdating
 	}
 }
 

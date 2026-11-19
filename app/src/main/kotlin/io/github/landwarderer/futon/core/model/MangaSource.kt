@@ -29,6 +29,9 @@ fun updateMihonTitle(name: String, title: String) {
 	MIHON_TITLES[name] = title
 }
 
+/** The display name of a Mihon source seen by this process, or null if it is not known (yet). */
+fun mihonTitleOrNull(name: String): String? = MIHON_TITLES[name]
+
 data object LocalMangaSource : MangaSource {
 	override val name = "LOCAL"
 }

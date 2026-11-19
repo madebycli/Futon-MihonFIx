@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import io.github.landwarderer.futon.R
+import io.github.landwarderer.futon.core.prefs.AppSettings
 import io.github.landwarderer.futon.core.ui.BaseViewModel
 import io.github.landwarderer.futon.core.util.ext.MutableEventFlow
 import io.github.landwarderer.futon.core.util.ext.call
@@ -25,6 +26,8 @@ import io.github.landwarderer.futon.mihon.extensions.repo.ExternalExtensionRepo
 import io.github.landwarderer.futon.mihon.extensions.repo.ExternalExtensionRepoRepository
 import io.github.landwarderer.futon.mihon.extensions.repo.ExternalExtensionType
 import io.github.landwarderer.futon.mihon.extensions.repo.RepoAvailableExtension
+import io.github.landwarderer.futon.mihon.extensions.update.newerInstalledPackages
+import io.github.landwarderer.futon.mihon.extensions.update.updateSignature
 import io.github.landwarderer.futon.mihon.model.MihonLoadResult
 import javax.inject.Inject
 
@@ -34,6 +37,7 @@ class ExtensionDownloaderViewModel @Inject constructor(
     private val repoRepository: ExternalExtensionRepoRepository,
     private val extensionManager: MihonExtensionManager,
     private val installService: ExtensionInstallService,
+    private val settings: AppSettings,
 ) : BaseViewModel() {
 
     private val refreshing = MutableStateFlow(false)
@@ -56,6 +60,21 @@ class ExtensionDownloaderViewModel @Inject constructor(
             catalogExtensions.value = repoRepository.getCatalogExtensions(ExternalExtensionType.MIHON)
         }
         refresh()
+        // Keep the explore list's update buttons in step with what this screen knows.
+        viewModelScope.launch(Dispatchers.IO) {
+            combine(catalogExtensions, extensionManager.installedExtensions) { available, installed ->
+                available.filter { it.isCompatible } to installed
+            }.collect { (available, installed) ->
+                if (available.isEmpty()) return@collect
+                val packages = newerInstalledPackages(
+                    installed.associate { it.pkgName to it.versionCode },
+                    available.map { it.pkgName to it.versionCode },
+                )
+                val updates = available.filter { it.pkgName in packages }
+                    .groupBy { it.pkgName }.map { (_, versions) -> versions.maxBy { it.versionCode } }
+                settings.pendingExtensionUpdates = updateSignature(updates.map { it.pkgName to it.versionCode })
+            }
+        }
     }
 
     private data class RepoCatalogQuery(

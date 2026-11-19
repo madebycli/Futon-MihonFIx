@@ -5,7 +5,11 @@ import androidx.annotation.StringRes
 import io.github.landwarderer.futon.R
 import io.github.landwarderer.futon.core.db.entity.toEntity
 import io.github.landwarderer.futon.core.model.FavouriteCategory
+import io.github.landwarderer.futon.core.model.AnonymousMangaSource
 import io.github.landwarderer.futon.core.model.LocalMangaSource
+import io.github.landwarderer.futon.core.model.mihonTitleOrNull
+import io.github.landwarderer.futon.mihon.model.MihonMangaSource
+import io.github.landwarderer.futon.novel.data.source.NovelParserSource
 import io.github.landwarderer.futon.core.model.titleResId
 import io.github.landwarderer.futon.core.model.unwrap
 import io.github.landwarderer.futon.core.parser.external.ExternalMangaSource
@@ -148,6 +152,10 @@ sealed interface ListFilterOption {
 		override val titleText: CharSequence?
 			get() = when (val source = mangaSource.unwrap()) {
 				is MangaParserSource -> source.title
+				is NovelParserSource -> source.title
+				// Without a title the chip shows only the icon, so a Mihon source was an empty chip.
+				is MihonMangaSource -> source.displayName
+				is AnonymousMangaSource -> mihonTitleOrNull(source.name) ?: source.title
 				else -> null
 			}
 

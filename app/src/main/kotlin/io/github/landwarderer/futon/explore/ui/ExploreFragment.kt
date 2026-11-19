@@ -89,6 +89,7 @@ class ExploreFragment :
 		viewModel.content.observe(viewLifecycleOwner, checkNotNull(exploreAdapter))
 		viewModel.onError.observeEvent(viewLifecycleOwner, SnackbarErrorObserver(binding.recyclerView, this))
 		viewModel.onOpenManga.observeEvent(viewLifecycleOwner, ::onOpenManga)
+		viewModel.onInstallExtension.observeEvent(viewLifecycleOwner) { startActivity(it) }
 		viewModel.onActionDone.observeEvent(viewLifecycleOwner, ReversibleActionObserver(binding.recyclerView))
 		viewModel.isGrid.observe(viewLifecycleOwner, ::onGridModeChanged)
 		viewModel.onShowSuggestionsTip.observeEvent(viewLifecycleOwner) {
@@ -159,6 +160,10 @@ class ExploreFragment :
 	}
 
 	override fun onItemClick(item: MangaSourceItem, view: View) {
+		if (view.id == R.id.button_update) {
+			viewModel.updateExtension(item)
+			return
+		}
 		if (sourceSelectionController?.onItemClick(item.id) == true) {
 			return
 		}

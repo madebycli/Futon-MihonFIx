@@ -1,11 +1,13 @@
 package io.github.landwarderer.futon.explore.ui
 
+import android.content.Intent
 import androidx.collection.LongSet
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.landwarderer.futon.R
 import io.github.landwarderer.futon.core.model.MangaSourceInfo
 import io.github.landwarderer.futon.core.model.isNovelSource
+import io.github.landwarderer.futon.core.model.unwrap
 import io.github.landwarderer.futon.core.os.AppShortcutManager
 import io.github.landwarderer.futon.core.prefs.AppSettings
 import io.github.landwarderer.futon.core.prefs.observeAsFlow
@@ -23,6 +25,12 @@ import io.github.landwarderer.futon.explore.ui.model.ExploreButtons
 import io.github.landwarderer.futon.explore.ui.model.MangaSourceItem
 import io.github.landwarderer.futon.explore.ui.model.RecommendationsItem
 import io.github.landwarderer.futon.list.ui.model.EmptyHint
+import io.github.landwarderer.futon.mihon.MihonExtensionManager
+import io.github.landwarderer.futon.mihon.extensions.install.ExtensionInstallService
+import io.github.landwarderer.futon.mihon.extensions.repo.ExternalExtensionRepoRepository
+import io.github.landwarderer.futon.mihon.extensions.repo.ExternalExtensionType
+import io.github.landwarderer.futon.mihon.extensions.update.parseUpdateSignature
+import io.github.landwarderer.futon.mihon.model.MihonMangaSource
 import io.github.landwarderer.futon.list.ui.model.ListHeader
 import io.github.landwarderer.futon.list.ui.model.ListModel
 import io.github.landwarderer.futon.list.ui.model.LoadingState
@@ -52,6 +60,9 @@ class ExploreViewModel @Inject constructor(
 	private val sourcesRepository: MangaSourcesRepository,
 	private val presetsRepository: SourcePresetsRepository,
 	private val shortcutManager: AppShortcutManager,
+	private val extensionManager: MihonExtensionManager,
+	private val extensionRepos: ExternalExtensionRepoRepository,
+	private val installService: ExtensionInstallService,
 ) : BaseViewModel() {
 
 	val isGrid = settings.observeAsStateFlow(
@@ -97,6 +108,9 @@ class ExploreViewModel @Inject constructor(
 	val onOpenManga = MutableEventFlow<Manga>()
 	val onActionDone = MutableEventFlow<ReversibleAction>()
 	val onShowSuggestionsTip = MutableEventFlow<Unit>()
+
+	/** The system installer for an extension update, ready to be started by the screen. */
+	val onInstallExtension = MutableEventFlow<Intent>()
 	private val isRandomLoading = MutableStateFlow(false)
 
 	val content: StateFlow<List<ListModel>> = isLoading.flatMapLatest { loading ->
@@ -196,20 +210,48 @@ class ExploreViewModel @Inject constructor(
 		sources.filter { it.mangaSource.isNovelSource == isNovel }
 	}
 
+	/** Packages of installed extensions that have a newer version, each with whether its download is running. */
+	private fun observeExtensionUpdates(): Flow<Map<String, Boolean>> = combineFlows(
+		extensionManager.installedExtensions,
+		settings.observeAsFlow(AppSettings.KEY_EXTENSION_UPDATE_PENDING) { pendingExtensionUpdates },
+		installService.downloadStates,
+	) { installed, pending, downloads ->
+		val available = parseUpdateSignature(pending)
+		installed.mapNotNull { extension ->
+			val version = available[extension.pkgName]
+			if (version != null && version > extension.versionCode) {
+				extension.pkgName to downloads.containsKey(extension.pkgName)
+			} else {
+				null
+			}
+		}.toMap()
+	}
+
+	fun updateExtension(item: MangaSourceItem) {
+		val pkgName = item.updatePackage ?: return
+		launchJob(Dispatchers.IO) {
+			val extension = extensionRepos.getAvailableExtensions(ExternalExtensionType.MIHON)
+				.firstOrNull { it.pkgName == pkgName }
+				?: throw IllegalStateException("No update found for $pkgName")
+			installService.createInstallIntent(extension)?.let { onInstallExtension.call(it) }
+		}
+	}
+
 	private fun createContentFlow(): Flow<List<ListModel>> = combine(
-		observeFilteredSources(),
+		combineFlows(observeFilteredSources(), observeExtensionUpdates()) { sources, updates -> sources to updates },
 		getSuggestionFlow(),
 		isGrid,
 		isRandomLoading,
 		isAllSourcesEnabled,
 		sourcesRepository.observeHasNewSourcesForBadge(),
 		activePresetFlow,
-	) { content, suggestions, grid, randomLoading, allSourcesEnabled, newSources, activePreset ->
-		buildList(content, suggestions, grid, randomLoading, allSourcesEnabled, newSources, activePreset)
+	) { (content, updates), suggestions, grid, randomLoading, allSourcesEnabled, newSources, activePreset ->
+		buildList(content, updates, suggestions, grid, randomLoading, allSourcesEnabled, newSources, activePreset)
 	}.withErrorHandling()
 
 	private fun buildList(
 		sources: List<MangaSourceInfo>,
+		extensionUpdates: Map<String, Boolean>,
 		recommendation: List<Manga>,
 		isGrid: Boolean,
 		randomLoading: Boolean,
@@ -229,7 +271,12 @@ class ExploreViewModel @Inject constructor(
 				buttonTextRes = if (allSourcesEnabled && activePreset == null) R.string.manage else R.string.catalog,
 				badge = if (!allSourcesEnabled && activePreset == null && hasNewSources) "" else null,
 			)
-			sources.mapTo(result) { MangaSourceItem(it, isGrid) }
+			sources.mapTo(result) { source ->
+				// The update button only exists in the list view.
+				val pkgName = (source.mangaSource.unwrap() as? MihonMangaSource)?.pkgName
+					?.takeIf { !isGrid && it in extensionUpdates }
+				MangaSourceItem(source, isGrid, pkgName, isUpdating = pkgName != null && extensionUpdates[pkgName] == true)
+			}
 		} else {
 			result += EmptyHint(
 				icon = R.drawable.ic_empty_common,

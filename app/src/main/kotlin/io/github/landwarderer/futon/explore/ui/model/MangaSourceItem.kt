@@ -7,6 +7,9 @@ import org.koitharu.kotatsu.parsers.util.longHashCode
 data class MangaSourceItem(
 	val source: MangaSourceInfo,
 	val isGrid: Boolean,
+	/** Package of the Mihon extension that has a newer version available; shown as a button in the list view. */
+	val updatePackage: String? = null,
+	val isUpdating: Boolean = false,
 ) : ListModel {
 
 	val id: Long = source.name.longHashCode()

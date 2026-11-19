@@ -101,6 +101,28 @@ class MihonExtensionLoader @Inject constructor(
         loadExtension(context, pkgInfo)
     }
 
+    /**
+     * The launcher icon of an extension: its installed package, or else its managed APK archive. Managed
+     * extensions are not installed packages, so the package manager alone finds no icon for them.
+     */
+    fun loadExtensionIcon(context: Context, pkgName: String): android.graphics.drawable.Drawable? {
+        val pkgManager = context.packageManager
+        try {
+            return pkgManager.getApplicationIcon(pkgName)
+        } catch (_: Exception) {
+            // Not an installed package: fall through to the archive.
+        }
+        val appInfo = LocalApkExtensionSupport
+            .getLocalArchivePackageInfoOrNull(context, pkgManager, ECOSYSTEM_DIR, pkgName)
+            ?.applicationInfo
+            ?: return null
+        return try {
+            appInfo.loadIcon(pkgManager)
+        } catch (_: Exception) {
+            null
+        }
+    }
+
     fun getInstalledExtensions(context: Context): List<MihonExtensionInfo> {
         val pkgManager = context.packageManager
         val installedPkgs = ExternalExtensionLoaderSupport.getInstalledPackages(pkgManager)

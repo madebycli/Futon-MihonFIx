@@ -69,6 +69,16 @@ internal class AwaitingMihonMangaRepository(
     override suspend fun fetchPageResponse(pageUrl: String, page: MangaPage): Response? =
         delegate().fetchNativePageResponse(pageUrl, page)
 
+    /** The real repository once the extension scan has produced the source, otherwise null. */
+    fun resolvedOrNull(): MihonMangaRepository? = resolveNow()
+
+    /** Waits for the first extension scan, then returns the real repository, or null if the extension is gone. */
+    suspend fun awaitResolved(): MihonMangaRepository? {
+        resolved?.let { return it }
+        extensionManager.awaitInitialLoad()
+        return resolveNow()
+    }
+
     private suspend fun delegate(): MihonMangaRepository {
         resolved?.let { return it }
         extensionManager.awaitInitialLoad()

@@ -28,10 +28,11 @@
 		tools:src="@tools:sample/backgrounds/scenic" />
 
 	<LinearLayout
-		android:layout_width="match_parent"
+		android:layout_width="0dp"
 		android:layout_height="wrap_content"
 		android:layout_marginStart="16dp"
 		android:layout_marginEnd="@dimen/margin_small"
+		android:layout_weight="1"
 		android:orientation="vertical">
 
 		<TextView
@@ -56,5 +57,15 @@
 			tools:text="@tools:sample/lorem[2]" />
 
 	</LinearLayout>
+
+	<com.google.android.material.button.MaterialButton
+		android:id="@+id/button_update"
+		style="@style/Widget.Material3.Button.TonalButton"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:layout_marginEnd="@dimen/margin_small"
+		android:text="@string/update"
+		android:visibility="gone"
+		tools:visibility="visible" />
 
 </LinearLayout>

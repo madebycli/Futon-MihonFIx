@@ -51,6 +51,7 @@ class ExtensionUpdatesWorker @AssistedInject constructor(
             val updates = available.filter { it.pkgName in packages }
                 .groupBy { it.pkgName }.map { (_, versions) -> versions.maxBy { it.versionCode } }
             val signature = updateSignature(updates.map { it.pkgName to it.versionCode })
+            settings.pendingExtensionUpdates = signature
             if (updates.isEmpty()) {
                 settings.lastNotifiedExtensionUpdates = null
             } else if (settings.isExtensionUpdateNotificationsEnabled &&
@@ -124,3 +125,13 @@ internal fun canCompleteUpdateCheck(repositoryErrors: List<String?>): Boolean = 
 /** Identifies one set of pending updates; the order of the list does not matter. */
 internal fun updateSignature(updates: List<Pair<String, Long>>): String =
     updates.sortedBy { it.first }.joinToString(",") { "${it.first}:${it.second}" }
+
+/** Reads what [updateSignature] wrote: package to the newest version found in a repository. */
+internal fun parseUpdateSignature(signature: String?): Map<String, Long> {
+    if (signature.isNullOrEmpty()) return emptyMap()
+    return signature.split(',').mapNotNull { entry ->
+        val pkg = entry.substringBeforeLast(':', "")
+        val version = entry.substringAfterLast(':', "").toLongOrNull()
+        if (pkg.isEmpty() || version == null) null else pkg to version
+    }.toMap()
+}
