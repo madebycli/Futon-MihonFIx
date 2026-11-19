@@ -144,7 +144,9 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
 		viewBinding.navRail?.headerView?.findViewById<View>(R.id.railFab)?.setOnClickListener(this)
 		fadingAppbarMediator =
 			FadingAppbarMediator(viewBinding.appbar, viewBinding.layoutSearch ?: viewBinding.searchBar)
-		defaultContainerBehavior = (viewBinding.container.layoutParams as CoordinatorLayout.LayoutParams).behavior
+		viewBinding.appbar.updateLayoutParams<CoordinatorLayout.LayoutParams> {
+			behavior = appBarBehavior
+		}
 		defaultSearchBarElevation = viewBinding.searchBar.elevation
 		viewBinding.appbar.addOnLayoutChangeListener { _, _, top, _, bottom, _, oldTop, _, oldBottom ->
 			if (bottom - top != oldBottom - oldTop) updateTopOverlay()
@@ -408,7 +410,7 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
 		e.printStackTraceDebug("MainActivity::onFirstStart")
 	}
 
-	private var defaultContainerBehavior: CoordinatorLayout.Behavior<*>? = null
+	private val appBarBehavior = FloatingAwareAppBarBehavior()
 	private var defaultSearchBarElevation = 0f
 	private var defaultSearchBarOutline: ViewOutlineProvider? = null
 
@@ -427,8 +429,14 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
 	 */
 	private fun applyTopBarStyle() {
 		val isFloating = settings.isTopBarFloating
-		viewBinding.container.updateLayoutParams<CoordinatorLayout.LayoutParams> {
-			behavior = if (isFloating) null else defaultContainerBehavior
+		appBarBehavior.isFloating = isFloating
+		val containerParams = viewBinding.container.layoutParams as CoordinatorLayout.LayoutParams
+		val hasScrollingBehavior = containerParams.behavior is AppBarLayout.ScrollingViewBehavior
+		if (isFloating == hasScrollingBehavior) {
+			// A fresh behaviour each time: a detached one keeps the offset it had applied before.
+			viewBinding.container.updateLayoutParams<CoordinatorLayout.LayoutParams> {
+				behavior = if (isFloating) null else AppBarLayout.ScrollingViewBehavior()
+			}
 		}
 		val searchBar = viewBinding.searchBar
 		if (defaultSearchBarOutline == null) {
