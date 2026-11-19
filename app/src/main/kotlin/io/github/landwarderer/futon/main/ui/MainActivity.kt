@@ -145,10 +145,10 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
 		viewBinding.navRail?.headerView?.findViewById<View>(R.id.railFab)?.setOnClickListener(this)
 		fadingAppbarMediator =
 			FadingAppbarMediator(viewBinding.appbar, viewBinding.layoutSearch ?: viewBinding.searchBar)
+		defaultSearchBarElevation = viewBinding.searchBar.elevation
 		viewBinding.appbar.updateLayoutParams<CoordinatorLayout.LayoutParams> {
 			behavior = appBarBehavior
 		}
-		defaultSearchBarElevation = viewBinding.searchBar.elevation
 		viewBinding.appbar.addOnLayoutChangeListener { _, _, top, _, bottom, _, oldTop, _, oldBottom ->
 			if (bottom - top != oldBottom - oldTop) updateTopOverlay()
 		}
@@ -411,8 +411,8 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
 		e.printStackTraceDebug("MainActivity::onFirstStart")
 	}
 
-	private val appBarBehavior = FloatingAwareAppBarBehavior()
 	private var defaultSearchBarElevation = 0f
+	private val appBarBehavior = SettlingAppBarBehavior()
 	private var defaultSearchBarOutline: ViewOutlineProvider? = null
 
 	/** A rounded outline over the whole view, as the search bar is drawn. */
@@ -423,22 +423,12 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
 	}
 
 	/**
-	 * The floating top bar: the lists no longer start below the app bar (its scrolling behaviour is taken off the
-	 * container) but behind it, and get its height as top padding through [TopOverlay], so they still start below the
-	 * search bar and then scroll behind it. The search bar gets a shadow. How the app bar hides and comes back on
-	 * scroll does not change.
+	 * The floating top bar: the lists reach up behind the app bar and scroll on behind the search bar, which gets a
+	 * shadow (see [updateTopOverlay]). How the app bar hides and comes back on scroll does not change.
 	 */
 	private fun applyTopBarStyle() {
 		val isFloating = settings.isTopBarFloating
-		appBarBehavior.isFloating = isFloating
-		val containerParams = viewBinding.container.layoutParams as CoordinatorLayout.LayoutParams
-		val hasScrollingBehavior = containerParams.behavior is AppBarLayout.ScrollingViewBehavior
-		if (isFloating == hasScrollingBehavior) {
-			// A fresh behaviour each time: a detached one keeps the offset it had applied before.
-			viewBinding.container.updateLayoutParams<CoordinatorLayout.LayoutParams> {
-				behavior = if (isFloating) null else AppBarLayout.ScrollingViewBehavior()
-			}
-		}
+		appBarBehavior.isSettleEnabled = isFloating
 		val searchBar = viewBinding.searchBar
 		if (defaultSearchBarOutline == null) {
 			defaultSearchBarOutline = searchBar.outlineProvider
@@ -457,8 +447,18 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
 		updateTopOverlay()
 	}
 
+	/**
+	 * The floating top bar works as in Kototoro, where the content's top inset is the top bar's height and follows it
+	 * as it hides: the app bar and its scrolling stay exactly as they are, the content area only reaches up behind the
+	 * app bar by its height, and the lists get that height as top padding. So everything still moves together with
+	 * the app bar as before, a list starts below the search bar, and it scrolls on behind it.
+	 */
 	private fun updateTopOverlay() {
-		TopOverlay.set(viewBinding.container, if (settings.isTopBarFloating) viewBinding.appbar.height else 0)
+		val overlay = if (settings.isTopBarFloating) viewBinding.appbar.height else 0
+		viewBinding.container.updateLayoutParams<CoordinatorLayout.LayoutParams> {
+			topMargin = -overlay
+		}
+		TopOverlay.set(viewBinding.container, overlay)
 	}
 
 	private fun adjustAppbar(topFragment: Fragment) {
