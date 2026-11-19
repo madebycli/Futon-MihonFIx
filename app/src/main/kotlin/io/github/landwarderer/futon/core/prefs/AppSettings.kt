@@ -427,7 +427,7 @@ class AppSettings internal constructor(
 		set(value) = prefs.edit { putEnumValue(KEY_SOURCES_ORDER, value) }
 
 	var isSourcesGridMode: Boolean
-		get() = prefs.getBoolean(KEY_SOURCES_GRID, true)
+		get() = prefs.getBoolean(KEY_SOURCES_GRID, false)
 		set(value) = prefs.edit { putBoolean(KEY_SOURCES_GRID, value) }
 
 	var sourcesVersion: Int
