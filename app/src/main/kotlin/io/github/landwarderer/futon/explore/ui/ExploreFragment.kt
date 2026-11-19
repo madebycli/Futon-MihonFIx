@@ -88,13 +88,22 @@ class ExploreFragment :
 		addMenuProvider(ExploreMenuProvider(binding.root.context, router))
 		viewModel.content.observe(viewLifecycleOwner, checkNotNull(exploreAdapter))
 		viewModel.onError.observeEvent(viewLifecycleOwner, SnackbarErrorObserver(binding.recyclerView, this))
-		viewModel.onOpenManga.observeEvent(viewLifecycleOwner, ::onOpenManga)
-		viewModel.onInstallExtension.observeEvent(viewLifecycleOwner) { startActivity(it) }
+		viewModel.onOpenManga.observeEvent(viewLifecycleOwner) { manga ->
+			if (isResumed && !isHidden) onOpenManga(manga)
+		}
+		viewModel.onInstallExtension.observeEvent(viewLifecycleOwner) { intent ->
+			if (isResumed && !isHidden) startActivity(intent)
+		}
 		viewModel.onActionDone.observeEvent(viewLifecycleOwner, ReversibleActionObserver(binding.recyclerView))
 		viewModel.isGrid.observe(viewLifecycleOwner, ::onGridModeChanged)
 		viewModel.onShowSuggestionsTip.observeEvent(viewLifecycleOwner) {
-			showSuggestionsTip()
+			if (!isHidden) showSuggestionsTip()
 		}
+	}
+
+	override fun onHiddenChanged(hidden: Boolean) {
+		super.onHiddenChanged(hidden)
+		if (hidden) viewModel.cancelPendingNavigation()
 	}
 
 	override fun onApplyWindowInsets(v: View, insets: WindowInsetsCompat): WindowInsetsCompat {

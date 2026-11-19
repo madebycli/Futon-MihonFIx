@@ -207,11 +207,16 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
 		}
 	}
 
+	override fun onPostResume() {
+		super.onPostResume()
+		navigationDelegate.schedulePendingChanges()
+	}
+
 	override fun onTrimMemory(level: Int) {
 		super.onTrimMemory(level)
 		// The kept tabs are only a shortcut; give their memory back before the system has to end the app.
 		@Suppress("DEPRECATION")
-		if (level == ComponentCallbacks2.TRIM_MEMORY_RUNNING_CRITICAL || level >= ComponentCallbacks2.TRIM_MEMORY_MODERATE) {
+		if (level == ComponentCallbacks2.TRIM_MEMORY_RUNNING_CRITICAL || level >= ComponentCallbacks2.TRIM_MEMORY_BACKGROUND) {
 			navigationDelegate.releaseHiddenTabs()
 		}
 	}
