@@ -263,6 +263,9 @@ class MainNavigationDelegate(
 		// restored after a recreation have no transitions.
 		if (current != null && current !== target) {
 			current.exitTransition = Fade(Fade.OUT).setDuration(TAB_FADE_OUT_MS)
+			// The tab stays alive while hidden: a fling or smooth scroll still running in it would go on moving the
+			// app bar and the bottom bar, which the tabs share, and leave them stuck halfway on the new tab.
+			(current as? RecyclerViewOwner)?.recyclerView?.stopScroll()
 		}
 		target.enterTransition = Fade(Fade.IN).setDuration(TAB_FADE_IN_MS)
 		target.allowEnterTransitionOverlap = false
