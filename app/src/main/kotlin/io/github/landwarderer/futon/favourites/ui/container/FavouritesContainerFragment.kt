@@ -11,21 +11,17 @@ import android.graphics.drawable.InsetDrawable
 import androidx.appcompat.view.ActionMode
 import androidx.core.view.doOnLayout
 import androidx.core.view.updateLayoutParams
-import com.google.android.material.appbar.AppBarLayout
 import com.google.android.material.color.MaterialColors
 import com.google.android.material.shape.MaterialShapeDrawable
 import com.google.android.material.shape.RelativeCornerSize
 import com.google.android.material.shape.ShapeAppearanceModel
 import io.github.landwarderer.futon.core.ui.util.TopOverlay
-import io.github.landwarderer.futon.main.ui.owners.AppBarOwner
-import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isGone
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.RecyclerView
-import androidx.viewpager2.widget.ViewPager2
 import com.google.android.material.tabs.TabLayoutMediator
 import dagger.hilt.android.AndroidEntryPoint
 import io.github.landwarderer.futon.R
@@ -82,10 +78,11 @@ class FavouritesContainerFragment : BaseFragment<FragmentFavouritesContainerBind
 	}
 
 	override fun onDestroyView() {
-		bindAppBarOffset(false)
 		actionModeDelegate.removeListener(this)
 		super.onDestroyView()
 	}
+
+	private var defaultIndicator: Drawable? = null
 
 	override fun onApplyWindowInsets(v: View, insets: WindowInsetsCompat): WindowInsetsCompat {
 		applyFloatingTabs(TopOverlay.of(v))
@@ -94,7 +91,8 @@ class FavouritesContainerFragment : BaseFragment<FragmentFavouritesContainerBind
 
 	/**
 	 * With the floating top bar the category tabs float too: a rounded bar with a shadow below the search bar, and the
-	 * lists of the pager scroll behind it. They move up and away together with the search bar. Without it the tabs are
+	 * lists of the pager scroll behind it. Like the plain row they move with the content, so they leave and come back
+	 * with the search bar exactly as before, and every category starts at the same height. Without it the tabs are
 	 * the plain row above the pager, as before.
 	 */
 	private fun applyFloatingTabs(topOverlay: Int) {
@@ -132,7 +130,6 @@ class FavouritesContainerFragment : BaseFragment<FragmentFavouritesContainerBind
 				binding.pager.updateLayoutParams<ViewGroup.MarginLayoutParams> { topMargin = -block }
 				TopOverlay.set(binding.pager, block + (FLOATING_TABS_GAP_DP * density).toInt())
 			}
-			bindAppBarOffset(true)
 		} else {
 			tabs.updateLayoutParams<ViewGroup.MarginLayoutParams> {
 				topMargin = 0
@@ -151,53 +148,6 @@ class FavouritesContainerFragment : BaseFragment<FragmentFavouritesContainerBind
 			binding.pager.updateLayoutParams<ViewGroup.MarginLayoutParams> { topMargin = 0 }
 			if (binding.pager.getTag(R.id.tag_top_overlay) != null) {
 				TopOverlay.set(binding.pager, 0)
-			}
-			bindAppBarOffset(false)
-		}
-	}
-
-	private val appBarOffsetListener = AppBarLayout.OnOffsetChangedListener { _, verticalOffset ->
-		// The floating tabs move up together with the search bar, as the plain row did, but stop below the status
-		// bar like the original row instead of sliding under the clock and the icons.
-		val tabs = viewBinding?.tabs ?: return@OnOffsetChangedListener
-		val statusBar = ViewCompat.getRootWindowInsets(tabs)
-			?.getInsets(WindowInsetsCompat.Type.statusBars())?.top ?: 0
-		val gap = (FLOATING_TABS_GAP_DP * resources.displayMetrics.density).toInt()
-		val top = (tabs.layoutParams as ViewGroup.MarginLayoutParams).topMargin
-		val lowest = -(top - statusBar - gap).coerceAtLeast(0)
-		tabs.translationY = verticalOffset.coerceAtLeast(lowest).toFloat()
-	}
-	private var isAppBarOffsetBound = false
-	private var defaultIndicator: Drawable? = null
-
-	private fun bindAppBarOffset(bind: Boolean) {
-		val appBar = (activity as? AppBarOwner)?.appBar ?: return
-		val pager = viewBinding?.pager
-		if (bind && !isAppBarOffsetBound) {
-			appBar.addOnOffsetChangedListener(appBarOffsetListener)
-			pager?.registerOnPageChangeCallback(pageChangeCallback)
-			isAppBarOffsetBound = true
-		} else if (!bind && isAppBarOffsetBound) {
-			appBar.removeOnOffsetChangedListener(appBarOffsetListener)
-			pager?.unregisterOnPageChangeCallback(pageChangeCallback)
-			isAppBarOffsetBound = false
-		}
-	}
-
-	/**
-	 * The lists of the pager keep a fixed top padding: the room of the search bar and the tabs. When the search bar
-	 * is scrolled away and another category is opened at its top, that room would show as a gap between the tabs and
-	 * the list, so the search bar comes back. A category that is already scrolled down is left as it is.
-	 */
-	private val pageChangeCallback = object : ViewPager2.OnPageChangeCallback() {
-		override fun onPageSelected(position: Int) {
-			val pager = viewBinding?.pager ?: return
-			pager.post {
-				val appBar = (activity as? AppBarOwner)?.appBar ?: return@post
-				val list = (findCurrentFragment() as? RecyclerViewOwner)?.recyclerView
-				if (list == null || !list.canScrollVertically(-1)) {
-					appBar.setExpanded(true, true)
-				}
 			}
 		}
 	}
