@@ -141,11 +141,73 @@ class AppSettings internal constructor(
 			}
 		}
 
+	/** The legacy on/off switch for the labels. [navLabelMode] replaces it; it is kept in step for older versions. */
 	val isNavLabelsVisible: Boolean
-		get() = prefs.getBoolean(KEY_NAV_LABELS, false)
+		get() = navLabelMode != NavLabelMode.NONE
+
+	/**
+	 * Which items of the navigation show their label. Older versions only had the [KEY_NAV_LABELS] switch, so while
+	 * the new value was never written it follows that switch: on means every label, off means none.
+	 */
+	val navLabelMode: NavLabelMode
+		get() = NavLabelMode.read(
+			stored = prefs.getString(KEY_NAV_LABEL_MODE, null),
+			legacyLabels = prefs.getBoolean(KEY_NAV_LABELS, false),
+		)
+
+	/**
+	 * Writes [navLabelMode] once from the legacy switch, so the setting screen shows the value the bar already uses.
+	 * Nothing changes for anyone: an existing choice is kept, and the legacy switch keeps its value.
+	 */
+	fun migrateNavLabelMode() {
+		if (!prefs.contains(KEY_NAV_LABEL_MODE)) {
+			prefs.edit { putString(KEY_NAV_LABEL_MODE, navLabelMode.name) }
+		}
+	}
+
+	/** Keeps the legacy switch in step with [navLabelMode], so a downgrade still shows or hides the labels. */
+	fun syncLegacyNavLabels() {
+		val isVisible = navLabelMode != NavLabelMode.NONE
+		if (prefs.getBoolean(KEY_NAV_LABELS, false) != isVisible) {
+			prefs.edit { putBoolean(KEY_NAV_LABELS, isVisible) }
+		}
+	}
 
 	val isNavBarPinned: Boolean
 		get() = prefs.getBoolean(KEY_NAV_PINNED, false)
+
+	/** The navigation bar floats above the content as a compact rounded bar, instead of being docked to the edge. */
+	val isNavFloating: Boolean
+		get() = prefs.getBoolean(KEY_NAV_FLOATING, false)
+
+	/** The selected item sits in a capsule; off highlights it with the accent color only. */
+	val isNavCapsuleEnabled: Boolean
+		get() = prefs.getBoolean(KEY_NAV_CAPSULE, true)
+
+	/** The floating bar stretches across the full width, instead of wrapping its items. */
+	val isNavFullWidth: Boolean
+		get() = prefs.getBoolean(KEY_NAV_FULL_WIDTH, false)
+
+	/** Height of the floating bar's content in dp; the bar itself is 4 dp more, as in Kototoro. */
+	val navFloatingHeight: Int
+		get() = prefs.getInt(KEY_NAV_FLOATING_HEIGHT, NAV_FLOATING_HEIGHT_DEFAULT)
+			.coerceIn(NAV_FLOATING_HEIGHT_MIN, NAV_FLOATING_HEIGHT_MAX)
+
+	/** Corner radius of the floating navigation bar, in dp. */
+	val navCornerRadius: Int
+		get() = prefs.getInt(KEY_NAV_CORNER_RADIUS, NAV_CORNER_RADIUS_DEFAULT).coerceIn(0, NAV_CORNER_RADIUS_MAX)
+
+	/** Gap between the floating navigation bar and the bottom edge (above the system navigation), in dp. */
+	val navSpacing: Int
+		get() = prefs.getInt(KEY_NAV_SPACING, NAV_SPACING_DEFAULT).coerceIn(0, NAV_SPACING_MAX)
+
+	/** The docked bar as a rounded, raised surface with a small margin around it. */
+	val isNavLayeredSurface: Boolean
+		get() = prefs.getBoolean(KEY_NAV_LAYERED_SURFACE, false)
+
+	/** The continue button is a round button with the cover of the last manga, next to the bar on every main screen. */
+	val isMainFabRound: Boolean
+		get() = prefs.getBoolean(KEY_MAIN_FAB_ROUND, false)
 
 	val isMainFabEnabled: Boolean
 		get() = prefs.getBoolean(KEY_MAIN_FAB, true)
@@ -1075,6 +1137,22 @@ class AppSettings internal constructor(
 		const val KEY_NAV_MAIN = "nav_main"
 		const val KEY_NAV_LABELS = "nav_labels"
 		const val KEY_NAV_PINNED = "nav_pinned"
+		const val KEY_NAV_FLOATING = "nav_floating"
+		const val KEY_NAV_LABEL_MODE = "nav_label_mode"
+		const val KEY_NAV_CAPSULE = "nav_capsule"
+		const val KEY_NAV_FULL_WIDTH = "nav_full_width"
+		const val KEY_NAV_FLOATING_HEIGHT = "nav_floating_height"
+		const val KEY_NAV_LAYERED_SURFACE = "nav_layered_surface"
+		const val KEY_NAV_CORNER_RADIUS = "nav_corner_radius"
+		const val KEY_NAV_SPACING = "nav_spacing"
+		const val KEY_MAIN_FAB_ROUND = "main_fab_round"
+		const val NAV_FLOATING_HEIGHT_DEFAULT = 52
+		const val NAV_FLOATING_HEIGHT_MIN = 48
+		const val NAV_FLOATING_HEIGHT_MAX = 84
+		const val NAV_CORNER_RADIUS_DEFAULT = 28
+		const val NAV_CORNER_RADIUS_MAX = 32
+		const val NAV_SPACING_DEFAULT = 16
+		const val NAV_SPACING_MAX = 32
 		const val KEY_MAIN_FAB = "main_fab"
 		const val KEY_32BIT_COLOR = "enhanced_colors"
 		const val KEY_SOURCES_ORDER = "sources_sort_order"

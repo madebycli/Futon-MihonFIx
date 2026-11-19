@@ -84,6 +84,8 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
@@ -120,6 +122,7 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
 	private var modeSwitcherSpotlight: ModeSwitcherSpotlightOverlay? = null
 	private lateinit var navigationDelegate: MainNavigationDelegate
 	private lateinit var fadingAppbarMediator: FadingAppbarMediator
+	private var navBarController: FloatingNavBarController? = null
 
 	override val appBar: AppBarLayout
 		get() = viewBinding.appbar
@@ -134,6 +137,7 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
 		updateHomeWatermark()
 
 		viewBinding.fab?.setOnClickListener(this)
+		navBarController = bottomNav?.let { FloatingNavBarController(it, settings, this) }
 		viewBinding.navRail?.headerView?.findViewById<View>(R.id.railFab)?.setOnClickListener(this)
 		fadingAppbarMediator =
 			FadingAppbarMediator(viewBinding.appbar, viewBinding.layoutSearch ?: viewBinding.searchBar)
@@ -187,6 +191,24 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
 				viewModel.isLoading.observe(this@MainActivity, this@MainActivity::onLoadingStateChanged)
 				viewModel.isResumeEnabled.observe(this@MainActivity, this@MainActivity::onResumeEnabledChanged)
 				viewModel.feedCounter.observe(this@MainActivity, ::onFeedCounterChanged)
+				viewModel.lastReadManga.observe(this@MainActivity) { manga ->
+					navBarController?.setResumeManga(manga)
+				}
+				settings.observe(
+					AppSettings.KEY_NAV_FLOATING,
+					AppSettings.KEY_NAV_LABEL_MODE,
+					AppSettings.KEY_NAV_CAPSULE,
+					AppSettings.KEY_NAV_FULL_WIDTH,
+					AppSettings.KEY_NAV_FLOATING_HEIGHT,
+					AppSettings.KEY_NAV_CORNER_RADIUS,
+					AppSettings.KEY_NAV_SPACING,
+					AppSettings.KEY_NAV_LAYERED_SURFACE,
+					AppSettings.KEY_MAIN_FAB_ROUND,
+				).onEach {
+					navBarController?.apply()
+					adjustFabVisibility()
+					updateContainerBottomMargin()
+				}.launchIn(lifecycleScope)
 				viewModel.onShowOnboarding.observeEvent(this@MainActivity) {
 					onboardingLauncher.launch(Intent(this@MainActivity, OnboardingActivity::class.java))
 				}
@@ -248,7 +270,7 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
 
 	override fun onClick(v: View) {
 		when (v.id) {
-			R.id.fab, R.id.railFab -> viewModel.openLastReader()
+			R.id.fab, R.id.railFab, R.id.roundFab -> viewModel.openLastReader()
 		}
 	}
 
@@ -264,11 +286,12 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
 				searchBarDefaultMargin + barsInsets.start(v)
 			}
 		}
-		viewBinding.bottomNav?.updatePadding(
-			left = barsInsets.left,
-			right = barsInsets.right,
-			bottom = barsInsets.bottom,
-		)
+		navBarController?.onInsets(barsInsets.left, barsInsets.right, barsInsets.bottom)
+			?: viewBinding.bottomNav?.updatePadding(
+				left = barsInsets.left,
+				right = barsInsets.right,
+				bottom = barsInsets.bottom,
+			)
 		viewBinding.navRail?.updateLayoutParams<MarginLayoutParams> {
 			marginStart = barsInsets.start(v)
 			topMargin = barsInsets.top
@@ -395,8 +418,13 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
 		isSearchOpened: Boolean = viewBinding.searchView.isShowing,
 	) {
 		navigationDelegate.navRailHeader?.railFab?.isVisible = isResumeEnabled
+		// The round button replaces the continue button of History: never both.
+		val isRound = settings.isMainFabRound
+		val isIdle = !actionModeDelegate.isActionModeStarted && !isSearchOpened
+		val showRound = isResumeEnabled && isRound && isIdle
+		navBarController?.isResumeVisible = showRound
 		val fab = viewBinding.fab ?: return
-		if (isResumeEnabled && !actionModeDelegate.isActionModeStarted && !isSearchOpened && topFragment is HistoryListFragment) {
+		if (isResumeEnabled && !isRound && isIdle && topFragment is HistoryListFragment) {
 			if (!fab.isVisible) {
 				fab.show()
 			}
@@ -512,7 +540,12 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
 
 	private fun updateContainerBottomMargin() {
 		val bottomNavBar = viewBinding.bottomNav ?: return
-		val newMargin = if (bottomNavBar.isPinned && bottomNavBar.isShownOrShowing) bottomNavBar.height else 0
+		val gapBelowBar = (bottomNavBar.layoutParams as? MarginLayoutParams)?.bottomMargin ?: 0
+		val newMargin = if (bottomNavBar.isPinned && bottomNavBar.isShownOrShowing) {
+			bottomNavBar.height + gapBelowBar
+		} else {
+			0
+		}
 		with(viewBinding.container) {
 			val params = layoutParams as MarginLayoutParams
 			if (params.bottomMargin != newMargin) {

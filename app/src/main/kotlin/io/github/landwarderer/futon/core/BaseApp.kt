@@ -72,6 +72,7 @@ open class BaseApp : Application(), Configuration.Provider {
 		super.onCreate()
 		PlatformRegistry.applicationContext = this // TODO replace with OkHttp.initialize
 		AppCompatDelegate.setDefaultNightMode(settings.theme)
+		settings.migrateNavLabelMode()
 		// Initialize Sentry only if user has opted in
 		if (settings.isCrashAnalyticsEnabled) {
 			initializeSentry()
