@@ -58,8 +58,9 @@ class FloatingNavBarController(
 
 	init {
 		bottomNav.onMenuStateChanged = { syncEntries() }
-		bottomNav.addOnLayoutChangeListener { _, _, top, _, bottom, _, oldTop, _, oldBottom ->
-			if (bottom - top != oldBottom - oldTop && bottomNav.floatingRow == null) {
+		bottomNav.addOnLayoutChangeListener { _, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom ->
+			val isResized = bottom - top != oldBottom - oldTop || right - left != oldRight - oldLeft
+			if (isResized && bottomNav.floatingRow == null) {
 				bottomNav.post { placeDockedResumeButton() }
 			}
 		}
@@ -167,15 +168,30 @@ class FloatingNavBarController(
 			gravity = Gravity.END or Gravity.CENTER_VERTICAL
 			marginEnd = dp(DOCKED_RESUME_MARGIN_DP)
 		}
+		// The menu view lays its items out over the width it is given and centres itself, so it gets an exact,
+		// narrower width at the start instead of a margin (with a margin the items ran off the start edge).
+		val reserved = size + dp(DOCKED_RESUME_MARGIN_DP + DOCKED_RESUME_GAP_DP)
+		val available = bottomNav.width - bottomNav.paddingLeft - bottomNav.paddingRight
+		if (available <= reserved) return
 		menuView.updateLayoutParams<FrameLayout.LayoutParams> {
-			marginEnd = size + dp(DOCKED_RESUME_MARGIN_DP + DOCKED_RESUME_GAP_DP)
+			if (menuViewParams == null) {
+				menuViewParams = FrameLayout.LayoutParams(this)
+			}
+			width = available - reserved
+			gravity = Gravity.START or (menuViewParams!!.gravity and Gravity.VERTICAL_GRAVITY_MASK)
 		}
 	}
 
+	/** The layout params the menu view had before the docked button took its end. */
+	private var menuViewParams: FrameLayout.LayoutParams? = null
+
 	private fun resetMenuViewMargin() {
+		val original = menuViewParams ?: return
 		bottomNav.getChildAt(0)?.updateLayoutParams<FrameLayout.LayoutParams> {
-			marginEnd = 0
+			width = original.width
+			gravity = original.gravity
 		}
+		menuViewParams = null
 	}
 
 	/** Copies the visible sections, the selection and the badges of the docked bar into the floating bar. */

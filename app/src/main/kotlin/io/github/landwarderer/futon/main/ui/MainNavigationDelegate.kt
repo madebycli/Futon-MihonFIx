@@ -314,8 +314,8 @@ class MainNavigationDelegate(
 
 	/**
 	 * The labels of the docked bar and of the rail. The floating bar reads the same setting itself. "Beside the icon"
-	 * is the horizontal item of Material 3 (icon and label side by side in the indicator) on the bottom bar; the rail
-	 * shows labels below its icons.
+	 * is a look of the floating bar only; the docked bar and the rail show the label of the selected item below its
+	 * icon then, as the docked NavigationBar of Kototoro ignores its indicator style too.
 	 */
 	private fun setNavbarLabels(mode: NavLabelMode) {
 		val isLabeled = mode != NavLabelMode.NONE
@@ -327,11 +327,6 @@ class MainNavigationDelegate(
 					R.dimen.nav_bar_height_compact
 				},
 			)
-			navBar.itemIconGravity = if (mode == NavLabelMode.SELECTED_BESIDE) {
-				NavigationBarView.ITEM_ICON_GRAVITY_START
-			} else {
-				NavigationBarView.ITEM_ICON_GRAVITY_TOP
-			}
 		}
 		navRailHeader?.buttonExpand?.isVisible = isLabeled
 		if (!isLabeled) {
@@ -340,7 +335,6 @@ class MainNavigationDelegate(
 		navBar.labelVisibilityMode = when (mode) {
 			NavLabelMode.NONE -> NavigationBarView.LABEL_VISIBILITY_UNLABELED
 			NavLabelMode.ALL -> NavigationBarView.LABEL_VISIBILITY_LABELED
-			// The rail has no room beside its icons: there the label of the selected item goes below it.
 			NavLabelMode.SELECTED, NavLabelMode.SELECTED_BESIDE -> NavigationBarView.LABEL_VISIBILITY_SELECTED
 		}
 		notifyMenuStateChanged()
