@@ -110,12 +110,14 @@ class FloatingNavBarController(
 		// The shadows of the bar and of the button fall below this view, into the gap above the screen edge.
 		bottomNav.clipChildren = false
 		bottomNav.clipToPadding = false
-		// Kototoro keeps the floating bar clear of the system navigation and the screen edges.
-		bottomNav.setPadding(insetLeft, 0, insetRight, 0)
+		// Kototoro keeps the floating bar clear of the system navigation and the screen edges. The gap is padding,
+		// not a margin, so the shadows of the bar and of the button are drawn inside this view instead of being cut
+		// off by its parent; touches in the gap still go through to the content (see dispatchTouchEvent).
+		bottomNav.setPadding(insetLeft, 0, insetRight, dp(settings.navSpacing) + insetBottom)
 		bottomNav.updateLayoutParams<MarginLayoutParams> {
 			marginStart = 0
 			marginEnd = 0
-			bottomMargin = dp(settings.navSpacing) + insetBottom
+			bottomMargin = 0
 		}
 	}
 
@@ -184,8 +186,9 @@ class FloatingNavBarController(
 	}
 
 	/**
-	 * The docked bar gives the button its end: the sections make room, and the button, as high as the sections,
-	 * sits 12 dp from the edge, like the Row of Kototoro's docked bar with the button beside it.
+	 * The docked bar gives the button its end: the sections make room, and the button sits 12 dp from the edge, like
+	 * the Row of Kototoro's docked bar with the button beside it. Kototoro makes it as high as the bar (80 dp); here it
+	 * stops at 64 dp, which keeps it clear of the bar's edges.
 	 */
 	private fun placeDockedResumeButton() {
 		if (resumeButton.parent !== bottomNav || bottomNav.floatingRow != null) return
@@ -252,7 +255,7 @@ class FloatingNavBarController(
 		const val DOCKED_RESUME_MARGIN_DP = 12
 		const val DOCKED_RESUME_GAP_DP = 8
 		const val DOCKED_RESUME_MIN_DP = 48
-		const val DOCKED_RESUME_MAX_DP = 80
+		const val DOCKED_RESUME_MAX_DP = 64
 		const val DOCKED_RESUME_FALLBACK_DP = 56
 	}
 }
