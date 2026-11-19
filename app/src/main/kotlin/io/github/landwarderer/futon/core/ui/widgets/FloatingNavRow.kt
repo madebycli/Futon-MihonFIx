@@ -38,13 +38,17 @@ import androidx.core.view.isVisible
 import androidx.core.widget.ImageViewCompat
 import androidx.core.widget.TextViewCompat
 import androidx.interpolator.view.animation.FastOutSlowInInterpolator
-import androidx.transition.AutoTransition
+import androidx.transition.ChangeBounds
+import androidx.transition.Fade
 import androidx.transition.TransitionManager
+import androidx.transition.TransitionSet
 import com.google.android.material.color.MaterialColors
 import com.google.android.material.shape.MaterialShapeDrawable
 import com.google.android.material.shape.ShapeAppearanceModel
 import io.github.landwarderer.futon.core.prefs.NavLabelMode
 import kotlin.math.abs
+import kotlin.math.ceil
+import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
 import com.google.android.material.R as materialR
@@ -121,9 +125,16 @@ class FloatingNavRow(context: Context) : ViewGroup(context) {
 		entries = value
 		if (isSelectionChange) {
 			// The selection moves: the items change their size and the capsule slides to the new item.
+			// One short step: the label fades in while the icon lifts and the capsule slides (AutoTransition would fade
+			// out, move and fade in one after the other).
 			TransitionManager.beginDelayedTransition(
 				bar,
-				AutoTransition().setDuration(SELECTION_ANIMATION_MS).setInterpolator(FastOutSlowInInterpolator()),
+				TransitionSet()
+					.setOrdering(TransitionSet.ORDERING_TOGETHER)
+					.addTransition(ChangeBounds())
+					.addTransition(Fade())
+					.setDuration(SELECTION_ANIMATION_MS)
+					.setInterpolator(FastOutSlowInInterpolator()),
 			)
 		}
 		selectedId = selected
@@ -301,20 +312,46 @@ class FloatingNavRow(context: Context) : ViewGroup(context) {
 				return
 			}
 			val itemHeightSpec = MeasureSpec.makeMeasureSpec(height, MeasureSpec.EXACTLY)
-			var total = 0
-			for (item in items) {
-				item.measure(MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED), itemHeightSpec)
-				total += item.measuredWidth
+			val gaps = dp(spec.itemSpacing) * (items.size - 1).coerceAtLeast(0) + dp(spec.horizontalPadding) * 2
+			if (style.labelMode == NavLabelMode.SELECTED_BESIDE) {
+				// The selected item is wider than the others, but the bar keeps the width it needs for the widest
+				// selection, so it does not grow or shrink when the selection moves; the items are centred in it.
+				var total = 0
+				for (item in items) {
+					item.measure(MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED), itemHeightSpec)
+					total += item.measuredWidth
+				}
+				val minWidth = dp(FloatingNavLayoutSpec.ITEM_TOUCH_TARGET)
+				val widest = items.maxOfOrNull { it.besideSelectedWidth() } ?: 0
+				val fixed = minWidth * (items.size - 1).coerceAtLeast(0) + max(widest, minWidth) + gaps
+				contentWidth = total + gaps
+				setMeasuredDimension(min(max(fixed, contentWidth), maxWidth), height)
+				return
 			}
-			total += dp(spec.itemSpacing) * (items.size - 1).coerceAtLeast(0) + dp(spec.horizontalPadding) * 2
-			setMeasuredDimension(min(total, maxWidth), height)
+			// Every item gets the same slot, as wide as the widest item with its label shown: the bar stays the
+			// same size whichever item is selected, and items do not shift when a label appears.
+			val fitting = ((maxWidth - gaps) / items.size.coerceAtLeast(1)).coerceAtLeast(0)
+			val slot = min(items.maxOfOrNull { it.belowSelectedWidth() } ?: 0, fitting)
+			val slotSpec = MeasureSpec.makeMeasureSpec(slot, MeasureSpec.EXACTLY)
+			for (item in items) {
+				item.measure(slotSpec, itemHeightSpec)
+			}
+			contentWidth = slot * items.size + gaps
+			setMeasuredDimension(min(contentWidth, maxWidth), height)
 		}
+
+		/** Width the items and gaps need; the bar may be wider (see onMeasure), then they are centred in it. */
+		private var contentWidth = 0
 
 		override fun onLayout(changed: Boolean, l: Int, t: Int, r: Int, b: Int) {
 			val isRtl = layoutDirection == LAYOUT_DIRECTION_RTL
 			val inset = if (style.isFullWidth) dp(4) else 0
 			val spacing = if (style.isFullWidth) 0 else dp(spec.itemSpacing)
-			var x = if (style.isFullWidth) inset else dp(spec.horizontalPadding)
+			var x = if (style.isFullWidth) {
+				inset
+			} else {
+				dp(spec.horizontalPadding) + ((r - l - contentWidth) / 2).coerceAtLeast(0)
+			}
 			val ordered = if (isRtl) items.asReversed() else items
 			for (item in ordered) {
 				val top = (b - t - item.measuredHeight) / 2
@@ -623,6 +660,27 @@ class FloatingNavRow(context: Context) : ViewGroup(context) {
 			(content.layoutParams as LayoutParams).height = dp(40)
 		}
 
+		private fun labelTextWidth(): Int {
+			val text = entry?.title ?: return 0
+			return ceil(label.paint.measureText(text, 0, text.length)).toInt()
+		}
+
+		/** Width of this item when it is selected with the label below the icon, at least the touch target. */
+		fun belowSelectedWidth(): Int {
+			val minWidth = dp(FloatingNavLayoutSpec.ITEM_TOUCH_TARGET)
+			if (style.labelMode == NavLabelMode.NONE || !spec.showLabels) return minWidth
+			val padding = if (style.isCapsuleEnabled) dp(8) else dp(1)
+			return max(minWidth, max(labelTextWidth(), dp(24)) + padding * 2)
+		}
+
+		/** Width of this item when it is selected with the label beside the icon. */
+		fun besideSelectedWidth(): Int {
+			if (!spec.showLabels) return dp(FloatingNavLayoutSpec.ITEM_TOUCH_TARGET)
+			val labelWidth = min(labelTextWidth(), spec.labelMaxWidth?.let { dp(it) } ?: Int.MAX_VALUE)
+			val margin = if (entry?.badge?.let { it > 0 } == true) dp(20) else dp(8)
+			return max(dp(FloatingNavLayoutSpec.ITEM_TOUCH_TARGET), dp(8) + dp(24) + margin + labelWidth + dp(8))
+		}
+
 		/** A tab of FullWidthFloatingBottomNavRow: icon and label 2 dp apart, or 6 dp apart side by side. */
 		private fun bindFullWidth(isBeside: Boolean, labelParams: LinearLayout.LayoutParams) {
 			TextViewCompat.setTextAppearance(label, materialR.style.TextAppearance_Material3_LabelMedium)
@@ -694,7 +752,7 @@ class FloatingNavRow(context: Context) : ViewGroup(context) {
 
 	private companion object {
 
-		const val SELECTION_ANIMATION_MS = 250L
+		const val SELECTION_ANIMATION_MS = 180L
 
 		/** GlassDefaults.navigationShadowElevation in Kototoro. */
 		const val NAV_SHADOW_ELEVATION_DP = 4
