@@ -82,12 +82,14 @@ class FloatingNavRow(context: Context) : ViewGroup(context) {
 	var onItemClick: ((Int) -> Unit)? = null
 
 	private val density = resources.displayMetrics.density
-	private val bar = BarView(context)
 	private var adjacentView: View? = null
 	private var entries: List<Entry> = emptyList()
 	private var selectedId: Int = View.NO_ID
 	private var style = Style(NavLabelMode.SELECTED, true, false, 52, 28)
 	private var spec = FloatingNavLayoutSpec.resolve(Float.MAX_VALUE, 1, null, showLabels = true)
+
+	// Created after the fields above: the bar reads the style while it is built.
+	private val bar = BarView(context)
 
 	init {
 		clipChildren = false
