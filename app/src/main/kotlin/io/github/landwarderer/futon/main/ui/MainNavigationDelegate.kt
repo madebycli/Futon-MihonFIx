@@ -20,7 +20,7 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.navigation.NavigationBarView
 import com.google.android.material.navigationrail.NavigationRailView
-import com.google.android.material.transition.MaterialFadeThrough
+import androidx.transition.Fade
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.channels.trySendBlocking
 import kotlinx.coroutines.flow.callbackFlow
@@ -257,9 +257,15 @@ class MainNavigationDelegate(
 			it.arguments = buildBundle(1) {
 				putBoolean(AppRouter.KEY_IS_BOTTOMTAB, true)
 			}
-			it.enterTransition = MaterialFadeThrough()
-			it.exitTransition = MaterialFadeThrough()
 		}
+		// The shown tab fades out first, then the other one fades in: both are never visible at the same time (with
+		// an overlapping fade the old page showed through the new one). Set on every switch, as tabs that were
+		// restored after a recreation have no transitions.
+		if (current != null && current !== target) {
+			current.exitTransition = Fade(Fade.OUT).setDuration(TAB_FADE_OUT_MS)
+		}
+		target.enterTransition = Fade(Fade.IN).setDuration(TAB_FADE_IN_MS)
+		target.allowEnterTransitionOverlap = false
 		val transaction = fragmentManager.beginTransaction().setReorderingAllowed(true)
 		if (current != null && current !== target) {
 			// STARTED, not RESUMED: a hidden tab keeps its content up to date but does not own the menu or the toolbar.
@@ -411,5 +417,8 @@ class MainNavigationDelegate(
 	companion object {
 
 		const val MAX_ITEM_COUNT = 6
+
+		private const val TAB_FADE_OUT_MS = 90L
+		private const val TAB_FADE_IN_MS = 150L
 	}
 }
