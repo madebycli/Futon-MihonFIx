@@ -1,6 +1,7 @@
 package io.github.landwarderer.futon.main.ui
 
 import android.Manifest
+import android.content.ComponentCallbacks2
 import android.content.Intent
 import android.content.pm.PackageManager.PERMISSION_GRANTED
 import android.os.Build
@@ -203,6 +204,15 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
 				}
 				initSearch()
 			}
+		}
+	}
+
+	override fun onTrimMemory(level: Int) {
+		super.onTrimMemory(level)
+		// The kept tabs are only a shortcut; give their memory back before the system has to end the app.
+		@Suppress("DEPRECATION")
+		if (level == ComponentCallbacks2.TRIM_MEMORY_RUNNING_CRITICAL || level >= ComponentCallbacks2.TRIM_MEMORY_MODERATE) {
+			navigationDelegate.releaseHiddenTabs()
 		}
 	}
 

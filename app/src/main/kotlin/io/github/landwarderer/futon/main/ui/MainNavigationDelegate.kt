@@ -277,17 +277,36 @@ class MainNavigationDelegate(
 
 	/**
 	 * After the activity was recreated every restored tab fragment is brought back to RESUMED, hidden or not. Hidden
-	 * tabs are held at STARTED again, as when they were hidden.
+	 * tabs are held at STARTED again, as when they were hidden. Tabs whose section is no longer in the bar (the
+	 * sections were changed in the settings, which recreates this screen) are removed instead of staying hidden.
 	 */
 	private fun syncTabLifecycles() {
 		if (fragmentManager.isStateSaved) return
 		val tabs = fragmentManager.fragments.filter { it.isTab() }
-		if (tabs.none { it.isHidden }) return
+		val orphans = tabs.filter { navBar.menu.findItem(getItemId(it)) == null }
+		if (orphans.isEmpty() && tabs.none { it.isHidden }) return
 		val transaction = fragmentManager.beginTransaction()
 		for (tab in tabs) {
-			transaction.setMaxLifecycle(tab, if (tab.isHidden) Lifecycle.State.STARTED else Lifecycle.State.RESUMED)
+			if (tab in orphans) {
+				transaction.remove(tab)
+			} else {
+				transaction.setMaxLifecycle(tab, if (tab.isHidden) Lifecycle.State.STARTED else Lifecycle.State.RESUMED)
+			}
 		}
 		transaction.commitNow()
+	}
+
+	/**
+	 * Frees the hidden tabs when the system runs short of memory: they are rebuilt, and load again, when they are
+	 * opened next. The shown tab stays.
+	 */
+	fun releaseHiddenTabs() {
+		if (fragmentManager.isStateSaved) return
+		val hidden = fragmentManager.fragments.filter { it.isTab() && it.isHidden }
+		if (hidden.isEmpty()) return
+		val transaction = fragmentManager.beginTransaction()
+		hidden.forEach { transaction.remove(it) }
+		transaction.commitAllowingStateLoss()
 	}
 
 	private fun onNavigationItemReselected() {
