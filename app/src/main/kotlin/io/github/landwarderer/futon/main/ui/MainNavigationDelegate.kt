@@ -8,6 +8,8 @@ import android.view.View
 import android.widget.FrameLayout
 import androidx.activity.OnBackPressedCallback
 import androidx.annotation.IdRes
+import androidx.core.view.ViewCompat
+import androidx.core.view.allViews
 import androidx.core.view.isEmpty
 import androidx.core.view.isVisible
 import androidx.core.view.iterator
@@ -20,6 +22,7 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.navigation.NavigationBarView
 import com.google.android.material.navigationrail.NavigationRailView
+import androidx.recyclerview.widget.RecyclerView
 import androidx.transition.Fade
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.channels.trySendBlocking
@@ -35,6 +38,7 @@ import io.github.landwarderer.futon.core.prefs.AppSettings
 import io.github.landwarderer.futon.core.prefs.NavItem
 import io.github.landwarderer.futon.core.ui.util.RecyclerViewOwner
 import io.github.landwarderer.futon.core.ui.widgets.SlidingBottomNavigationView
+import io.github.landwarderer.futon.core.util.ext.isLowRamDevice
 import io.github.landwarderer.futon.core.util.ext.buildBundle
 import io.github.landwarderer.futon.core.util.ext.setContentDescriptionAndTooltip
 import io.github.landwarderer.futon.core.util.ext.smoothScrollToTop
@@ -66,6 +70,7 @@ class MainNavigationDelegate(
 	NavigationBarView.OnItemSelectedListener,
 	NavigationBarView.OnItemReselectedListener, View.OnClickListener {
 
+	private val lowRam = navBar.context.isLowRamDevice()
 	private var pendingTab: Class<out Fragment>? = null
 	private var pendingFromUser = false
 	private var trimRequested = false
@@ -289,9 +294,10 @@ class MainNavigationDelegate(
 			current.exitTransition = Fade(Fade.OUT).setDuration(TAB_FADE_OUT_MS)
 			// The tab stays alive while hidden: a fling or smooth scroll still running in it would go on moving the
 			// app bar and the bottom bar, which the tabs share, and leave them stuck halfway on the new tab.
-			(current as? RecyclerViewOwner)?.recyclerView?.run {
-				stopScroll()
-				stopNestedScroll(androidx.core.view.ViewCompat.TYPE_NON_TOUCH)
+			current.view?.allViews?.filterIsInstance<RecyclerView>()?.forEach { list ->
+				list.stopScroll()
+				list.stopNestedScroll(ViewCompat.TYPE_TOUCH)
+				list.stopNestedScroll(ViewCompat.TYPE_NON_TOUCH)
 			}
 		}
 		target.enterTransition = Fade(Fade.IN).setDuration(TAB_FADE_IN_MS)
@@ -300,6 +306,12 @@ class MainNavigationDelegate(
 		if (current != null && current !== target) {
 			// STARTED, not RESUMED: a hidden tab keeps its content up to date but does not own the menu or the toolbar.
 			transaction.hide(current).setMaxLifecycle(current, Lifecycle.State.STARTED)
+		}
+		if (lowRam) {
+			// Retain the page being left for Back, and free older hidden pages on low-memory devices.
+			fragmentManager.fragments.filter { it.isTab() && it.isHidden && it !== target }.forEach {
+				transaction.remove(it)
+			}
 		}
 		if (existing != null) {
 			transaction.show(existing).setMaxLifecycle(existing, Lifecycle.State.RESUMED)
@@ -314,10 +326,13 @@ class MainNavigationDelegate(
 		val tabs = fragmentManager.fragments.filter { it.isTab() || it.tag == "primary" }
 		if (tabs.isEmpty()) return
 		val visible = tabs.lastOrNull { it.isTab() && !it.isHidden && navBar.menu.findItem(getItemId(it)) != null }
+		val warm = if (lowRam) tabs.lastOrNull { it.isTab() && it.isHidden && navBar.menu.findItem(getItemId(it)) != null } else null
 		val retainedTags = mutableSetOf<String?>()
 		val transaction = fragmentManager.beginTransaction()
 		for (tab in tabs.sortedByDescending { it === visible }) {
-			if (!tab.isTab() || navBar.menu.findItem(getItemId(tab)) == null || !retainedTags.add(tab.tag)) {
+			if (!tab.isTab() || navBar.menu.findItem(getItemId(tab)) == null || !retainedTags.add(tab.tag) ||
+				(lowRam && tab !== visible && tab !== warm)
+			) {
 				transaction.remove(tab)
 			} else if (tab === visible) {
 				transaction.show(tab).setMaxLifecycle(tab, Lifecycle.State.RESUMED)
