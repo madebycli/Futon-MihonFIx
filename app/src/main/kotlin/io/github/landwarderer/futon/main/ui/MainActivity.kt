@@ -253,6 +253,7 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
 		if (fromUser) {
 			actionModeDelegate.finishActionMode()
 			viewBinding.appbar.setExpanded(true)
+			viewBinding.bottomNav?.revealIfScrolledAway()
 		}
 	}
 

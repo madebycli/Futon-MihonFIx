@@ -239,6 +239,17 @@ class SlidingBottomNavigationView @JvmOverloads constructor(
 		)
 	}
 
+	/**
+	 * Brings the bar fully back when scrolling left it partly hidden, as Kototoro resets its bottom bar when another
+	 * section is opened. Does nothing while the bar is hidden on purpose (action mode).
+	 */
+	fun revealIfScrolledAway() {
+		if (currentState == STATE_UP && translationY != 0F) {
+			currentAnimator?.cancel()
+			animateTranslation(0F, SLIDE_UP_ANIMATION_DURATION, LinearOutSlowInInterpolator())
+		}
+	}
+
 	fun showOrHide(show: Boolean) {
 		if (show) {
 			show()
