@@ -102,9 +102,14 @@ class HideBottomNavigationOnScrollBehavior @JvmOverloads constructor(
 		if (isPinned) return
 		val dy = dyConsumed + dyUnconsumed.coerceAtMost(0)
 		if (dy != 0) {
-			child.translationY = (child.translationY + (dy * dyRatio)).coerceIn(0F, slideRangeOf(child))
+			// The floating bar moves with the content one to one, as Kototoro's bottom bar; the docked bar keeps
+			// its old pace, scaled to the height of the search bar.
+			val ratio = if (child.isFloatingBar()) 1F else dyRatio
+			child.translationY = (child.translationY + (dy * ratio)).coerceIn(0F, slideRangeOf(child))
 		}
 	}
+
+	private fun NavigationBarView.isFloatingBar() = (this as? SlidingBottomNavigationView)?.floatingRow != null
 
 	override fun onStopNestedScroll(
 		coordinatorLayout: CoordinatorLayout,
@@ -112,6 +117,8 @@ class HideBottomNavigationOnScrollBehavior @JvmOverloads constructor(
 		target: View,
 		type: Int,
 	) {
+		// The floating bar stays where the scrolling left it, as in Kototoro; the docked bar snaps open or closed.
+		if (child.isFloatingBar()) return
 		if (!isPinned && (lastStartedType == ViewCompat.TYPE_TOUCH || type == ViewCompat.TYPE_NON_TOUCH)) {
 			animateBottomNavigationVisibility(child, child.translationY < slideRangeOf(child) / 2)
 		}
