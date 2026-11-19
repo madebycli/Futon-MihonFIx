@@ -4,6 +4,17 @@ All notable changes to this project are documented in this file.
 
 The format is based on "Keep a Changelog" and follows semantic versioning where possible.
 
+## 9.11.1
+Date: 2026-11-19
+
+### Mihon extensions
+- A source of an extension that was restored before the extension scan finished is no longer shown as "not supported" in its settings, and its icon is the extension's icon instead of a white square. Filter chips of Mihon sources show the source name.
+- Chapters of extensions that read the list through a WebView (Comix) load more reliably: opening the same manga again joins the running load instead of failing, and a list the extension stopped reading early is read again.
+
+### Explore
+- The sources are a list by default (an existing choice of the grid is kept).
+- In the list, a source whose Mihon extension has an update shows an update button at the right edge of its row.
+
 ## 9.11.0
 Date: 2026-11-18
 
