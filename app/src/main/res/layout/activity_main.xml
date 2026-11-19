@@ -102,45 +102,4 @@
 		android:layout_gravity="bottom"
 		android:fitsSystemWindows="false" />
 
-	<!-- The round continue button: the cover of the last manga under a dark scrim and the read icon. -->
-	<FrameLayout
-		android:id="@+id/roundFab"
-		android:layout_width="56dp"
-		android:layout_height="56dp"
-		android:layout_gravity="bottom|end"
-		android:layout_marginEnd="12dp"
-		android:layout_marginBottom="12dp"
-		android:background="@drawable/bg_round_resume"
-		android:clickable="true"
-		android:clipToOutline="true"
-		android:contentDescription="@string/_continue"
-		android:elevation="6dp"
-		android:focusable="true"
-		android:visibility="gone"
-		app:layout_behavior="io.github.landwarderer.futon.main.ui.RoundResumeButtonBehavior"
-		tools:visibility="visible">
-
-		<io.github.landwarderer.futon.image.ui.CoverImageView
-			android:id="@+id/roundFabCover"
-			android:layout_width="match_parent"
-			android:layout_height="match_parent"
-			android:importantForAccessibility="no"
-			android:scaleType="centerCrop" />
-
-		<View
-			android:id="@+id/roundFabScrim"
-			android:layout_width="match_parent"
-			android:layout_height="match_parent"
-			android:background="#61000000" />
-
-		<ImageView
-			android:layout_width="wrap_content"
-			android:layout_height="wrap_content"
-			android:layout_gravity="center"
-			android:importantForAccessibility="no"
-			android:src="@drawable/ic_read"
-			app:tint="@android:color/white" />
-
-	</FrameLayout>
-
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

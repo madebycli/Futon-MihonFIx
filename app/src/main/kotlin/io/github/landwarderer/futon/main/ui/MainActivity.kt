@@ -136,8 +136,7 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
 		updateHomeWatermark()
 
 		viewBinding.fab?.setOnClickListener(this)
-		viewBinding.roundFab?.setOnClickListener(this)
-		navBarController = bottomNav?.let { FloatingNavBarController(it, viewBinding.roundFab, settings) }
+		navBarController = bottomNav?.let { FloatingNavBarController(it, settings, this) }
 		viewBinding.navRail?.headerView?.findViewById<View>(R.id.railFab)?.setOnClickListener(this)
 		fadingAppbarMediator =
 			FadingAppbarMediator(viewBinding.appbar, viewBinding.layoutSearch ?: viewBinding.searchBar)
@@ -192,12 +191,17 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
 				viewModel.isResumeEnabled.observe(this@MainActivity, this@MainActivity::onResumeEnabledChanged)
 				viewModel.feedCounter.observe(this@MainActivity, ::onFeedCounterChanged)
 				viewModel.lastReadManga.observe(this@MainActivity) { manga ->
-					viewBinding.roundFabCover?.setImageAsync(manga?.coverUrl, manga)
+					navBarController?.setResumeManga(manga)
 				}
 				settings.observe(
 					AppSettings.KEY_NAV_FLOATING,
+					AppSettings.KEY_NAV_LABEL_MODE,
+					AppSettings.KEY_NAV_CAPSULE,
+					AppSettings.KEY_NAV_FULL_WIDTH,
+					AppSettings.KEY_NAV_FLOATING_HEIGHT,
 					AppSettings.KEY_NAV_CORNER_RADIUS,
 					AppSettings.KEY_NAV_SPACING,
+					AppSettings.KEY_NAV_LAYERED_SURFACE,
 					AppSettings.KEY_MAIN_FAB_ROUND,
 				).onEach {
 					navBarController?.apply()
@@ -301,7 +305,6 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
 		oldBottom: Int
 	) {
 		if (top != oldTop || bottom != oldBottom) {
-			navBarController?.alignRoundFab()
 			updateContainerBottomMargin()
 		}
 	}
@@ -409,8 +412,7 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
 		val isRound = settings.isMainFabRound
 		val isIdle = !actionModeDelegate.isActionModeStarted && !isSearchOpened
 		val showRound = isResumeEnabled && isRound && isIdle
-		viewBinding.roundFab?.isVisible = showRound
-		navBarController?.isRoundFabVisible = showRound
+		navBarController?.isResumeVisible = showRound
 		val fab = viewBinding.fab ?: return
 		if (isResumeEnabled && !isRound && isIdle && topFragment is HistoryListFragment) {
 			if (!fab.isVisible) {

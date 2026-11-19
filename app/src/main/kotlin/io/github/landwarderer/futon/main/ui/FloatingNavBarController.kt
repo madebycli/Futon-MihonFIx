@@ -1,44 +1,73 @@
 package io.github.landwarderer.futon.main.ui
 
 import android.content.res.ColorStateList
+import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup.MarginLayoutParams
+import android.widget.FrameLayout
+import androidx.core.view.isVisible
+import androidx.core.view.iterator
 import androidx.core.view.updateLayoutParams
 import com.google.android.material.color.MaterialColors
 import com.google.android.material.shape.MaterialShapeDrawable
 import com.google.android.material.shape.ShapeAppearanceModel
 import io.github.landwarderer.futon.core.prefs.AppSettings
+import io.github.landwarderer.futon.core.prefs.NavItem
+import io.github.landwarderer.futon.core.ui.widgets.FloatingNavRow
 import io.github.landwarderer.futon.core.ui.widgets.SlidingBottomNavigationView
+import org.koitharu.kotatsu.parsers.model.Manga
+import kotlin.math.roundToInt
 import com.google.android.material.R as materialR
 
 /**
- * The design of the bottom navigation bar: docked to the screen edge, or floating as a rounded bar with a gap around
- * it, and the round continue button beside it. The design follows the floating bottom bar of Kototoro (a rounded bar on a
- * surface container color with the continue button as a round button with the cover next to it); only the look is
- * taken over, the entries of the bar stay those of this app.
+ * The design of the bottom navigation bar, from the settings of Appearance → Main screen:
+ *
+ *  - docked: the Material bar along the bottom edge, as before; optionally on a raised rounded surface
+ *    (Kototoro's "layered surface": 16 dp corners, surfaceContainer, 6 dp shadow, 12/6 dp margin);
+ *  - floating: Kototoro's compact rounded bar ([FloatingNavRow]) above the bottom edge.
+ *
+ * In both designs the round continue button ([RoundResumeButton]) sits at the end of the bar, the size of the bar,
+ * as Kototoro's ContinueReadingFab next to its bottom bar. The sections, the selection and the badges stay those of
+ * the [SlidingBottomNavigationView]; the floating bar only shows them.
  */
 class FloatingNavBarController(
 	private val bottomNav: SlidingBottomNavigationView,
-	private val roundFab: View?,
 	private val settings: AppSettings,
+	onResumeClick: View.OnClickListener,
 ) {
 
-	private val density = bottomNav.resources.displayMetrics.density
+	private val context = bottomNav.context
+	private val density = context.resources.displayMetrics.density
 	private val defaultBackground = bottomNav.background
 	private val defaultElevation = bottomNav.elevation
 	private val defaultPaddingTop = bottomNav.paddingTop
+	private val resumeButton = RoundResumeButton(context).apply { setOnClickListener(onResumeClick) }
+	private var floatingRow: FloatingNavRow? = null
 	private var insetLeft = 0
 	private var insetRight = 0
 	private var insetBottom = 0
 
-	/** Whether the round continue button is shown now. */
-	var isRoundFabVisible: Boolean = false
+	/** Whether the round continue button is shown now; [MainActivity] decides it from the settings and the state. */
+	var isResumeVisible: Boolean = false
 		set(value) {
 			if (field != value) {
 				field = value
 				apply()
 			}
 		}
+
+	init {
+		bottomNav.onMenuStateChanged = { syncEntries() }
+		bottomNav.addOnLayoutChangeListener { _, _, top, _, bottom, _, oldTop, _, oldBottom ->
+			if (bottom - top != oldBottom - oldTop && bottomNav.floatingRow == null) {
+				bottomNav.post { placeDockedResumeButton() }
+			}
+		}
+	}
+
+	fun setResumeManga(manga: Manga?) {
+		resumeButton.setManga(manga)
+	}
 
 	fun onInsets(left: Int, right: Int, bottom: Int) {
 		insetLeft = left
@@ -47,65 +76,138 @@ class FloatingNavBarController(
 		apply()
 	}
 
+	/** Applies the current settings; switching the design resets everything the other design changed. */
 	fun apply() {
 		if (settings.isNavFloating) applyFloating() else applyDocked()
-		alignRoundFab()
 	}
 
 	private fun applyFloating() {
-		val spacing = dp(settings.navSpacing)
-		val buttonSpace = if (isRoundFabVisible) dp(ROUND_FAB_SIZE_DP + ROUND_FAB_GAP_DP) else 0
-		bottomNav.updateLayoutParams<MarginLayoutParams> {
-			marginStart = spacing + insetLeft
-			marginEnd = spacing + insetRight + buttonSpace
-			bottomMargin = spacing + insetBottom
+		val row = floatingRow ?: FloatingNavRow(context).also {
+			it.onItemClick = { id -> bottomNav.selectedItemId = id }
+			floatingRow = it
 		}
-		bottomNav.setPadding(0, defaultPaddingTop, 0, 0)
-		val shape = ShapeAppearanceModel.builder()
-			.setAllCornerSizes(settings.navCornerRadius * density)
-			.build()
-		bottomNav.background = MaterialShapeDrawable(shape).apply {
-			fillColor = ColorStateList.valueOf(MaterialColors.getColor(bottomNav, materialR.attr.colorSurfaceContainer))
-			initializeElevationOverlay(bottomNav.context)
-		}
-		bottomNav.elevation = dp(FLOATING_ELEVATION_DP).toFloat()
-	}
-
-	private fun applyDocked() {
+		row.setStyle(
+			FloatingNavRow.Style(
+				labelMode = settings.navLabelMode,
+				isCapsuleEnabled = settings.isNavCapsuleEnabled,
+				isFullWidth = settings.isNavFullWidth,
+				contentHeight = settings.navFloatingHeight,
+				cornerRadius = settings.navCornerRadius,
+			),
+		)
+		resetMenuViewMargin()
+		row.setAdjacentView(resumeButton.takeIf { isResumeVisible })
+		resumeButton.isVisible = isResumeVisible
+		bottomNav.floatingRow = row
+		syncEntries()
+		bottomNav.background = null
+		bottomNav.elevation = 0f
+		// Kototoro keeps the floating bar clear of the system navigation and the screen edges.
+		bottomNav.setPadding(insetLeft, 0, insetRight, 0)
 		bottomNav.updateLayoutParams<MarginLayoutParams> {
 			marginStart = 0
 			marginEnd = 0
-			bottomMargin = 0
+			bottomMargin = dp(settings.navSpacing) + insetBottom
 		}
-		bottomNav.setPadding(insetLeft, defaultPaddingTop, insetRight, insetBottom)
-		bottomNav.background = defaultBackground
-		bottomNav.elevation = defaultElevation
 	}
 
-	/** Puts the round button level with the bar: beside it when the bar floats, above its end when it is docked. */
-	fun alignRoundFab() {
-		val fab = roundFab ?: return
-		val barHeight = bottomNav.height
-		val margin = dp(ROUND_FAB_MARGIN_DP)
-		fab.updateLayoutParams<MarginLayoutParams> {
-			if (settings.isNavFloating) {
-				val spacing = dp(settings.navSpacing)
-				marginEnd = spacing + insetRight
-				bottomMargin = spacing + insetBottom + ((barHeight - dp(ROUND_FAB_SIZE_DP)) / 2).coerceAtLeast(0)
-			} else {
-				marginEnd = margin + insetRight
-				bottomMargin = barHeight + margin
+	private fun applyDocked() {
+		floatingRow?.setAdjacentView(null)
+		bottomNav.floatingRow = null
+		if (settings.isNavLayeredSurface) {
+			bottomNav.updateLayoutParams<MarginLayoutParams> {
+				marginStart = dp(LAYERED_MARGIN_HORIZONTAL_DP) + insetLeft
+				marginEnd = dp(LAYERED_MARGIN_HORIZONTAL_DP) + insetRight
+				bottomMargin = dp(LAYERED_MARGIN_VERTICAL_DP)
 			}
+			bottomNav.setPadding(0, defaultPaddingTop, 0, insetBottom)
+			bottomNav.background = MaterialShapeDrawable(
+				ShapeAppearanceModel.builder().setAllCornerSizes(dp(LAYERED_CORNER_RADIUS_DP).toFloat()).build(),
+			).apply {
+				fillColor = ColorStateList.valueOf(MaterialColors.getColor(bottomNav, materialR.attr.colorSurfaceContainer))
+			}
+			bottomNav.elevation = dp(LAYERED_ELEVATION_DP).toFloat()
+		} else {
+			bottomNav.updateLayoutParams<MarginLayoutParams> {
+				marginStart = 0
+				marginEnd = 0
+				bottomMargin = 0
+			}
+			bottomNav.setPadding(insetLeft, defaultPaddingTop, insetRight, insetBottom)
+			bottomNav.background = defaultBackground
+			bottomNav.elevation = defaultElevation
+		}
+		if (isResumeVisible) {
+			if (resumeButton.parent !== bottomNav) {
+				(resumeButton.parent as? android.view.ViewGroup)?.removeView(resumeButton)
+				bottomNav.addView(resumeButton)
+			}
+			resumeButton.isVisible = true
+			placeDockedResumeButton()
+		} else {
+			if (resumeButton.parent === bottomNav) {
+				bottomNav.removeView(resumeButton)
+			}
+			resetMenuViewMargin()
 		}
 	}
 
-	private fun dp(value: Int) = (value * density).toInt()
+	/**
+	 * The docked bar gives the button its end: the sections make room, and the button, as high as the sections,
+	 * sits 12 dp from the edge, like the Row of Kototoro's docked bar with the button beside it.
+	 */
+	private fun placeDockedResumeButton() {
+		if (resumeButton.parent !== bottomNav || bottomNav.floatingRow != null) return
+		val menuView = bottomNav.getChildAt(0) ?: return
+		val size = (menuView.height.takeIf { it > 0 } ?: dp(DOCKED_RESUME_FALLBACK_DP))
+			.coerceIn(dp(DOCKED_RESUME_MIN_DP), dp(DOCKED_RESUME_MAX_DP))
+		resumeButton.updateLayoutParams<FrameLayout.LayoutParams> {
+			width = size
+			height = size
+			gravity = Gravity.END or Gravity.CENTER_VERTICAL
+			marginEnd = dp(DOCKED_RESUME_MARGIN_DP)
+		}
+		menuView.updateLayoutParams<FrameLayout.LayoutParams> {
+			marginEnd = size + dp(DOCKED_RESUME_MARGIN_DP + DOCKED_RESUME_GAP_DP)
+		}
+	}
+
+	private fun resetMenuViewMargin() {
+		bottomNav.getChildAt(0)?.updateLayoutParams<FrameLayout.LayoutParams> {
+			marginEnd = 0
+		}
+	}
+
+	/** Copies the visible sections, the selection and the badges of the docked bar into the floating bar. */
+	private fun syncEntries() {
+		val row = floatingRow ?: return
+		val entries = ArrayList<FloatingNavRow.Entry>(bottomNav.menu.size())
+		for (item in bottomNav.menu) {
+			if (!item.isVisible) continue
+			val navItem = NavItem.entries.firstOrNull { it.id == item.itemId } ?: continue
+			val badge = bottomNav.getBadge(item.itemId)?.takeIf { it.isVisible }
+			entries += FloatingNavRow.Entry(
+				id = item.itemId,
+				title = item.title ?: context.getString(navItem.title),
+				icon = navItem.icon,
+				badge = badge?.let { if (it.hasNumber()) it.number else 0 },
+			)
+		}
+		row.setEntries(entries, bottomNav.selectedItemId)
+	}
+
+	private fun dp(value: Int) = (value * density).roundToInt()
 
 	private companion object {
 
-		const val ROUND_FAB_SIZE_DP = 56
-		const val ROUND_FAB_GAP_DP = 10
-		const val ROUND_FAB_MARGIN_DP = 12
-		const val FLOATING_ELEVATION_DP = 6
+		const val LAYERED_MARGIN_HORIZONTAL_DP = 12
+		const val LAYERED_MARGIN_VERTICAL_DP = 6
+		const val LAYERED_CORNER_RADIUS_DP = 16
+		const val LAYERED_ELEVATION_DP = 6
+		const val DOCKED_RESUME_MARGIN_DP = 12
+		const val DOCKED_RESUME_GAP_DP = 8
+		const val DOCKED_RESUME_MIN_DP = 48
+		const val DOCKED_RESUME_MAX_DP = 80
+		const val DOCKED_RESUME_FALLBACK_DP = 56
 	}
 }
