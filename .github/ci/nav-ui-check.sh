@@ -19,6 +19,12 @@ fail() { log "FAIL: $*"; FAILURES+=("$*"); }
 dismiss_system_dialogs() {
 	adb shell uiautomator dump /sdcard/ui-dlg.xml > /dev/null 2>&1
 	adb pull /sdcard/ui-dlg.xml "$OUT/.dlg.xml" > /dev/null 2>&1 || return 0
+	if grep -q 'text="No thanks"' "$OUT/.dlg.xml"; then
+		# The one-time question of Explore about suggestions covers the bar.
+		log "answering the suggestions question with No thanks"
+		TAP_NO_DIALOG_CHECK=1 tap_node "No thanks"
+		sleep 1
+	fi
 	if grep -q "isn&apos;t responding\|isn't responding\|keeps stopping" "$OUT/.dlg.xml"; then
 		log "system dialog on screen: $(grep -o 'text="[^"]*responding[^"]*"\|text="[^"]*stopping[^"]*"' "$OUT/.dlg.xml" | head -1)"
 		local xy
@@ -44,8 +50,9 @@ uidump() {
 fragments() { adb shell dumpsys activity "$ACTIVITY" > "$OUT/$1.dumpsys.txt" 2>&1; }
 
 # Taps the first node whose content-desc or text is $1 (exactly). Returns 1 when there is none.
+declare -A TAP_CACHE
 tap_node() {
-	dismiss_system_dialogs
+	[ -z "${TAP_NO_DIALOG_CHECK:-}" ] && dismiss_system_dialogs
 	adb shell uiautomator dump /sdcard/ui.xml > /dev/null 2>&1
 	adb pull /sdcard/ui.xml "$OUT/.last-ui.xml" > /dev/null 2>&1
 	local xy
@@ -62,10 +69,16 @@ for n in root.iter('node'):
 		break
 PY
 )
+	if [ -z "$xy" ] && [ -n "${TAP_CACHE[$1]:-}" ]; then
+		# uiautomator cannot dump while something animates; the bar has not moved, so the last position is used.
+		log "no dump for '$1', tapping its last position"
+		xy=${TAP_CACHE[$1]}
+	fi
 	if [ -z "$xy" ]; then
 		fail "no node '$1' on screen"
 		return 1
 	fi
+	TAP_CACHE[$1]=$xy
 	adb shell input tap $xy
 }
 
