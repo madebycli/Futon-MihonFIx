@@ -142,6 +142,20 @@
 
         <SwitchPreferenceCompat
             android:defaultValue="false"
+            android:key="nav_accent"
+            android:summary="@string/nav_accent_summary"
+            android:title="@string/nav_accent" />
+
+        <io.github.landwarderer.futon.settings.utils.SliderPreference
+            android:key="nav_opacity"
+            android:stepSize="5"
+            android:title="@string/nav_opacity"
+            android:valueFrom="40"
+            android:valueTo="100"
+            app:defaultValue="100" />
+
+        <SwitchPreferenceCompat
+            android:defaultValue="false"
             android:key="nav_floating"
             android:summary="@string/nav_floating_summary"
             android:title="@string/nav_floating" />
@@ -179,6 +193,15 @@
             android:valueTo="32"
             app:defaultValue="16"
             app:isPreferenceVisible="false" />
+
+        <io.github.landwarderer.futon.settings.utils.SliderPreference
+            android:key="nav_height"
+            android:stepSize="4"
+            android:summary="@string/nav_height_summary"
+            android:title="@string/nav_floating_height"
+            android:valueFrom="56"
+            android:valueTo="96"
+            app:defaultValue="80" />
 
         <SwitchPreferenceCompat
             android:defaultValue="false"

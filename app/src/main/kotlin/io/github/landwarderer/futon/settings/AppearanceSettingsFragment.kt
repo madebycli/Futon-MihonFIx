@@ -170,7 +170,9 @@ class AppearanceSettingsFragment :
                 bindNavSummary()
             }
 
-            AppSettings.KEY_NAV_FLOATING -> bindNavBarOptions()
+            AppSettings.KEY_NAV_FLOATING,
+            AppSettings.KEY_NAV_LAYERED_SURFACE,
+                -> bindNavBarOptions()
 
             AppSettings.KEY_NAV_LABEL_MODE -> settings.syncLegacyNavLabels()
 
@@ -208,6 +210,10 @@ class AppearanceSettingsFragment :
             findPreference<Preference>(key)?.isVisible = isFloating
         }
         findPreference<Preference>(AppSettings.KEY_NAV_LAYERED_SURFACE)?.isVisible = !isFloating
+        findPreference<Preference>(AppSettings.KEY_NAV_HEIGHT)?.isVisible = !isFloating
+        // The radius shapes the floating bar and the raised docked bar; the plain docked bar has no corners.
+        findPreference<Preference>(AppSettings.KEY_NAV_CORNER_RADIUS)?.isVisible =
+            isFloating || settings.isNavLayeredSurface
     }
 
     private fun postRestart() {
@@ -354,7 +360,6 @@ class AppearanceSettingsFragment :
         val FLOATING_NAV_KEYS = arrayOf(
             AppSettings.KEY_NAV_FULL_WIDTH,
             AppSettings.KEY_NAV_FLOATING_HEIGHT,
-            AppSettings.KEY_NAV_CORNER_RADIUS,
             AppSettings.KEY_NAV_SPACING,
         )
     }

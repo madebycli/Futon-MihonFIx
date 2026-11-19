@@ -41,6 +41,8 @@ class FloatingNavBarController(
 	private val defaultBackground = bottomNav.background
 	private val defaultElevation = bottomNav.elevation
 	private val defaultPaddingTop = bottomNav.paddingTop
+	private val defaultIconTint = bottomNav.itemIconTintList
+	private val defaultTextColor = bottomNav.itemTextColor
 	private val resumeButton = RoundResumeButton(context).apply { setOnClickListener(onResumeClick) }
 	private var floatingRow: FloatingNavRow? = null
 	private var insetLeft = 0
@@ -94,6 +96,8 @@ class FloatingNavBarController(
 				isFullWidth = settings.isNavFullWidth,
 				contentHeight = settings.navFloatingHeight,
 				cornerRadius = settings.navCornerRadius,
+				opacity = settings.navOpacity / 100f,
+				isAccentColored = settings.isNavAccentColored,
 			),
 		)
 		resetMenuViewMargin()
@@ -128,11 +132,12 @@ class FloatingNavBarController(
 			}
 			bottomNav.setPadding(0, defaultPaddingTop, 0, insetBottom)
 			bottomNav.background = MaterialShapeDrawable(
-				ShapeAppearanceModel.builder().setAllCornerSizes(dp(LAYERED_CORNER_RADIUS_DP).toFloat()).build(),
+				ShapeAppearanceModel.builder().setAllCornerSizes(dp(settings.navCornerRadius).toFloat()).build(),
 			).apply {
 				fillColor = ColorStateList.valueOf(MaterialColors.getColor(bottomNav, materialR.attr.colorSurfaceContainer))
+				alpha = opacityAlpha()
 			}
-			bottomNav.elevation = dp(LAYERED_ELEVATION_DP).toFloat()
+			bottomNav.elevation = if (opacityAlpha() < 255) 0f else dp(LAYERED_ELEVATION_DP).toFloat()
 		} else {
 			bottomNav.updateLayoutParams<MarginLayoutParams> {
 				marginStart = 0
@@ -140,9 +145,13 @@ class FloatingNavBarController(
 				bottomMargin = 0
 			}
 			bottomNav.setPadding(insetLeft, defaultPaddingTop, insetRight, insetBottom)
-			bottomNav.background = defaultBackground
-			bottomNav.elevation = defaultElevation
+			bottomNav.background = defaultBackground?.constantState?.newDrawable(context.resources)?.mutate()?.apply {
+				alpha = opacityAlpha()
+			} ?: defaultBackground
+			bottomNav.elevation = if (opacityAlpha() < 255) 0f else defaultElevation
 		}
+		bottomNav.dockedHeightOverride = settings.navHeight?.let { dp(it) }
+		applyDockedColors()
 		if (isResumeVisible) {
 			if (resumeButton.parent !== bottomNav) {
 				(resumeButton.parent as? android.view.ViewGroup)?.removeView(resumeButton)
@@ -155,6 +164,22 @@ class FloatingNavBarController(
 				bottomNav.removeView(resumeButton)
 			}
 			resetMenuViewMargin()
+		}
+	}
+
+	private fun opacityAlpha() = (settings.navOpacity * 255 / 100).coerceIn(0, 255)
+
+	/** The selected section of the docked bar in the accent color, or the colors of the bar's style. */
+	private fun applyDockedColors() {
+		if (settings.isNavAccentColored) {
+			val states = arrayOf(intArrayOf(android.R.attr.state_checked), intArrayOf())
+			val accent = MaterialColors.getColor(bottomNav, androidx.appcompat.R.attr.colorPrimary)
+			val normal = MaterialColors.getColor(bottomNav, materialR.attr.colorOnSurfaceVariant)
+			bottomNav.itemIconTintList = ColorStateList(states, intArrayOf(accent, normal))
+			bottomNav.itemTextColor = ColorStateList(states, intArrayOf(accent, normal))
+		} else {
+			bottomNav.itemIconTintList = defaultIconTint
+			bottomNav.itemTextColor = defaultTextColor
 		}
 	}
 
@@ -223,7 +248,6 @@ class FloatingNavBarController(
 
 		const val LAYERED_MARGIN_HORIZONTAL_DP = 12
 		const val LAYERED_MARGIN_VERTICAL_DP = 6
-		const val LAYERED_CORNER_RADIUS_DP = 16
 		const val LAYERED_ELEVATION_DP = 6
 		const val DOCKED_RESUME_MARGIN_DP = 12
 		const val DOCKED_RESUME_GAP_DP = 8
