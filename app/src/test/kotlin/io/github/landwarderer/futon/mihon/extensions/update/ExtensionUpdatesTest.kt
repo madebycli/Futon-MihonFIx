@@ -33,4 +33,13 @@ class ExtensionUpdatesTest {
         assertNotEquals(updateSignature(listOf("a" to 2L)), updateSignature(listOf("a" to 3L)))
         assertNotEquals(updateSignature(listOf("a" to 2L)), updateSignature(listOf("a" to 2L, "b" to 1L)))
     }
+
+    @Test
+    fun theUpdateSignatureRoundTripsAndIgnoresDamagedEntries() {
+        val updates = listOf("eu.kanade.tachiyomi.extension.en.comix" to 12L, "a.b" to 3L)
+        assertEquals(updates.toMap(), parseUpdateSignature(updateSignature(updates)))
+        assertEquals(emptyMap<String, Long>(), parseUpdateSignature(null))
+        assertEquals(emptyMap<String, Long>(), parseUpdateSignature(""))
+        assertEquals(mapOf("a.b" to 3L), parseUpdateSignature("a.b:3,broken,:5,x:y"))
+    }
 }

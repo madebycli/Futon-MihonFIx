@@ -904,6 +904,11 @@ class AppSettings internal constructor(
 		get() = prefs.getString(KEY_EXTENSION_UPDATE_NOTIFIED, null)
 		set(value) = prefs.edit { putString(KEY_EXTENSION_UPDATE_NOTIFIED, value) }
 
+	/** Extensions with a newer version in a repository, as `package:version` pairs (see ExtensionUpdatesWorker). */
+	var pendingExtensionUpdates: String
+		get() = prefs.getString(KEY_EXTENSION_UPDATE_PENDING, null).orEmpty()
+		set(value) = prefs.edit { putString(KEY_EXTENSION_UPDATE_PENDING, value) }
+
 	var lastExtensionUpdateCheck: Long
 		get() = getLongCompat(KEY_EXTENSION_UPDATE_LAST_CHECK, 0L)
 		set(value) = prefs.edit { putLong(KEY_EXTENSION_UPDATE_LAST_CHECK, value) }
@@ -994,6 +999,7 @@ class AppSettings internal constructor(
 		const val KEY_EXTENSION_UPDATE_NOTIFICATIONS = "extension_update_notifications"
 		const val KEY_EXTENSION_UPDATE_LAST_CHECK = "extension_update_last_check"
 		const val KEY_EXTENSION_UPDATE_NOTIFIED = "extension_update_notified"
+		const val KEY_EXTENSION_UPDATE_PENDING = "extension_update_pending"
 		const val KEY_INCOGNITO_NSFW = "incognito_nsfw"
 		const val KEY_PAGES_NUMBERS = "pages_numbers"
 		const val KEY_SCREENSHOTS_POLICY = "screenshots_policy"
