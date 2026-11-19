@@ -207,7 +207,23 @@ shot 05_floating_full_width
 set_prefs nav_full_width=boolean:false nav_floating_height=int:64 nav_corner_radius=int:12 nav_spacing=int:4
 launch 6
 shot 06_floating_height64_radius12_spacing4
-set_prefs nav_floating_height=int:52 nav_corner_radius=int:28 nav_spacing=int:16
+set_prefs nav_floating_height=int:48 nav_corner_radius=int:28 nav_spacing=int:16 nav_label_mode=string:SELECTED
+launch 6
+shot 06b_floating_height48_selected
+adb shell settings put system font_scale 1.3
+launch 6
+shot 06c_floating_height48_font130
+set_prefs nav_floating=boolean:false nav_label_mode=string:SELECTED nav_height=int:56
+launch 6
+shot 06d_docked_height56_font130
+adb shell settings put system font_scale 1.0
+set_prefs nav_floating=boolean:true nav_floating_height=int:52 nav_accent=boolean:true nav_opacity=int:70
+launch 6
+shot 06e_floating_accent_opacity70
+set_prefs nav_floating=boolean:false nav_height=int:64 nav_label_mode=string:NONE
+launch 6
+shot 06f_docked_accent_opacity70_height64
+set_prefs nav_floating=boolean:true nav_accent=boolean:false nav_opacity=int:100 nav_height=remove:x nav_label_mode=string:SELECTED
 
 # --- 4. Continue button: round with the cover, classic, off --------------------------------------------------------------
 set_prefs main_fab=boolean:true main_fab_round=boolean:true
