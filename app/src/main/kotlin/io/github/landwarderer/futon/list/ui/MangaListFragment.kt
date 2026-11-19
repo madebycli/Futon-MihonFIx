@@ -18,6 +18,7 @@ import coil3.ImageLoader
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import io.github.landwarderer.futon.R
+import io.github.landwarderer.futon.core.ui.util.BottomOverlay
 import io.github.landwarderer.futon.core.ui.util.TopOverlay
 import io.github.landwarderer.futon.core.exceptions.resolve.ExceptionResolver
 import io.github.landwarderer.futon.core.exceptions.resolve.SnackbarErrorObserver
@@ -143,7 +144,7 @@ abstract class MangaListFragment :
 			left = barsInsets.left + basePadding,
 			top = basePadding + topOverlay,
 			right = barsInsets.right + basePadding,
-			bottom = barsInsets.bottom + basePadding,
+			bottom = barsInsets.bottom + basePadding + BottomOverlay.of(v),
 		)
 		return insets.consumeAll(typeMask)
 	}

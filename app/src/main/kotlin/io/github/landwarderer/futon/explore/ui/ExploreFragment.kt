@@ -20,6 +20,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import dagger.hilt.android.AndroidEntryPoint
 import io.github.landwarderer.futon.R
+import io.github.landwarderer.futon.core.ui.util.BottomOverlay
 import io.github.landwarderer.futon.core.ui.util.TopOverlay
 import io.github.landwarderer.futon.core.exceptions.resolve.SnackbarErrorObserver
 import io.github.landwarderer.futon.core.model.LocalMangaSource
@@ -105,7 +106,7 @@ class ExploreFragment :
 			/* left = */ barsInsets.left + basePadding,
 			/* top = */ basePadding + TopOverlay.of(v),
 			/* right = */ barsInsets.right + basePadding,
-			/* bottom = */ barsInsets.bottom + basePadding,
+			/* bottom = */ barsInsets.bottom + basePadding + BottomOverlay.of(v),
 		)
 		return insets.consumeAllSystemBarsInsets()
 	}
