@@ -50,8 +50,9 @@ class SlidingBottomNavigationView @JvmOverloads constructor(
 		get() = behavior.isPinned
 		set(value) {
 			behavior.isPinned = value
-			if (value) {
-				translationX = 0f
+			if (value && currentState == STATE_UP) {
+				currentAnimator?.cancel()
+				translationY = 0f
 			}
 		}
 
@@ -177,7 +178,7 @@ class SlidingBottomNavigationView @JvmOverloads constructor(
 	override fun onRestoreInstanceState(state: Parcelable?) {
 		if (state is SavedState) {
 			super.onRestoreInstanceState(state.superState)
-			super.setTranslationY(state.translationY)
+			super.setTranslationY(if (isPinned && state.currentState == STATE_UP) 0f else state.translationY)
 			currentState = state.currentState
 		} else {
 			super.onRestoreInstanceState(state)

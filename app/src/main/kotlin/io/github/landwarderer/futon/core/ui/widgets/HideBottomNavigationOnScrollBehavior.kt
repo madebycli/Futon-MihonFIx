@@ -60,7 +60,7 @@ class HideBottomNavigationOnScrollBehavior @JvmOverloads constructor(
 		axes: Int,
 		type: Int,
 	): Boolean {
-		if (isPinned || axes != ViewCompat.SCROLL_AXIS_VERTICAL) {
+		if (isPinned || (axes and ViewCompat.SCROLL_AXIS_VERTICAL) == 0) {
 			return false
 		}
 		lastStartedType = type
@@ -68,17 +68,6 @@ class HideBottomNavigationOnScrollBehavior @JvmOverloads constructor(
 		return true
 	}
 
-	override fun onNestedPreScroll(
-		coordinatorLayout: CoordinatorLayout,
-		child: NavigationBarView,
-		target: View,
-		dx: Int,
-		dy: Int,
-		consumed: IntArray,
-		type: Int,
-	) {
-		super.onNestedPreScroll(coordinatorLayout, child, target, dx, dy, consumed, type)
-	}
 
 	/**
 	 * The bar follows what the content really scrolled, not every drag: a list that cannot scroll, or a pull to
@@ -96,10 +85,8 @@ class HideBottomNavigationOnScrollBehavior @JvmOverloads constructor(
 		type: Int,
 		consumed: IntArray,
 	) {
-		super.onNestedScroll(
-			coordinatorLayout, child, target, dxConsumed, dyConsumed, dxUnconsumed, dyUnconsumed, type, consumed,
-		)
-		if (isPinned) return
+		// This overlay observes the list. Leave the unconsumed distance available to its parents.
+		if (isPinned || !target.isShown) return
 		val dy = dyConsumed + dyUnconsumed.coerceAtMost(0)
 		if (dy != 0) {
 			// The floating bar moves with the content one to one, as Kototoro's bottom bar; the docked bar keeps
