@@ -112,9 +112,9 @@ interface MangaRepository {
                 io.github.landwarderer.futon.core.model.LocalNovelSource -> return localNovelRepository.get()
                 UnknownMangaSource -> return EmptyMangaRepository(source)
             }
-            cache[source]?.get()?.let { return it }
+            cache[source]?.get()?.let { return upgradeAwaiting(source, it) }
             return synchronized(cache) {
-                cache[source]?.get()?.let { return it }
+                cache[source]?.get()?.let { return upgradeAwaiting(source, it) }
                 val repository = createRepository(source)
                 if (repository != null) {
                     cache[source] = WeakReference(repository)
@@ -123,6 +123,18 @@ interface MangaRepository {
                     EmptyMangaRepository(source)
                 }
             }
+        }
+
+        /**
+         * A Mihon source restored before the extension scan gets a placeholder repository. Callers that look at the
+         * repository type (source settings, icons) must not see that placeholder once the extension is available,
+         * otherwise a working extension is shown as unsupported.
+         */
+        private fun upgradeAwaiting(source: MangaSource, repository: MangaRepository): MangaRepository {
+            if (repository !is AwaitingMihonMangaRepository) return repository
+            val resolved = repository.resolvedOrNull() ?: return repository
+            synchronized(cache) { cache[source] = WeakReference(resolved) }
+            return resolved
         }
 
         private fun createRepository(source: MangaSource): MangaRepository? = when (source) {

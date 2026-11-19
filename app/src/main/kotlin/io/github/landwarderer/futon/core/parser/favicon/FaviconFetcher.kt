@@ -22,6 +22,7 @@ import coil3.toBitmap
 import io.github.landwarderer.futon.R
 import io.github.landwarderer.futon.core.exceptions.CloudFlareProtectedException
 import io.github.landwarderer.futon.core.model.MangaSource
+import io.github.landwarderer.futon.core.parser.AwaitingMihonMangaRepository
 import io.github.landwarderer.futon.core.parser.EmptyMangaRepository
 import io.github.landwarderer.futon.core.parser.MangaRepository
 import io.github.landwarderer.futon.core.parser.ParserMangaRepository
@@ -33,6 +34,7 @@ import io.github.landwarderer.futon.core.util.ext.toMimeTypeOrNull
 import io.github.landwarderer.futon.local.data.FaviconCache
 import io.github.landwarderer.futon.local.data.LocalMangaRepository
 import io.github.landwarderer.futon.local.data.LocalStorageCache
+import io.github.landwarderer.futon.mihon.MihonExtensionLoader
 import io.github.landwarderer.futon.mihon.MihonMangaRepository
 import io.github.landwarderer.futon.novel.data.LocalNovelRepository
 import io.github.landwarderer.futon.novel.data.source.BaseNovelRepository
@@ -52,13 +54,18 @@ class FaviconFetcher(
 	private val options: Options,
 	private val imageLoader: ImageLoader,
 	private val mangaRepositoryFactory: MangaRepository.Factory,
+	private val mihonExtensionLoader: MihonExtensionLoader,
 	private val localStorageCache: LocalStorageCache,
 ) : Fetcher {
 
 	override suspend fun fetch(): FetchResult? {
 		val mangaSource = MangaSource(uri.schemeSpecificPart)
 
-		return when (val repo = mangaRepositoryFactory.create(mangaSource)) {
+		// A Mihon source restored before the extension scan is a placeholder (an empty repository); wait for the real
+		// one instead of showing the blank icon that stands for an unusable source.
+		val created = mangaRepositoryFactory.create(mangaSource)
+		val resolved = if (created is AwaitingMihonMangaRepository) created.awaitResolved() ?: created else created
+		return when (val repo = resolved) {
 			is ParserMangaRepository -> fetchParserFavicon(repo)
 			is ExternalMangaRepository -> fetchPluginIcon(repo)
 			is EmptyMangaRepository -> ImageFetchResult(
@@ -160,18 +167,11 @@ class FaviconFetcher(
 		)
 	}
 
-	private suspend fun fetchMihonIcon(repository: MihonMangaRepository): FetchResult {
+	private suspend fun fetchMihonIcon(repository: MihonMangaRepository): FetchResult? {
 		val source = repository.source
-		val pm = options.context.packageManager
 		val icon = runInterruptible {
-			try {
-				pm.getApplicationIcon(source.pkgName)
-			} catch (e: Exception) {
-				e.printStackTraceDebug("FaviconFetcher::fetchMihonIcon")
-				// Fallback to generic icon if extension icon not found
-				pm.getApplicationIcon("com.android.packageinstaller")
-			}
-		}
+			mihonExtensionLoader.loadExtensionIcon(options.context, source.pkgName)
+		} ?: return imageLoader.fetch(R.drawable.ic_web, options)
 		return ImageFetchResult(
 			image = icon.nonAdaptive().asImage(),
 			isSampled = false,
@@ -211,6 +211,7 @@ class FaviconFetcher(
 
 	class Factory @Inject constructor(
 		private val mangaRepositoryFactory: MangaRepository.Factory,
+		private val mihonExtensionLoader: MihonExtensionLoader,
 		@FaviconCache private val faviconCache: LocalStorageCache,
 	) : Fetcher.Factory<CoilUri> {
 
@@ -219,7 +220,7 @@ class FaviconFetcher(
 			options: Options,
 			imageLoader: ImageLoader
 		): Fetcher? = if (data.scheme == URI_SCHEME_FAVICON) {
-			FaviconFetcher(data.toAndroidUri(), options, imageLoader, mangaRepositoryFactory, faviconCache)
+			FaviconFetcher(data.toAndroidUri(), options, imageLoader, mangaRepositoryFactory, mihonExtensionLoader, faviconCache)
 		} else {
 			null
 		}
