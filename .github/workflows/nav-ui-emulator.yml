@@ -6,7 +6,7 @@ on:
   push:
     branches: [test/nav-tabs-integration]
 permissions:
-  contents: read
+  contents: write
 concurrency:
   group: nav-ui-${{ github.ref }}
   cancel-in-progress: true
@@ -16,8 +16,6 @@ jobs:
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
-        with:
-          persist-credentials: false
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -59,3 +57,17 @@ jobs:
           path: nav-ui-out/**
           if-no-files-found: warn
           retention-days: 14
+      - name: Publish screenshots to the test-only branch test/nav-ui-screens
+        if: always()
+        run: |
+          set -euo pipefail
+          test -d nav-ui-out || exit 0
+          rm -f nav-ui-out/.db nav-ui-out/.db-wal nav-ui-out/.prefs.xml
+          cd nav-ui-out
+          git init -q
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -q -b test/nav-ui-screens
+          git add -A
+          git commit -q -m "Screenshots of run ${{ github.run_id }} (${{ github.sha }})"
+          git push -q -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" test/nav-ui-screens
