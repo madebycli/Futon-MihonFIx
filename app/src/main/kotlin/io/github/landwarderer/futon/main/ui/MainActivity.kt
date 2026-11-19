@@ -425,6 +425,9 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
 		} else {
 			defaultSearchBarElevation
 		}
+		// The app bar would cut the shadow off below the search bar.
+		viewBinding.appbar.clipChildren = !isFloating
+		(viewBinding.layoutSearch as? ViewGroup)?.clipChildren = !isFloating
 		updateTopOverlay()
 	}
 
@@ -651,6 +654,6 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
 	private companion object {
 
 		/** Shadow of the search bar while the top bar floats. */
-		const val TOP_BAR_ELEVATION_DP = 4
+		const val TOP_BAR_ELEVATION_DP = 6
 	}
 }
