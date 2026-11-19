@@ -1,0 +1,61 @@
+name: Navigation UI emulator check
+# Test-only workflow of the integration branch for PR #31 and PR #32: it installs the debug build on an emulator,
+# switches the navigation settings and the tabs and keeps screenshots, window dumps and logcat as an artifact.
+on:
+  workflow_dispatch:
+  push:
+    branches: [test/nav-tabs-integration]
+permissions:
+  contents: read
+concurrency:
+  group: nav-ui-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  nav-ui:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Android SDK
+        run: |
+          set -euo pipefail
+          SDKMANAGER="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          set +o pipefail
+          yes | "$SDKMANAGER" --licenses > /dev/null
+          set -o pipefail
+          "$SDKMANAGER" "platform-tools" "platforms;android-37.0" "build-tools;36.0.0"
+          echo "$ANDROID_HOME/platform-tools" >> "$GITHUB_PATH"
+      - name: Build debug APK
+        run: |
+          rm -f gradle/gradle-daemon-jvm.properties
+          ./gradlew -Dorg.gradle.java.home="$JAVA_HOME" :app:assembleDebug --no-configuration-cache --console=plain
+          ls -la app/build/outputs/apk/debug/
+      - name: Enable emulator acceleration
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Run the navigation checks on Android 14
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          profile: pixel_6
+          disable-animations: false
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          script: bash .github/ci/nav-ui-check.sh "$PWD/nav-ui-out"
+      - name: Upload screenshots and logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nav-ui-screens
+          path: nav-ui-out/**
+          if-no-files-found: warn
+          retention-days: 14
