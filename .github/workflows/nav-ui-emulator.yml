@@ -34,6 +34,13 @@ jobs:
           rm -f gradle/gradle-daemon-jvm.properties
           ./gradlew -Dorg.gradle.java.home="$JAVA_HOME" :app:assembleDebug --no-configuration-cache --console=plain
           ls -la app/build/outputs/apk/debug/
+      - name: Upload the integration debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: clio-navigation-debug
+          path: app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+          retention-days: 14
       - name: Enable emulator acceleration
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules

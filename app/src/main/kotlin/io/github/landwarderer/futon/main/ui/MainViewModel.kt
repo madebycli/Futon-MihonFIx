@@ -98,8 +98,11 @@ class MainViewModel @Inject constructor(
 		}
 	}
 
+	private var openReaderJob: kotlinx.coroutines.Job? = null
+
 	fun openLastReader() {
-		launchLoadingJob(Dispatchers.IO) {
+		if (openReaderJob?.isActive == true) return
+		openReaderJob = launchLoadingJob(Dispatchers.IO) {
 			val manga = historyRepository.getLastOrNull() ?: throw EmptyHistoryException()
 			onOpenReader.call(manga)
 		}

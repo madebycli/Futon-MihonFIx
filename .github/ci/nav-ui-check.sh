@@ -342,10 +342,29 @@ uidump 24_settings_docked_options
 set_prefs nav_floating=boolean:true nav_label_mode=string:SELECTED
 launch 8
 tap_node Explore; sleep 1; tap_node History; sleep 1
-set_prefs nav_main=string:HISTORY,FAVORITES,LOCAL,UPDATED,BOOKMARKS,SUGGESTIONS
+# At 420 dpi 840 px is 320 dp. Exercise six actual tabs and the separate continue button.
+adb shell wm size 840x1800
+adb shell wm density 420
+set_prefs nav_main=string:HISTORY,FAVORITES,LOCAL,UPDATED,BOOKMARKS,SUGGESTIONS suggestions=boolean:true main_fab=boolean:true main_fab_round=boolean:true
 launch 8
 shot 24b_floating_six_sections
 fragments 24b_six_sections
+uidump 24b_six_sections
+python3 - "$OUT/24b_six_sections.xml" <<'PYTHON' || fail "six tabs and Continue need distinct 48 dp targets at 320 dp"
+import re, sys, xml.etree.ElementTree as ET
+nodes = list(ET.parse(sys.argv[1]).iter("node"))
+tabs = [n for n in nodes if n.get("class") == "android.widget.Tab"]
+buttons = [n for n in nodes if n.get("content-desc") == "Continue" and n.get("clickable") == "true"]
+assert len(tabs) == 6 and len(buttons) == 1, (len(tabs), len(buttons))
+bounds = []
+for n in tabs + buttons:
+    x1, y1, x2, y2 = map(int, re.findall(r"-?\d+", n.get("bounds")))
+    assert x2 - x1 >= 126 and y2 - y1 >= 126, (n.get("content-desc"), n.get("bounds"))
+    assert all(x2 <= a or x1 >= c or y2 <= b or y1 >= d for a, b, c, d in bounds), n.get("bounds")
+    bounds.append((x1, y1, x2, y2))
+PYTHON
+adb shell wm size reset
+adb shell wm density reset
 
 # --- 8c. Floating top bar: lists scroll behind the search bar and the tabs of Favourites ------------------------------
 set_prefs nav_main=string:HISTORY,FAVORITES,EXPLORE,FEED nav_floating=boolean:true top_bar_floating=boolean:false
@@ -411,4 +430,4 @@ grep -A25 "FATAL EXCEPTION" "$OUT/logcat.txt" | grep -B2 -A22 "Process: $PKG" > 
 if [ -s "$OUT/crashes.txt" ]; then fail "crash in logcat (see crashes.txt)"; fi
 log "done; failures: ${#FAILURES[@]}"
 for f in "${FAILURES[@]}"; do log " - $f"; done
-exit 0
+(( ${#FAILURES[@]} == 0 ))

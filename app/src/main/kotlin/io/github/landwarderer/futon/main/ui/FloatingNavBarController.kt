@@ -68,6 +68,13 @@ class FloatingNavBarController(
 		}
 	}
 
+	val listOverlayHeight: Int
+		get() = (bottomNav.height - insetBottom).coerceAtLeast(0)
+
+	fun setResumeEnabled(enabled: Boolean) {
+		resumeButton.isEnabled = enabled
+	}
+
 	fun setResumeManga(manga: Manga?) {
 		resumeButton.setManga(manga)
 	}
@@ -129,8 +136,9 @@ class FloatingNavBarController(
 		bottomNav.clipToPadding = false
 		if (settings.isNavLayeredSurface) {
 			bottomNav.updateLayoutParams<MarginLayoutParams> {
-				marginStart = dp(LAYERED_MARGIN_HORIZONTAL_DP) + insetLeft
-				marginEnd = dp(LAYERED_MARGIN_HORIZONTAL_DP) + insetRight
+				val rtl = bottomNav.layoutDirection == View.LAYOUT_DIRECTION_RTL
+				marginStart = dp(LAYERED_MARGIN_HORIZONTAL_DP) + if (rtl) insetRight else insetLeft
+				marginEnd = dp(LAYERED_MARGIN_HORIZONTAL_DP) + if (rtl) insetLeft else insetRight
 				bottomMargin = dp(LAYERED_MARGIN_VERTICAL_DP)
 			}
 			bottomNav.setPadding(0, defaultPaddingTop, 0, insetBottom)
@@ -240,6 +248,7 @@ class FloatingNavBarController(
 				id = item.itemId,
 				title = item.title ?: context.getString(navItem.title),
 				icon = navItem.icon,
+				badgeDescription = badge?.contentDescription,
 				badge = badge?.let { if (it.hasNumber()) it.number else 0 },
 			)
 		}

@@ -67,6 +67,28 @@ class MainNavigationDelegate(
 	NavigationBarView.OnItemSelectedListener,
 	NavigationBarView.OnItemReselectedListener, View.OnClickListener {
 
+	private var pendingTab: Class<out Fragment>? = null
+	private var pendingFromUser = false
+	private var trimRequested = false
+	private val applyPending = Runnable {
+		if (!fragmentManager.isDestroyed && !fragmentManager.isStateSaved) {
+			val target = pendingTab
+			pendingTab = null
+			if (target != null && !target.isInstance(primaryFragment)) {
+				showTab(target, pendingFromUser)
+			}
+			if (trimRequested) {
+				trimRequested = false
+				val hidden = fragmentManager.fragments.filter { it.isTab() && it.isHidden }
+				if (hidden.isNotEmpty()) {
+					val transaction = fragmentManager.beginTransaction()
+					hidden.forEach { transaction.remove(it) }
+					transaction.commitNow()
+				}
+			}
+		}
+	}
+
 	private val listeners = LinkedList<OnFragmentChangedListener>()
 	val navRailHeader = (navBar as? NavigationRailView)?.headerView?.let {
 		NavigationRailFabBinding.bind(it)
@@ -104,7 +126,7 @@ class MainNavigationDelegate(
 	}
 
 	override fun onNavigationItemReselected(item: MenuItem) {
-		onNavigationItemReselected()
+		if (pendingTab == null && primaryFragment?.let(::getItemId) == item.itemId) onNavigationItemReselected()
 	}
 
 	override fun onClick(v: View) {
@@ -126,6 +148,7 @@ class MainNavigationDelegate(
 			createMenu(settings.mainNavItems, navBar.menu)
 		}
 		observeSettings(lifecycleOwner)
+		val legacyItem = fragmentManager.findFragmentByTag("primary")?.let(::getItemId)
 		syncTabLifecycles()
 		notifyMenuStateChanged()
 		val fragment = primaryFragment
@@ -136,12 +159,12 @@ class MainNavigationDelegate(
 				navBar.selectedItemId = itemId
 			}
 		} else {
-			val itemId = if (savedInstanceState == null) {
+			val itemId = legacyItem?.takeIf { navBar.menu.findItem(it)?.isVisible == true } ?: if (savedInstanceState == null) {
 				firstItem()?.itemId ?: navBar.selectedItemId
 			} else {
 				navBar.selectedItemId
 			}
-			onNavigationItemSelected(itemId)
+			if (itemId != navBar.selectedItemId) navBar.selectedItemId = itemId else onNavigationItemSelected(itemId)
 		}
 	}
 
@@ -160,6 +183,7 @@ class MainNavigationDelegate(
 	}
 
 	fun syncSelectedItem() {
+		if (pendingTab != null) return
 		val fragment = primaryFragment ?: return
 		onFragmentChanged(fragment, fromUser = false)
 		val itemId = getItemId(fragment)
@@ -217,10 +241,8 @@ class MainNavigationDelegate(
 			R.id.nav_updated -> UpdatesFragment::class.java
 			else -> return false
 		}
-		if (!setPrimaryFragment(newFragment)) {
-			// probably already selected
-			onNavigationItemReselected()
-		}
+		if (fragmentManager.isStateSaved) return false
+		queueTab(newFragment, fromUser = true)
 		return true
 	}
 
@@ -232,8 +254,7 @@ class MainNavigationDelegate(
 			} else {
 				LocalListFragment::class.java
 			}
-			if (fragmentManager.isStateSaved || fragmentClass.isInstance(primaryFragment)) return
-			showTab(fragmentClass, fromUser = false)
+			queueTab(fragmentClass, fromUser = false)
 		}
 	}
 
@@ -249,12 +270,15 @@ class MainNavigationDelegate(
 		else -> 0
 	}
 
-	private fun setPrimaryFragment(fragmentClass: Class<out Fragment>): Boolean {
-		if (fragmentManager.isStateSaved || fragmentClass.isInstance(primaryFragment)) {
-			return false
-		}
-		showTab(fragmentClass, fromUser = true)
-		return true
+	private fun queueTab(fragmentClass: Class<out Fragment>, fromUser: Boolean) {
+		pendingFromUser = fromUser || (pendingTab == fragmentClass && pendingFromUser)
+		pendingTab = fragmentClass
+		schedulePendingChanges()
+	}
+
+	fun schedulePendingChanges() {
+		navBar.removeCallbacks(applyPending)
+		if (pendingTab != null || trimRequested) navBar.post(applyPending)
 	}
 
 	/** Shows the tab of [fragmentClass], creating it on the first visit, and hides the tab that was shown. */
@@ -274,7 +298,10 @@ class MainNavigationDelegate(
 			current.exitTransition = Fade(Fade.OUT).setDuration(TAB_FADE_OUT_MS)
 			// The tab stays alive while hidden: a fling or smooth scroll still running in it would go on moving the
 			// app bar and the bottom bar, which the tabs share, and leave them stuck halfway on the new tab.
-			(current as? RecyclerViewOwner)?.recyclerView?.stopScroll()
+			(current as? RecyclerViewOwner)?.recyclerView?.run {
+				stopScroll()
+				stopNestedScroll(androidx.core.view.ViewCompat.TYPE_NON_TOUCH)
+			}
 		}
 		target.enterTransition = Fade(Fade.IN).setDuration(TAB_FADE_IN_MS)
 		target.allowEnterTransitionOverlap = false
@@ -288,43 +315,31 @@ class MainNavigationDelegate(
 		} else {
 			transaction.add(R.id.container, target, tag)
 		}
-		transaction
-			.runOnCommit { onFragmentChanged(target, fromUser = fromUser) }
-			.commit()
+		transaction.commitNow()
+		onFragmentChanged(target, fromUser = fromUser)
 	}
 
-	/**
-	 * After the activity was recreated every restored tab fragment is brought back to RESUMED, hidden or not. Hidden
-	 * tabs are held at STARTED again, as when they were hidden. Tabs whose section is no longer in the bar (the
-	 * sections were changed in the settings, which recreates this screen) are removed instead of staying hidden.
-	 */
 	private fun syncTabLifecycles() {
-		if (fragmentManager.isStateSaved) return
-		val tabs = fragmentManager.fragments.filter { it.isTab() }
-		val orphans = tabs.filter { navBar.menu.findItem(getItemId(it)) == null }
-		if (orphans.isEmpty() && tabs.none { it.isHidden }) return
+		val tabs = fragmentManager.fragments.filter { it.isTab() || it.tag == "primary" }
+		if (tabs.isEmpty()) return
+		val visible = tabs.lastOrNull { it.isTab() && !it.isHidden && navBar.menu.findItem(getItemId(it)) != null }
+		val retainedTags = mutableSetOf<String?>()
 		val transaction = fragmentManager.beginTransaction()
-		for (tab in tabs) {
-			if (tab in orphans) {
+		for (tab in tabs.sortedByDescending { it === visible }) {
+			if (!tab.isTab() || navBar.menu.findItem(getItemId(tab)) == null || !retainedTags.add(tab.tag)) {
 				transaction.remove(tab)
+			} else if (tab === visible) {
+				transaction.show(tab).setMaxLifecycle(tab, Lifecycle.State.RESUMED)
 			} else {
-				transaction.setMaxLifecycle(tab, if (tab.isHidden) Lifecycle.State.STARTED else Lifecycle.State.RESUMED)
+				transaction.hide(tab).setMaxLifecycle(tab, Lifecycle.State.STARTED)
 			}
 		}
 		transaction.commitNow()
 	}
 
-	/**
-	 * Frees the hidden tabs when the system runs short of memory: they are rebuilt, and load again, when they are
-	 * opened next. The shown tab stays.
-	 */
 	fun releaseHiddenTabs() {
-		if (fragmentManager.isStateSaved) return
-		val hidden = fragmentManager.fragments.filter { it.isTab() && it.isHidden }
-		if (hidden.isEmpty()) return
-		val transaction = fragmentManager.beginTransaction()
-		hidden.forEach { transaction.remove(it) }
-		transaction.commitAllowingStateLoss()
+		trimRequested = true
+		schedulePendingChanges()
 	}
 
 	private fun onNavigationItemReselected() {
