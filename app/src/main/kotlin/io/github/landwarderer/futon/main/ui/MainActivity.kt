@@ -7,6 +7,8 @@ import android.os.Build
 import android.os.Bundle
 import android.view.View
 import android.view.ViewGroup
+import android.view.ViewOutlineProvider
+import android.graphics.Outline
 import android.view.ViewGroup.MarginLayoutParams
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
@@ -408,6 +410,14 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
 
 	private var defaultContainerBehavior: CoordinatorLayout.Behavior<*>? = null
 	private var defaultSearchBarElevation = 0f
+	private var defaultSearchBarOutline: ViewOutlineProvider? = null
+
+	/** A rounded outline over the whole view, as the search bar is drawn. */
+	private object PillOutlineProvider : ViewOutlineProvider() {
+		override fun getOutline(view: View, outline: Outline) {
+			outline.setRoundRect(0, 0, view.width, view.height, view.height / 2f)
+		}
+	}
 
 	/**
 	 * The floating top bar: the lists no longer start below the app bar (its scrolling behaviour is taken off the
@@ -420,7 +430,13 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
 		viewBinding.container.updateLayoutParams<CoordinatorLayout.LayoutParams> {
 			behavior = if (isFloating) null else defaultContainerBehavior
 		}
-		viewBinding.searchBar.elevation = if (isFloating) {
+		val searchBar = viewBinding.searchBar
+		if (defaultSearchBarOutline == null) {
+			defaultSearchBarOutline = searchBar.outlineProvider
+		}
+		// The expressive search bar gives no usable outline, so it casts no shadow: it gets the pill as its outline.
+		searchBar.outlineProvider = if (isFloating) PillOutlineProvider else defaultSearchBarOutline
+		searchBar.elevation = if (isFloating) {
 			TOP_BAR_ELEVATION_DP * resources.displayMetrics.density
 		} else {
 			defaultSearchBarElevation

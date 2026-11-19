@@ -6,6 +6,8 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.ViewStub
 import android.content.res.ColorStateList
+import android.graphics.drawable.Drawable
+import android.graphics.drawable.InsetDrawable
 import androidx.appcompat.view.ActionMode
 import androidx.core.view.doOnLayout
 import androidx.core.view.updateLayoutParams
@@ -114,6 +116,14 @@ class FavouritesContainerFragment : BaseFragment<FragmentFavouritesContainerBind
 				tabs.clipToOutline = true
 			}
 			tabs.elevation = FLOATING_TABS_ELEVATION_DP * density
+			// The indicator line sits a little above the bottom, inside the rounded bar, instead of on its edge.
+			if (defaultIndicator == null) {
+				defaultIndicator = tabs.tabSelectedIndicator
+				val inset = (FLOATING_TABS_INDICATOR_INSET_DP * density).toInt()
+				val line = defaultIndicator?.constantState?.newDrawable(resources)?.mutate() ?: defaultIndicator
+				tabs.setSelectedTabIndicator(InsetDrawable(line, 0, 0, 0, inset))
+				tabs.setSelectedTabIndicatorHeight((line?.intrinsicHeight?.takeIf { it > 0 } ?: (3 * density).toInt()) + inset)
+			}
 			tabs.doOnLayout {
 				val block = tabs.height + (it.layoutParams as ViewGroup.MarginLayoutParams).topMargin
 				// The pager starts at the top, behind the tabs; its lists start below them (TopOverlay).
@@ -131,6 +141,11 @@ class FavouritesContainerFragment : BaseFragment<FragmentFavouritesContainerBind
 			tabs.clipToOutline = false
 			tabs.elevation = 0f
 			tabs.translationY = 0f
+			defaultIndicator?.let {
+				tabs.setSelectedTabIndicator(it)
+				tabs.setSelectedTabIndicatorHeight(-1)
+				defaultIndicator = null
+			}
 			binding.pager.updateLayoutParams<ViewGroup.MarginLayoutParams> { topMargin = 0 }
 			if (binding.pager.getTag(R.id.tag_top_overlay) != null) {
 				TopOverlay.set(binding.pager, 0)
@@ -144,6 +159,7 @@ class FavouritesContainerFragment : BaseFragment<FragmentFavouritesContainerBind
 		viewBinding?.tabs?.translationY = verticalOffset.toFloat()
 	}
 	private var isAppBarOffsetBound = false
+	private var defaultIndicator: Drawable? = null
 
 	private fun bindAppBarOffset(bind: Boolean) {
 		val appBar = (activity as? AppBarOwner)?.appBar ?: return
@@ -204,5 +220,6 @@ class FavouritesContainerFragment : BaseFragment<FragmentFavouritesContainerBind
 		const val FLOATING_TABS_MARGIN_DP = 12
 		const val FLOATING_TABS_GAP_DP = 4
 		const val FLOATING_TABS_ELEVATION_DP = 6
+		const val FLOATING_TABS_INDICATOR_INSET_DP = 6
 	}
 }
