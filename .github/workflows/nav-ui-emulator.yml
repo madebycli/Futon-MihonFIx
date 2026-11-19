@@ -55,13 +55,17 @@ jobs:
           profile: pixel_6
           disable-animations: false
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
-          script: bash .github/ci/nav-ui-check.sh "$PWD/nav-ui-out"
+          script: |
+            ./gradlew :app:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=io.github.landwarderer.futon.main.ui.RapidTabSelectionTest --no-configuration-cache
+            bash .github/ci/nav-ui-check.sh "$PWD/nav-ui-out"
       - name: Upload screenshots and logs
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: nav-ui-screens
-          path: nav-ui-out/**
+          path: |
+            nav-ui-out/**
+            app/build/outputs/androidTest-results/connected/**
           if-no-files-found: warn
           retention-days: 14
       - name: Publish screenshots to the test-only branch test/nav-ui-screens

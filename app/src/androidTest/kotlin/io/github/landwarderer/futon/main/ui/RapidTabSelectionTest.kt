@@ -1,15 +1,23 @@
 package io.github.landwarderer.futon.main.ui
 
+import android.Manifest
+import android.os.Build
 import android.os.SystemClock
 import androidx.lifecycle.Lifecycle
 import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
 import com.google.android.material.navigation.NavigationBarView
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import io.github.landwarderer.futon.R
+import io.github.landwarderer.futon.core.prefs.AppSettings
+import io.github.landwarderer.futon.reader.initializeReaderTestWorkManager
 import io.github.landwarderer.futon.explore.ui.ExploreFragment
 import io.github.landwarderer.futon.history.ui.HistoryListFragment
+import javax.inject.Inject
+import org.junit.After
+import org.junit.Before
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -22,9 +30,37 @@ class RapidTabSelectionTest {
 
 	@get:Rule val hilt = HiltAndroidRule(this)
 
+	@Inject lateinit var settings: AppSettings
+	private var previousOnboarding = 0
+	private var previousSources = 0
+	private var previousSpotlight = false
+
+	@Before
+	fun setUp() {
+		val instrumentation = InstrumentationRegistry.getInstrumentation()
+		val context = instrumentation.targetContext
+		initializeReaderTestWorkManager(context)
+		hilt.inject()
+		previousOnboarding = settings.onboardingVersion
+		previousSources = settings.sourcesVersion
+		previousSpotlight = settings.isModeSwitcherSpotlightShown
+		settings.onboardingVersion = AppSettings.CURRENT_ONBOARDING_VERSION
+		settings.sourcesVersion = 1
+		settings.isModeSwitcherSpotlightShown = true
+		if (Build.VERSION.SDK_INT >= 33) {
+			instrumentation.uiAutomation.grantRuntimePermission(context.packageName, Manifest.permission.POST_NOTIFICATIONS)
+		}
+	}
+
+	@After
+	fun restoreSettings() {
+		settings.onboardingVersion = previousOnboarding
+		settings.sourcesVersion = previousSources
+		settings.isModeSwitcherSpotlightShown = previousSpotlight
+	}
+
 	@Test
 	fun latestSelectionOwnsTheOnlyResumedTab() {
-		hilt.inject()
 		ActivityScenario.launch(MainActivity::class.java).use { scenario ->
 			scenario.onActivity { it.navigation().selectedItemId = R.id.nav_history }
 			assertCurrent(scenario, R.id.nav_history, HistoryListFragment::class.java)
