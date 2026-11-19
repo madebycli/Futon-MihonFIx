@@ -78,7 +78,30 @@ class HideBottomNavigationOnScrollBehavior @JvmOverloads constructor(
 		type: Int,
 	) {
 		super.onNestedPreScroll(coordinatorLayout, child, target, dx, dy, consumed, type)
-		if (!isPinned) {
+	}
+
+	/**
+	 * The bar follows what the content really scrolled, not every drag: a list that cannot scroll, or a pull to
+	 * refresh at the top of a list, no longer moves the bar and leaves it hanging halfway. Pulling down at the top
+	 * brings it back.
+	 */
+	override fun onNestedScroll(
+		coordinatorLayout: CoordinatorLayout,
+		child: NavigationBarView,
+		target: View,
+		dxConsumed: Int,
+		dyConsumed: Int,
+		dxUnconsumed: Int,
+		dyUnconsumed: Int,
+		type: Int,
+		consumed: IntArray,
+	) {
+		super.onNestedScroll(
+			coordinatorLayout, child, target, dxConsumed, dyConsumed, dxUnconsumed, dyUnconsumed, type, consumed,
+		)
+		if (isPinned) return
+		val dy = dyConsumed + dyUnconsumed.coerceAtMost(0)
+		if (dy != 0) {
 			child.translationY = (child.translationY + (dy * dyRatio)).coerceIn(0F, slideRangeOf(child))
 		}
 	}
