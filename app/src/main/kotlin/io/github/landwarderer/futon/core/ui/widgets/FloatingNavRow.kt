@@ -72,6 +72,10 @@ class FloatingNavRow(context: Context) : ViewGroup(context) {
 		val isFullWidth: Boolean,
 		val contentHeight: Int,
 		val cornerRadius: Int,
+		/** Opacity of the bar's background, 0..1; the content shows through below 1. Not in Kototoro's Material look. */
+		val opacity: Float = 1f,
+		/** The selected section in the accent color (primary) instead of onSecondaryContainer. */
+		val isAccentColored: Boolean = false,
 	) {
 
 		/** The height of the bar: the content height plus the 4 dp inset, as resolveNavBarHeight in Kototoro. */
@@ -240,14 +244,24 @@ class FloatingNavRow(context: Context) : ViewGroup(context) {
 				dp(style.cornerRadius).toFloat()
 			}
 			background = MaterialShapeDrawable(ShapeAppearanceModel.builder().setAllCornerSizes(radius).build()).apply {
-				fillColor = ColorStateList.valueOf(color(materialR.attr.colorSurfaceContainer))
+				fillColor = ColorStateList.valueOf(
+					ColorUtils.setAlphaComponent(
+						color(materialR.attr.colorSurfaceContainer),
+						(style.opacity.coerceIn(0f, 1f) * 255).roundToInt(),
+					),
+				)
 				setStroke(
 					density,
 					ColorUtils.setAlphaComponent(color(materialR.attr.colorOutlineVariant), (0.10f * 255).roundToInt()),
 				)
 			}
-			elevation = dp(NAV_SHADOW_ELEVATION_DP).toFloat()
-			pillPaint.color = ColorUtils.setAlphaComponent(color(materialR.attr.colorOnSurface), (0.10f * 255).roundToInt())
+			// resolveFallbackShadowElevation in Kototoro: a see-through surface gets no shadow, it would shine through.
+			elevation = if (style.opacity < 1f) 0f else dp(NAV_SHADOW_ELEVATION_DP).toFloat()
+			pillPaint.color = if (style.isAccentColored) {
+				ColorUtils.setAlphaComponent(color(androidx.appcompat.R.attr.colorPrimary), (0.14f * 255).roundToInt())
+			} else {
+				ColorUtils.setAlphaComponent(color(materialR.attr.colorOnSurface), (0.10f * 255).roundToInt())
+			}
 		}
 
 		fun rebuild() {
@@ -485,7 +499,11 @@ class FloatingNavRow(context: Context) : ViewGroup(context) {
 				// The icon takes its first state without the animation, which only plays when the selection changes.
 				icon.jumpDrawablesToCurrentState()
 			}
-			val selectedColor = color(materialR.attr.colorOnSecondaryContainer)
+			val selectedColor = if (style.isAccentColored) {
+				color(androidx.appcompat.R.attr.colorPrimary)
+			} else {
+				color(materialR.attr.colorOnSecondaryContainer)
+			}
 			val contentColor = if (isSelected) selectedColor else color(materialR.attr.colorOnSurfaceVariant)
 			ImageViewCompat.setImageTintList(icon, ColorStateList.valueOf(contentColor))
 			label.setTextColor(contentColor)
@@ -523,16 +541,53 @@ class FloatingNavRow(context: Context) : ViewGroup(context) {
 			content.background = null
 			content.setPadding(0, 0, 0, 0)
 			val horizontal = if (isSelected && style.isCapsuleEnabled) dp(8) else dp(1)
-			setPadding(horizontal, dp(6), horizontal, dp(6))
+			// No fixed vertical padding: the content is centred, and onLayout makes sure it fits (see liftIcon).
+			setPadding(horizontal, 0, horizontal, 0)
 			minimumWidth = dp(FloatingNavLayoutSpec.ITEM_TOUCH_TARGET)
 			content.minimumHeight = 0
 			content.minimumWidth = 0
 			(content.layoutParams as LayoutParams).height = LayoutParams.WRAP_CONTENT
-			icon.animate()
-				.translationY(if (isSelected) -dp(3).toFloat() else 0f)
-				.setDuration(SELECTION_ANIMATION_MS)
-				.setInterpolator(FastOutSlowInInterpolator())
-				.start()
+			wantsLift = isSelected
+			requestLayout()
+		}
+
+		/** The selected icon is lifted a little (3 dp in Kototoro), but only as far as the bar has room for it. */
+		private var wantsLift = false
+		private var appliedLift = Float.NaN
+
+		override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
+			super.onLayout(changed, left, top, right, bottom)
+			val isBelow = !style.isFullWidth && style.labelMode != NavLabelMode.SELECTED_BESIDE
+			val lift = if (isBelow && wantsLift) {
+				// Room above the content inside the item, keeping a 2 dp margin to the edge of the bar.
+				val room = (content.top - dp(2)).coerceAtLeast(0)
+				-min(dp(3), room).toFloat()
+			} else {
+				0f
+			}
+			if (lift != appliedLift) {
+				val isFirst = appliedLift.isNaN()
+				appliedLift = lift
+				if (isFirst) {
+					icon.translationY = lift
+				} else {
+					icon.animate()
+						.translationY(lift)
+						.setDuration(SELECTION_ANIMATION_MS)
+						.setInterpolator(FastOutSlowInInterpolator())
+						.start()
+				}
+			}
+		}
+
+		override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
+			super.onMeasure(widthMeasureSpec, heightMeasureSpec)
+			// Should the content not fit the bar (a very low bar with a large font), the label goes first: the icon
+			// stays whole and inside the bar instead of being pushed out or cut.
+			if (label.isVisible && content.measuredHeight > measuredHeight - paddingTop - paddingBottom) {
+				label.isVisible = false
+				super.onMeasure(widthMeasureSpec, heightMeasureSpec)
+			}
 		}
 
 		/** The expressive pill: icon and the label beside it in a secondaryContainer capsule, 40 dp high. */
@@ -543,8 +598,7 @@ class FloatingNavRow(context: Context) : ViewGroup(context) {
 			label.maxWidth = spec.labelMaxWidth?.let { dp(it) } ?: Int.MAX_VALUE
 			labelParams.marginStart = if (entry?.badge?.let { it > 0 } == true) dp(20) else dp(8)
 			labelParams.topMargin = 0
-			icon.animate().cancel()
-			icon.translationY = 0f
+			wantsLift = false
 			setPadding(0, dp(4), 0, dp(4))
 			minimumWidth = dp(FloatingNavLayoutSpec.ITEM_TOUCH_TARGET)
 			content.minimumHeight = dp(40)
@@ -553,7 +607,15 @@ class FloatingNavRow(context: Context) : ViewGroup(context) {
 			content.background = if (isSelected && style.isCapsuleEnabled) {
 				GradientDrawable().apply {
 					cornerRadius = dp(20).toFloat()
-					setColor(color(materialR.attr.colorSecondaryContainer))
+					setColor(
+						color(
+							if (style.isAccentColored) {
+								materialR.attr.colorPrimaryContainer
+							} else {
+								materialR.attr.colorSecondaryContainer
+							},
+						),
+					)
 				}
 			} else {
 				null
@@ -568,8 +630,7 @@ class FloatingNavRow(context: Context) : ViewGroup(context) {
 			label.maxWidth = if (isBeside) dp(72) else Int.MAX_VALUE
 			labelParams.marginStart = if (isBeside) dp(6) else 0
 			labelParams.topMargin = if (isBeside) 0 else dp(2)
-			icon.animate().cancel()
-			icon.translationY = 0f
+			wantsLift = false
 			content.background = null
 			content.setPadding(0, 0, 0, 0)
 			setPadding(0, 0, 0, 0)

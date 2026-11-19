@@ -201,6 +201,25 @@ class AppSettings internal constructor(
 	val navSpacing: Int
 		get() = prefs.getInt(KEY_NAV_SPACING, NAV_SPACING_DEFAULT).coerceIn(0, NAV_SPACING_MAX)
 
+	/**
+	 * Height of the docked bar in dp, or null while it was never set: then the bar keeps its own height (taller with
+	 * labels, compact without), as before this setting existed.
+	 */
+	val navHeight: Int?
+		get() = if (prefs.contains(KEY_NAV_HEIGHT)) {
+			prefs.getInt(KEY_NAV_HEIGHT, NAV_HEIGHT_DEFAULT).coerceIn(NAV_HEIGHT_MIN, NAV_HEIGHT_MAX)
+		} else {
+			null
+		}
+
+	/** Opacity of the bar's background in percent; below 100 the content shows through the bar. */
+	val navOpacity: Int
+		get() = prefs.getInt(KEY_NAV_OPACITY, 100).coerceIn(NAV_OPACITY_MIN, 100)
+
+	/** The selected section is drawn in the accent color instead of the neutral selected color. */
+	val isNavAccentColored: Boolean
+		get() = prefs.getBoolean(KEY_NAV_ACCENT, false)
+
 	/** The docked bar as a rounded, raised surface with a small margin around it. */
 	val isNavLayeredSurface: Boolean
 		get() = prefs.getBoolean(KEY_NAV_LAYERED_SURFACE, false)
@@ -1143,6 +1162,9 @@ class AppSettings internal constructor(
 		const val KEY_NAV_FULL_WIDTH = "nav_full_width"
 		const val KEY_NAV_FLOATING_HEIGHT = "nav_floating_height"
 		const val KEY_NAV_LAYERED_SURFACE = "nav_layered_surface"
+		const val KEY_NAV_HEIGHT = "nav_height"
+		const val KEY_NAV_OPACITY = "nav_opacity"
+		const val KEY_NAV_ACCENT = "nav_accent"
 		const val KEY_NAV_CORNER_RADIUS = "nav_corner_radius"
 		const val KEY_NAV_SPACING = "nav_spacing"
 		const val KEY_MAIN_FAB_ROUND = "main_fab_round"
@@ -1153,6 +1175,10 @@ class AppSettings internal constructor(
 		const val NAV_CORNER_RADIUS_MAX = 32
 		const val NAV_SPACING_DEFAULT = 16
 		const val NAV_SPACING_MAX = 32
+		const val NAV_HEIGHT_DEFAULT = 80
+		const val NAV_HEIGHT_MIN = 56
+		const val NAV_HEIGHT_MAX = 96
+		const val NAV_OPACITY_MIN = 40
 		const val KEY_MAIN_FAB = "main_fab"
 		const val KEY_32BIT_COLOR = "enhanced_colors"
 		const val KEY_SOURCES_ORDER = "sources_sort_order"

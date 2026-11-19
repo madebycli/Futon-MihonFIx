@@ -82,6 +82,19 @@ class SlidingBottomNavigationView @JvmOverloads constructor(
 			applyMinimumHeight()
 		}
 
+	/**
+	 * A height chosen in the settings for the docked bar, or null to keep the height that follows the labels. It is a
+	 * minimum: the bar never gets lower than its icons and labels need.
+	 */
+	var dockedHeightOverride: Int? = null
+		set(value) {
+			if (field != value) {
+				field = value
+				applyMinimumHeight()
+				requestLayout()
+			}
+		}
+
 	/** Called when the selection, the visible sections or a badge changed, to redraw the floating bar. */
 	var onMenuStateChanged: (() -> Unit)? = null
 
@@ -185,8 +198,11 @@ class SlidingBottomNavigationView @JvmOverloads constructor(
 
 	/** The minimum height is that of the docked bar; the floating bar has its own height. */
 	private fun applyMinimumHeight() {
-		super.setMinimumHeight(if (floatingRow == null) dockedMinimumHeight else 0)
-		getChildAt(0)?.minimumHeight = dockedMinimumHeight
+		val docked = dockedHeightOverride ?: dockedMinimumHeight
+		super.setMinimumHeight(if (floatingRow == null) docked else 0)
+		// The chosen height is a minimum: when the icons and labels need more room the bar grows instead of cutting
+		// them off, so a low setting never pushes an icon out of the bar.
+		getChildAt(0)?.minimumHeight = docked
 	}
 
 	fun show() {

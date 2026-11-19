@@ -98,6 +98,30 @@ class NavLabelModeTest {
 	}
 }
 
+class NavBarSettingsTest {
+
+	@Test
+	fun theDockedHeightIsUnsetUntilItIsChosen() {
+		val prefs = InMemoryPreferences()
+		val settings = AppSettings(mock(Context::class.java), prefs)
+		assertEquals(null, settings.navHeight)
+		prefs.edit().putInt(AppSettings.KEY_NAV_HEIGHT, 64).commit()
+		assertEquals(64, settings.navHeight)
+		prefs.edit().putInt(AppSettings.KEY_NAV_HEIGHT, 10).commit()
+		assertEquals(AppSettings.NAV_HEIGHT_MIN, settings.navHeight)
+	}
+
+	@Test
+	fun opacityAndAccentHaveTheOldLookByDefault() {
+		val prefs = InMemoryPreferences()
+		val settings = AppSettings(mock(Context::class.java), prefs)
+		assertEquals(100, settings.navOpacity)
+		assertFalse(settings.isNavAccentColored)
+		prefs.edit().putInt(AppSettings.KEY_NAV_OPACITY, 5).commit()
+		assertEquals(AppSettings.NAV_OPACITY_MIN, settings.navOpacity)
+	}
+}
+
 /** A plain map behind the SharedPreferences interface, enough for the settings that are read and written here. */
 private class InMemoryPreferences : SharedPreferences {
 

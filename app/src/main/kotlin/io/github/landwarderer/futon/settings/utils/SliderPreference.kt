@@ -70,7 +70,9 @@ class SliderPreference @JvmOverloads constructor(
 	}
 
 	override fun onSetInitialValue(defaultValue: Any?) {
-		value = getPersistedInt(defaultValue as? Int ?: 0)
+		// Shows the stored value, or the default without writing it: a setting that was never changed stays unset,
+		// exactly as for someone who never opened this screen (the readers in AppSettings have the same defaults).
+		currentValue = getPersistedInt(defaultValue as? Int ?: 0).coerceIn(valueFrom, valueTo)
 	}
 
 	override fun onGetDefaultValue(a: TypedArray, index: Int): Any {

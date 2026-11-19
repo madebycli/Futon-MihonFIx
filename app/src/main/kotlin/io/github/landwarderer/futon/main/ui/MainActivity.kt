@@ -202,6 +202,9 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
 					AppSettings.KEY_NAV_CORNER_RADIUS,
 					AppSettings.KEY_NAV_SPACING,
 					AppSettings.KEY_NAV_LAYERED_SURFACE,
+					AppSettings.KEY_NAV_HEIGHT,
+					AppSettings.KEY_NAV_OPACITY,
+					AppSettings.KEY_NAV_ACCENT,
 					AppSettings.KEY_MAIN_FAB_ROUND,
 				).onEach {
 					navBarController?.apply()
