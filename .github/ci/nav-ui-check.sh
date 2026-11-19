@@ -171,7 +171,8 @@ def insert(table, values):
 			names.append(name); params.append(0 if ctype.upper() in ('INTEGER', 'REAL') else '')
 	db.execute(f'INSERT OR REPLACE INTO {table} ({",".join(names)}) VALUES ({",".join("?" * len(names))})', params)
 now = int(time.time() * 1000)
-for i, title in enumerate(['Navigation check', 'Second manga', 'Third manga']):
+titles = ['Navigation check', 'Second manga', 'Third manga'] + [f'Scroll check {n}' for n in range(1, 25)]
+for i, title in enumerate(titles):
 	insert('manga', {
 		'manga_id': 900001 + i, 'title': title, 'url': f'/nav-check/{i}', 'public_url': f'https://example.org/{i}',
 		'rating': -1.0, 'nsfw': 0, 'cover_url': sys.argv[2], 'source': 'MANGADEX',
@@ -181,6 +182,18 @@ for i, title in enumerate(['Navigation check', 'Second manga', 'Third manga']):
 		'page': 0, 'scroll': 0.0, 'percent': 0.3, 'deleted_at': 0, 'chapters': 10,
 	})
 tables = [r[0] for r in db.execute("SELECT name FROM sqlite_master WHERE type='table'")]
+if 'favourite_categories' in tables and 'favourites' in tables:
+	for cid, name in ((1, 'Reading'), (2, 'Plan to read'), (3, 'Completed'), (4, 'Dropped')):
+		insert('favourite_categories', {
+			'category_id': cid, 'created_at': now, 'sort_key': cid, 'title': name, 'order': 'NEWEST',
+			'track': 1, 'show_in_lib': 1, 'deleted_at': 0,
+		})
+	for i in range(len(titles)):
+		insert('favourites', {
+			'manga_id': 900001 + i, 'category_id': 1 + (i % 2), 'sort_key': i, 'pinned': 0,
+			'created_at': now - i * 1000, 'deleted_at': 0,
+		})
+	print('favourites:', db.execute('SELECT COUNT(*) FROM favourites').fetchone()[0])
 if 'sources' in tables:
 	db.execute("UPDATE sources SET enabled = 1 WHERE rowid IN (SELECT rowid FROM sources ORDER BY rowid LIMIT 8)")
 	print('enabled sources:', db.execute('SELECT COUNT(*) FROM sources WHERE enabled = 1').fetchone()[0])
@@ -332,6 +345,40 @@ set_prefs nav_main=string:HISTORY,FAVORITES,LOCAL,UPDATED,BOOKMARKS,SUGGESTIONS
 launch 8
 shot 24b_floating_six_sections
 fragments 24b_six_sections
+
+# --- 8c. Floating top bar: lists scroll behind the search bar and the tabs of Favourites ------------------------------
+set_prefs nav_main=string:HISTORY,FAVORITES,EXPLORE,FEED nav_floating=boolean:true top_bar_floating=boolean:false
+launch 8
+tap_node Favorites; sleep 3
+shot 30_top_docked_favourites
+set_prefs top_bar_floating=boolean:true
+launch 8
+shot 31_top_floating_history
+adb shell input swipe 540 1500 540 1200 600; sleep 2
+shot 32_top_floating_history_scrolled_a_little
+adb shell input swipe 540 1700 540 700 500; sleep 2
+shot 33_top_floating_history_scrolled
+tap_node Favorites; sleep 3
+shot 34_top_floating_favourites
+adb shell input swipe 540 1500 540 1150 600; sleep 2
+shot 35_top_floating_favourites_scrolled_a_little
+adb shell input swipe 540 1700 540 700 500; sleep 2
+shot 36_top_floating_favourites_scrolled
+adb shell input swipe 540 700 540 1300 500; sleep 2
+shot 37_top_floating_favourites_back_up
+tap_node Explore; sleep 3
+adb shell input swipe 540 1500 540 1150 600; sleep 2
+shot 38_top_floating_explore_scrolled_a_little
+adb shell cmd uimode night yes > /dev/null 2>&1
+launch 8
+tap_node Favorites; sleep 3
+adb shell input swipe 540 1500 540 1150 600; sleep 2
+shot 39_top_floating_favourites_dark
+adb shell cmd uimode night no > /dev/null 2>&1
+set_prefs top_bar_floating=boolean:false
+launch 8
+tap_node Favorites; sleep 3
+shot 40_top_off_favourites_again
 
 # --- 9. Persistence after a restart of the app -----------------------------------------------------------------------
 launch 8
