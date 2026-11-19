@@ -355,20 +355,23 @@ shot 30_top_docked_favourites
 set_prefs top_bar_floating=boolean:true
 launch 8
 shot 31_top_floating_history
-adb shell input swipe 540 1500 540 1200 600; sleep 2
+# A short drag: the content moves behind the search bar, which snaps back and stays.
+adb shell input swipe 540 1500 540 1380 400; sleep 2
 shot 32_top_floating_history_scrolled_a_little
 adb shell input swipe 540 1700 540 700 500; sleep 2
 shot 33_top_floating_history_scrolled
+reveal_bars() { adb shell input swipe 540 900 540 1500 400; sleep 2; }
+reveal_bars
 tap_node Favorites; sleep 3
 shot 34_top_floating_favourites
-adb shell input swipe 540 1500 540 1150 600; sleep 2
+adb shell input swipe 540 1500 540 1380 400; sleep 2
 shot 35_top_floating_favourites_scrolled_a_little
 adb shell input swipe 540 1700 540 700 500; sleep 2
 shot 36_top_floating_favourites_scrolled
-adb shell input swipe 540 700 540 1300 500; sleep 2
+reveal_bars
 shot 37_top_floating_favourites_back_up
 tap_node Explore; sleep 3
-adb shell input swipe 540 1500 540 1150 600; sleep 2
+adb shell input swipe 540 1500 540 1380 400; sleep 2
 shot 38_top_floating_explore_scrolled_a_little
 adb shell cmd uimode night yes > /dev/null 2>&1
 launch 8
