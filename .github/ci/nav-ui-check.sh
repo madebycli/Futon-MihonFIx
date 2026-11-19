@@ -158,7 +158,7 @@ shot 00_first_start_main
 adb shell am force-stop $PKG
 adb pull "$DB" "$OUT/.db" > /dev/null 2>&1
 adb pull "$DB-wal" "$OUT/.db-wal" > /dev/null 2>&1
-python3 - "$OUT/.db" "$COVER_URL" <<'PY' | tee -a "$OUT/run.log"
+python3 - "$OUT/.db" "$COVER_URL" <<'PY' 2>&1 | tee -a "$OUT/run.log"
 import sqlite3, sys, time
 db = sqlite3.connect(sys.argv[1])
 def insert(table, values):
@@ -169,7 +169,8 @@ def insert(table, values):
 			names.append(name); params.append(values[name])
 		elif notnull and default is None:
 			names.append(name); params.append(0 if ctype.upper() in ('INTEGER', 'REAL') else '')
-	db.execute(f'INSERT OR REPLACE INTO {table} ({",".join(names)}) VALUES ({",".join("?" * len(names))})', params)
+	quoted = ",".join(f'"{n}"' for n in names)
+	db.execute(f'INSERT OR REPLACE INTO "{table}" ({quoted}) VALUES ({",".join("?" * len(names))})', params)
 now = int(time.time() * 1000)
 titles = ['Navigation check', 'Second manga', 'Third manga'] + [f'Scroll check {n}' for n in range(1, 25)]
 for i, title in enumerate(titles):
