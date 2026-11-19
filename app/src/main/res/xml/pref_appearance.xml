@@ -197,8 +197,7 @@
         <io.github.landwarderer.futon.settings.utils.SliderPreference
             android:key="nav_height"
             android:stepSize="4"
-            android:summary="@string/nav_height_summary"
-            android:title="@string/nav_floating_height"
+            android:title="@string/nav_height_min"
             android:valueFrom="56"
             android:valueTo="96"
             app:defaultValue="80" />

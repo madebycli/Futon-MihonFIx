@@ -570,7 +570,7 @@
     <string name="nav_accent">Ausgewählten Bereich in der Akzentfarbe</string>
     <string name="nav_accent_summary">Symbol und Beschriftung des ausgewählten Bereichs in der Akzentfarbe zeigen</string>
     <string name="nav_opacity">Deckkraft der Leiste</string>
-    <string name="nav_height_summary">Mindestens so hoch; nie niedriger, als Symbole und Beschriftungen brauchen</string>
+    <string name="nav_height_min">Mindesthöhe der Leiste</string>
     <string name="nav_floating">Schwebende Navigationsleiste</string>
     <string name="nav_floating_summary">Eine kompakte, abgerundete Leiste, die über dem Inhalt schwebt</string>
     <string name="nav_full_width">Volle Breite</string>
