@@ -132,6 +132,8 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
 
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
+		builtBarLayout = barLayout()
+		isRebuiltForBarLayout = savedInstanceState?.getBoolean(KEY_REBUILT_FOR_BAR_LAYOUT) == true
 		setContentView(ActivityMainBinding.inflate(layoutInflater))
 		setSupportActionBar(viewBinding.searchBar)
 		updateHomeWatermark()
@@ -183,6 +185,14 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
 			}
 		}, false)
 
+		// Also while this screen is in the background, where the settings are changed: it is rebuilt there unseen.
+		navBarController?.apply()
+		adjustFabVisibility()
+		updateContainerBottomMargin()
+		settings.observe(*BAR_LAYOUT_KEYS).onEach {
+			recreateIfBarLayoutChanged()
+		}.launchIn(lifecycleScope)
+
 		// Defer heavy initialization to after window is shown to prevent ANR on slow devices
 		lifecycleScope.launch {
 			lifecycle.withResumed {
@@ -194,24 +204,6 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
 				viewModel.lastReadManga.observe(this@MainActivity) { manga ->
 					navBarController?.setResumeManga(manga)
 				}
-				settings.observe(
-					AppSettings.KEY_NAV_FLOATING,
-					AppSettings.KEY_NAV_LABEL_MODE,
-					AppSettings.KEY_NAV_CAPSULE,
-					AppSettings.KEY_NAV_FULL_WIDTH,
-					AppSettings.KEY_NAV_FLOATING_HEIGHT,
-					AppSettings.KEY_NAV_CORNER_RADIUS,
-					AppSettings.KEY_NAV_SPACING,
-					AppSettings.KEY_NAV_LAYERED_SURFACE,
-					AppSettings.KEY_NAV_HEIGHT,
-					AppSettings.KEY_NAV_OPACITY,
-					AppSettings.KEY_NAV_ACCENT,
-					AppSettings.KEY_MAIN_FAB_ROUND,
-				).onEach {
-					navBarController?.apply()
-					adjustFabVisibility()
-					updateContainerBottomMargin()
-				}.launchIn(lifecycleScope)
 				viewModel.onShowOnboarding.observeEvent(this@MainActivity) {
 					onboardingLauncher.launch(Intent(this@MainActivity, OnboardingActivity::class.java))
 				}
@@ -236,6 +228,48 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
 		super.onRestoreInstanceState(savedInstanceState)
 		adjustSearchUI(viewBinding.searchView.isShowing)
 		navigationDelegate.syncSelectedItem()
+	}
+
+	override fun onPostCreate(savedInstanceState: Bundle?) {
+		super.onPostCreate(savedInstanceState)
+		if (isRebuiltForBarLayout) {
+			// Rebuilt for other bar settings: the bars start from their normal place (the app bar would otherwise
+			// restore its old offset), the tabs and the positions in the lists stay as they were.
+			isRebuiltForBarLayout = false
+			viewBinding.appbar.setExpanded(true, false)
+			viewBinding.bottomNav?.translationY = 0f
+		}
+	}
+
+	override fun onRestart() {
+		super.onRestart()
+		recreateIfBarLayoutChanged()
+	}
+
+	override fun onSaveInstanceState(outState: Bundle) {
+		super.onSaveInstanceState(outState)
+		outState.putBoolean(KEY_REBUILT_FOR_BAR_LAYOUT, isRecreatingForBarLayout)
+	}
+
+	/** The values of the bar settings this screen was built with. */
+	private var builtBarLayout: String? = null
+	private var isRecreatingForBarLayout = false
+	private var isRebuiltForBarLayout = false
+
+	private fun barLayout(): String {
+		val values = settings.getAllValues()
+		return BAR_LAYOUT_KEYS.joinToString("|") { "${values[it]}" }
+	}
+
+	/**
+	 * The look of the bars changed (in the settings, while this screen was in the background): the screen is built
+	 * again instead of restyling the bars in place, where paddings, margins and offsets of the old layout could stay
+	 * behind. The activity is stopped then, so the rebuild is not seen.
+	 */
+	private fun recreateIfBarLayoutChanged() {
+		if (isRecreatingForBarLayout || isFinishing || builtBarLayout == barLayout()) return
+		isRecreatingForBarLayout = true
+		ActivityCompat.recreate(this)
 	}
 
 	override fun onFragmentChanged(fragment: Fragment, fromUser: Boolean) {
@@ -616,3 +650,22 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
 		awaitClose { removeTransitionListener(listener) }
 	}
 }
+
+private const val KEY_REBUILT_FOR_BAR_LAYOUT = "rebuilt_for_bar_layout"
+
+/** Settings that change the layout of the bars; a change rebuilds the main screen. */
+private val BAR_LAYOUT_KEYS = arrayOf(
+	AppSettings.KEY_NAV_FLOATING,
+	AppSettings.KEY_NAV_LABEL_MODE,
+	AppSettings.KEY_NAV_CAPSULE,
+	AppSettings.KEY_NAV_FULL_WIDTH,
+	AppSettings.KEY_NAV_FLOATING_HEIGHT,
+	AppSettings.KEY_NAV_CORNER_RADIUS,
+	AppSettings.KEY_NAV_SPACING,
+	AppSettings.KEY_NAV_LAYERED_SURFACE,
+	AppSettings.KEY_NAV_HEIGHT,
+	AppSettings.KEY_NAV_OPACITY,
+	AppSettings.KEY_NAV_ACCENT,
+	AppSettings.KEY_MAIN_FAB_ROUND,
+	AppSettings.KEY_NAV_PINNED,
+)
