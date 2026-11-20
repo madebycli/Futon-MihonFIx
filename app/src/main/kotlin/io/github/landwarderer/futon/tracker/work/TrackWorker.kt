@@ -83,6 +83,8 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.runInterruptible
 import kotlinx.coroutines.withContext
+import io.github.landwarderer.futon.mihon.MihonLoadPriority
+import io.github.landwarderer.futon.mihon.model.MihonMangaSource
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 import java.util.Collections
@@ -197,7 +199,10 @@ class TrackWorker @AssistedInject constructor(
 		val notifications = channelFlow<MangaUpdates?> {
 			for (track in tracks) {
 				val source = track.manga.source
-				val sourceSemaphore = sourceSemaphores.getOrPut(source) { Semaphore(MAX_PER_SOURCE_PARALLELISM) }
+				// Extensions can read one manga at a time (a WebView); a second parallel check only queues up there.
+				val sourceSemaphore = sourceSemaphores.getOrPut(source) {
+					Semaphore(if (source is MihonMangaSource) 1 else MAX_PER_SOURCE_PARALLELISM)
+				}
 				launch {
 					// The source permit comes first: a busy source must not hold the global slots while it waits
 					sourceSemaphore.withPermit {
@@ -291,7 +296,10 @@ class TrackWorker @AssistedInject constructor(
 
 	private suspend fun check(track: MangaTracking, semaphore: Semaphore): MangaUpdates = semaphore.withPermit {
 		runCatchingCancellable {
-			checkNewChaptersUseCase.invoke(track)
+			// Nobody waits for this on screen: a manga the user opens of the same source goes first.
+			withContext(MihonLoadPriority.Background()) {
+				checkNewChaptersUseCase.invoke(track)
+			}
 		}.getOrElse { error ->
 			MangaUpdates.Failure(
 				manga = track.manga,

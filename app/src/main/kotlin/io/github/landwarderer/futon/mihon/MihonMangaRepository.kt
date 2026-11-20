@@ -140,7 +140,7 @@ class MihonMangaRepository(
         val running = detailsInFlight.putIfAbsent(manga.url, mine)
         if (running != null) return running.await()
         try {
-            val details = loadDetails(manga)
+            val details = MihonLoadPriority.run(source.sourceId) { loadDetails(manga) }
             mine.complete(details)
             return details
         } catch (e: Throwable) {
@@ -202,7 +202,10 @@ class MihonMangaRepository(
         ).copy(id = manga.id).toManga()
     }
 
-    override suspend fun getPagesImpl(chapter: MangaChapter): List<MangaPage> = withContext(Dispatchers.IO) {
+    override suspend fun getPagesImpl(chapter: MangaChapter): List<MangaPage> =
+        MihonLoadPriority.run(source.sourceId) { loadPages(chapter) }
+
+    private suspend fun loadPages(chapter: MangaChapter): List<MangaPage> = withContext(Dispatchers.IO) {
         val sChapter = MihonChapterSnapshotStore.get(source.sourceId, chapter.url)
             ?: snapshotPersistence?.getChapter(source.sourceId, chapter.url)?.also(::rememberMihonChapter)
             ?: chapter.toContentChapter(source).toMihonChapter()
