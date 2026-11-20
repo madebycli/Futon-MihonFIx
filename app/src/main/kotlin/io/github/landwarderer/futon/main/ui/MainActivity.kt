@@ -146,6 +146,9 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
 		fadingAppbarMediator =
 			FadingAppbarMediator(viewBinding.appbar, viewBinding.layoutSearch ?: viewBinding.searchBar)
 		defaultSearchBarElevation = viewBinding.searchBar.elevation
+		viewBinding.appbar.updateLayoutParams<CoordinatorLayout.LayoutParams> {
+			behavior = appBarBehavior
+		}
 		viewBinding.appbar.addOnLayoutChangeListener { _, _, top, _, bottom, _, oldTop, _, oldBottom ->
 			if (bottom - top != oldBottom - oldTop) updateTopOverlay()
 		}
@@ -411,6 +414,7 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
 	}
 
 	private var defaultSearchBarElevation = 0f
+	private val appBarBehavior = SettlingAppBarBehavior()
 	private var defaultSearchBarOutline: ViewOutlineProvider? = null
 
 	/** A rounded outline over the whole view, as the search bar is drawn. */
@@ -426,6 +430,7 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
 	 */
 	private fun applyTopBarStyle() {
 		val isFloating = settings.isTopBarFloating
+		appBarBehavior.isSettleEnabled = isFloating
 		val searchBar = viewBinding.searchBar
 		if (defaultSearchBarOutline == null) {
 			defaultSearchBarOutline = searchBar.outlineProvider
