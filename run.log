@@ -1,0 +1,88 @@
+[13:07:29] device: sdk_gphone64_x86_64 API 34 density Physical density: 420
+[13:07:29] job: nav_floating=boolean:true top_bar_floating=boolean:false nav_pinned=boolean:false
+[13:07:34] installing app/build/outputs/apk/debug/app-debug.apk
+Performing Streamed Install
+Success
+[13:08:29] screenshot 00_first_start_main
+favourites: 27
+enabled sources: 30
+history rows: 27
+[13:08:30] === combo 01: nav_floating=boolean:true top_bar_floating=boolean:false nav_pinned=boolean:false nav_label_mode=string:NONE main_fab_round=boolean:false
+[13:11:04] warning: no tab 'History' on screen (01)
+[13:13:13] warning: no tab 'Favorites' on screen (01)
+[13:15:21] warning: no tab 'Explore' on screen (01)
+[13:17:28] warning: no tab 'Feed' on screen (01)
+[13:19:33] warning: no tab 'History' on screen (01)
+[13:21:41] warning: no tab 'Favorites' on screen (01)
+[13:23:49] warning: no tab 'Explore' on screen (01)
+[13:25:55] warning: no tab 'History' on screen (01)
+[13:28:01] warning: no tab 'Favorites' on screen (01)
+[13:30:08] warning: no tab 'Explore' on screen (01)
+[13:32:14] warning: no tab 'History' on screen (01)
+[13:34:21] warning: no tab 'Favorites' on screen (01)
+[13:36:28] warning: no tab 'Explore' on screen (01)
+[13:36:32] === combo 02: nav_floating=boolean:true top_bar_floating=boolean:false nav_pinned=boolean:false nav_label_mode=string:ALL main_fab_round=boolean:false
+[13:38:53] warning: no tab 'History' on screen (02)
+[13:41:00] warning: no tab 'Favorites' on screen (02)
+[13:43:06] warning: no tab 'Explore' on screen (02)
+[13:45:13] warning: no tab 'Feed' on screen (02)
+[13:47:21] warning: no tab 'History' on screen (02)
+[13:49:29] warning: no tab 'Favorites' on screen (02)
+[13:51:37] warning: no tab 'Explore' on screen (02)
+[13:53:43] warning: no tab 'History' on screen (02)
+[13:55:50] warning: no tab 'Favorites' on screen (02)
+[13:57:56] warning: no tab 'Explore' on screen (02)
+[14:00:04] warning: no tab 'History' on screen (02)
+[14:02:12] warning: no tab 'Favorites' on screen (02)
+[14:04:20] warning: no tab 'Explore' on screen (02)
+[14:04:23] === combo 03: nav_floating=boolean:true top_bar_floating=boolean:false nav_pinned=boolean:false nav_label_mode=string:SELECTED main_fab_round=boolean:true
+[14:08:05] answering the suggestions question with No thanks
+[14:12:08] === combo 04: nav_floating=boolean:true top_bar_floating=boolean:false nav_pinned=boolean:false nav_label_mode=string:SELECTED_BESIDE main_fab_round=boolean:true
+[14:19:36] === combo 05-font130: nav_floating=boolean:true top_bar_floating=boolean:false nav_pinned=boolean:false nav_label_mode=string:ALL main_fab_round=boolean:false
+[14:21:58] warning: no tab 'History' on screen (05-font130)
+[14:24:05] warning: no tab 'Favorites' on screen (05-font130)
+[14:26:11] warning: no tab 'Explore' on screen (05-font130)
+[14:28:18] warning: no tab 'Feed' on screen (05-font130)
+[14:30:24] warning: no tab 'History' on screen (05-font130)
+[14:32:31] warning: no tab 'Favorites' on screen (05-font130)
+[14:34:39] warning: no tab 'Explore' on screen (05-font130)
+[14:36:47] warning: no tab 'History' on screen (05-font130)
+[14:38:53] warning: no tab 'Favorites' on screen (05-font130)
+[14:41:00] warning: no tab 'Explore' on screen (05-font130)
+[14:43:07] warning: no tab 'History' on screen (05-font130)
+[14:45:14] warning: no tab 'Favorites' on screen (05-font130)
+[14:47:20] warning: no tab 'Explore' on screen (05-font130)
+[14:47:23] === combo 06-font130: nav_floating=boolean:true top_bar_floating=boolean:false nav_pinned=boolean:false nav_label_mode=string:SELECTED main_fab_round=boolean:true
+[14:54:51] === combo 07: nav_floating=boolean:true top_bar_floating=boolean:false nav_pinned=boolean:false nav_label_mode=string:NONE nav_capsule=boolean:false
+[14:57:11] warning: no tab 'History' on screen (07)
+[14:59:17] warning: no tab 'Favorites' on screen (07)
+[15:01:24] warning: no tab 'Explore' on screen (07)
+[15:03:31] warning: no tab 'Feed' on screen (07)
+[15:05:36] warning: no tab 'History' on screen (07)
+[15:07:43] warning: no tab 'Favorites' on screen (07)
+[15:09:50] warning: no tab 'Explore' on screen (07)
+[15:11:56] warning: no tab 'History' on screen (07)
+[15:14:02] warning: no tab 'Favorites' on screen (07)
+[15:16:08] warning: no tab 'Explore' on screen (07)
+[15:18:14] warning: no tab 'History' on screen (07)
+[15:20:20] warning: no tab 'Favorites' on screen (07)
+[15:22:26] warning: no tab 'Explore' on screen (07)
+[15:22:29] === combo 08: nav_floating=boolean:true top_bar_floating=boolean:false nav_pinned=boolean:false nav_label_mode=string:SELECTED nav_full_width=boolean:true main_fab_round=boolean:true
+[15:29:55] === combo 09: nav_floating=boolean:true top_bar_floating=boolean:false nav_pinned=boolean:false nav_label_mode=string:ALL nav_floating_height=int:64 nav_corner_radius=int:12 nav_spacing=int:4 nav_height=int:72
+[15:32:16] warning: no tab 'History' on screen (09)
+[15:34:22] warning: no tab 'Favorites' on screen (09)
+[15:36:29] warning: no tab 'Explore' on screen (09)
+[15:38:36] warning: no tab 'Feed' on screen (09)
+[15:40:44] warning: no tab 'History' on screen (09)
+[15:42:50] warning: no tab 'Favorites' on screen (09)
+[15:44:57] warning: no tab 'Explore' on screen (09)
+[15:47:03] warning: no tab 'History' on screen (09)
+[15:49:10] warning: no tab 'Favorites' on screen (09)
+[15:51:15] warning: no tab 'Explore' on screen (09)
+[15:53:23] warning: no tab 'History' on screen (09)
+[15:55:30] warning: no tab 'Favorites' on screen (09)
+[15:57:36] warning: no tab 'Explore' on screen (09)
+[15:57:39] === combo 10: nav_floating=boolean:true top_bar_floating=boolean:false nav_pinned=boolean:false nav_label_mode=string:SELECTED nav_opacity=int:70 nav_accent=boolean:true nav_layered_surface=boolean:true
+[16:00:01] warning: no tab 'History' on screen (10)
+[16:02:07] warning: no tab 'Favorites' on screen (10)
+[16:04:13] warning: no tab 'Explore' on screen (10)
