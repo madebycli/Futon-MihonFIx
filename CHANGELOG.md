@@ -4,7 +4,16 @@ All notable changes to this project are documented in this file.
 
 The format is based on "Keep a Changelog" and follows semantic versioning where possible.
 
-## 10.0
+## 10.1
+Date: 2026-11-20
+
+### Extensions
+- A manga you open loads right away, also while the check for new chapters runs in the background. Before, extensions
+  that read chapter lists through a built-in web page (one title at a time) could keep the details screen on its
+  loading indicator for minutes, without description or chapters, while the check worked through other titles.
+- The check for new chapters goes through the titles of each extension one at a time, as Mihon does; built-in sources
+  are unchanged.
+
 Date: 2026-11-20
 
 ### Main screen
