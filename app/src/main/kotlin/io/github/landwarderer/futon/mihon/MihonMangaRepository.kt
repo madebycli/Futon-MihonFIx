@@ -26,6 +26,7 @@ import io.github.landwarderer.futon.mihon.model.toMangaPage
 import io.github.landwarderer.futon.mihon.model.toMihonChapter
 import io.github.landwarderer.futon.mihon.model.toMihonManga
 import kotlinx.coroutines.CancellationException
+import io.github.landwarderer.futon.core.parser.DetailsPreviewRepository
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -56,7 +57,7 @@ class MihonMangaRepository(
     override val source: MihonMangaSource,
     cache: MemoryContentCache,
     private val snapshotPersistence: MihonSnapshotPersistence? = null,
-) : CachingMangaRepository(cache) {
+) : CachingMangaRepository(cache), DetailsPreviewRepository {
 
     companion object {
         private const val TAG = "MihonMangaRepository"
@@ -150,15 +151,64 @@ class MihonMangaRepository(
                 detailsInFlight.remove(manga.url, running)
             }
         }
+        val startedAt = System.currentTimeMillis()
+        MihonLoadLog.i("details start source=${source.sourceId} manga=${manga.url.hashCode()}")
         try {
             val details = MihonLoadPriority.run(source.sourceId) { loadDetails(manga) }
             mine.complete(details)
+            MihonLoadLog.i("details done source=${source.sourceId} manga=${manga.url.hashCode()} " +
+                    "chapters=${details.chapters?.size} ms=${System.currentTimeMillis() - startedAt}",
+            )
             return details
         } catch (e: Throwable) {
+            MihonLoadLog.i("details failed source=${source.sourceId} manga=${manga.url.hashCode()} " +
+                    "error=${e.javaClass.simpleName} ms=${System.currentTimeMillis() - startedAt}",
+            )
             mine.completeExceptionally(e)
             throw e
         } finally {
             detailsInFlight.remove(manga.url, mine)
+        }
+    }
+
+    /**
+     * The details without the chapter list (one quick request for most extensions), for the details screen while
+     * the full load, which may read a long chapter list through a WebView, is still running.
+     */
+    override suspend fun getDetailsPreview(manga: Manga): Manga? {
+        val startedAt = System.currentTimeMillis()
+        return try {
+            MihonLoadPriority.run(source.sourceId) {
+                withContext(Dispatchers.IO) {
+                    val sContent = mangaSnapshots.get(manga.url)?.snapshot()
+                        ?: snapshotPersistence?.getManga(source.sourceId, manga.url)?.also(::rememberMihonManga)
+                        ?: manga.toContent(source).toMihonManga()
+                    val details = rethrowMihonWrappedExceptions {
+                        withMihonSourceContext {
+                            mihonSource.getMangaUpdate(
+                                manga = sContent,
+                                chapters = emptyList(),
+                                fetchDetails = true,
+                                fetchChapters = false,
+                            )
+                        }
+                    }.manga
+                    details.applyDetailFallbacks(sContent)
+                    rememberMihonManga(details)
+                    details.toDomainContent(
+                        source = source,
+                        chapters = null,
+                        publicUrl = getPublicUrl(details),
+                    ).copy(id = manga.id).toManga()
+                }
+            }.also {
+                MihonLoadLog.i("preview done source=${source.sourceId} ms=${System.currentTimeMillis() - startedAt}")
+            }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Throwable) {
+            MihonLoadLog.i("preview failed source=${source.sourceId} error=${e.javaClass.simpleName}")
+            null
         }
     }
 
