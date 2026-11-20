@@ -51,12 +51,13 @@ jobs:
           SOURCE_VERSION="$(grep -E '^versionName=' gradle.properties | tail -n 1 | cut -d= -f2-)"
           SOURCE_CODE="$(grep -E '^versionCode=' gradle.properties | tail -n 1 | cut -d= -f2-)"
 
-          if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo "::error::Release version must use MAJOR.MINOR.PATCH, got: $VERSION"
+          if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+(\.[0-9]+)?$ ]]; then
+            echo "::error::Release version must use MAJOR.MINOR or MAJOR.MINOR.PATCH, got: $VERSION"
             exit 1
           fi
 
           IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
+          PATCH="${PATCH:-0}"
           EXPECTED_CODE=$((MAJOR * 10000 + MINOR * 100 + PATCH))
 
           if [ "$SOURCE_VERSION" != "$VERSION" ]; then
@@ -122,6 +123,9 @@ jobs:
             --tests "io.github.landwarderer.futon.onboarding.*" \
             --tests "io.github.landwarderer.futon.core.prefs.HomeBackgroundFontTest" \
             --tests "io.github.landwarderer.futon.core.prefs.NovelAppSettingsTest" \
+            --tests "io.github.landwarderer.futon.core.prefs.NavLabelModeTest" \
+            --tests "io.github.landwarderer.futon.core.prefs.NavBarSettingsTest" \
+            --tests "io.github.landwarderer.futon.core.ui.widgets.FloatingNavLayoutSpecTest" \
             --tests "io.github.landwarderer.futon.reader.domain.*" \
             --tests "io.github.landwarderer.futon.details.domain.*" \
             --tests "io.github.landwarderer.futon.mihon.*" \
@@ -143,7 +147,7 @@ jobs:
           if-no-files-found: warn
           retention-days: 14
 
-      - name: Build both signed optimized APKs
+      - name: Build the signed optimized APKs (universal and per ABI)
         env:
           SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
@@ -152,12 +156,13 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p release-artifact
-          ./gradlew assembleRelease -Pstandalone=false -PversionName="$VERSION" -PversionCode="$VERSION_CODE" --stacktrace --no-build-cache --no-configuration-cache
-          cp app/build/outputs/apk/release/app-release.apk "release-artifact/Futon-$VERSION-legacy-update.apk"
-          ./gradlew assembleRelease -Pstandalone=true -PversionName="$VERSION" -PversionCode="$VERSION_CODE" --stacktrace --no-build-cache --no-configuration-cache
-          cp app/build/outputs/apk/release/app-release.apk "release-artifact/Futon-MihonFix-$VERSION.apk"
+          ./gradlew assembleRelease -Pstandalone=true -PabiSplits=true -PversionName="$VERSION" -PversionCode="$VERSION_CODE" --stacktrace --no-build-cache --no-configuration-cache
+          ls -la app/build/outputs/apk/release/
+          for ABI in universal arm64-v8a armeabi-v7a x86_64 x86; do
+            cp "app/build/outputs/apk/release/app-$ABI-release.apk" "release-artifact/Clio-$VERSION-$ABI.apk"
+          done
 
-      - name: Verify both APK identities, signatures and optimized Mihon ABI
+      - name: Verify the APK identities, signatures, native libraries and optimized Mihon ABI
         run: bash scripts/verify-release-apks.sh "$GITHUB_WORKSPACE/release-artifact" "${{ steps.version.outputs.version }}" "${{ steps.version.outputs.version_code }}"
 
       - name: Record build provenance
@@ -172,8 +177,8 @@ jobs:
             echo "Signing: repository-release-key"
             echo "Certificate SHA256: 12fe17245decb84c98985ddcc08884b874d10a78e4fb747a6ed3e2a42d77b625"
             echo "Build: optimized release (R8 minify + resource shrinking)"
-            echo "Standalone: io.github.madebycli.futon.mihonfix"
-            echo "Legacy update: io.github.landwarderer.futon"
+            echo "Package: io.github.madebycli.futon.mihonfix"
+            echo "APKs: universal, arm64-v8a, armeabi-v7a, x86_64, x86"
             echo "Android emulator installation check: not run in this release"
             echo "Signed APK identity, certificate and optimized Mihon ABI: verified in the release job"
             echo "Physical Galaxy S26 Ultra test: pending"
@@ -200,10 +205,8 @@ jobs:
           make_latest: true
           fail_on_unmatched_files: true
           files: |
-            release-artifact/Futon-MihonFix-${{ steps.version.outputs.version }}.apk
-            release-artifact/Futon-MihonFix-${{ steps.version.outputs.version }}.apk.sha256
-            release-artifact/Futon-${{ steps.version.outputs.version }}-legacy-update.apk
-            release-artifact/Futon-${{ steps.version.outputs.version }}-legacy-update.apk.sha256
+            release-artifact/Clio-${{ steps.version.outputs.version }}-*.apk
+            release-artifact/Clio-${{ steps.version.outputs.version }}-*.apk.sha256
             release-artifact/BUILD-INFO.txt
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

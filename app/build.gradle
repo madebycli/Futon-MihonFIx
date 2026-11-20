@@ -42,8 +42,8 @@ android {
 		// AbstractMethodError for typeParametersSerializers(). Match the extension host ABI.
 		minSdk = 26
 		targetSdk = 36
-		versionCode project.hasProperty('versionCode') ? project.property('versionCode').toInteger() : 91101
-        versionName project.hasProperty('versionName') ? project.property('versionName') : '9.11.1'
+		versionCode project.hasProperty('versionCode') ? project.property('versionCode').toInteger() : 100000
+        versionName project.hasProperty('versionName') ? project.property('versionName') : '10.0'
         generatedDensities = []
 		testInstrumentationRunner 'io.github.landwarderer.futon.HiltTestRunner'
 		ksp {
@@ -85,6 +85,15 @@ android {
 			applicationIdSuffix = '.nightly'
 			signingConfig signingConfigs.release
 			buildConfigField "String", "SENTRY_DSN", "\"${System.getenv('SENTRY_DSN') ?: ''}\""
+		}
+	}
+	splits {
+		// Release APKs per ABI (smaller, only the native code of one ABI) plus a universal one: -PabiSplits=true.
+		abi {
+			enable project.findProperty('abiSplits') == 'true'
+			reset()
+			include 'arm64-v8a', 'armeabi-v7a', 'x86_64', 'x86'
+			universalApk true
 		}
 	}
 	buildFeatures {

@@ -4,7 +4,33 @@ All notable changes to this project are documented in this file.
 
 The format is based on "Keep a Changelog" and follows semantic versioning where possible.
 
-## 9.11.1
+## 10.0
+Date: 2026-11-20
+
+### Main screen
+- Tabs stay loaded: switching between History, Favourites, Explore and the other sections shows the content at once,
+  with the scroll position kept, instead of loading it again.
+- Switching tabs fades the old page out before the new one fades in, without overlap.
+- New floating navigation bar (optional): a rounded bar above the content with a shadow, fixed tab widths and a short
+  selection animation. Labels: none, all, only the selected section, or beside the selected icon.
+- Round continue button with the cover of the last read manga, next to the bar (optional).
+- New floating top bar (optional): lists scroll behind the search bar and the Favourites category tabs, which float
+  as rounded bars with a shadow. The category tabs stop below the status bar.
+- The search bar never stays halfway: once you let go, a partly shown bar opens fully, and the content stays in place
+  while it does. It behaves the same on every tab.
+- The last item of a list can always be scrolled above the navigation bar.
+
+### Settings
+- Appearance → Main screen: label mode, highlight of the selected section, accent color, opacity, floating bar with
+  full width, height, corner radius and distance from the edge, height of the docked bar, raised docked bar, round
+  continue button and floating top bar. Options that do not apply to the current design are hidden.
+- The previous "Show labels" setting is migrated automatically; backups include all new settings.
+- Changing a bar setting rebuilds the main screen cleanly instead of restyling it in place.
+
+### Downloads
+- Release APKs per ABI (arm64-v8a, armeabi-v7a, x86_64, x86) and a universal APK. The separate legacy update APK is
+  no longer published.
+
 Date: 2026-11-19
 
 ### Mihon extensions
