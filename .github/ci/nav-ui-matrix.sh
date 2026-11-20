@@ -154,6 +154,8 @@ CTX="$OUT/.ctx.json"
 dump_ui() {
 	for _ in 1 2 3; do
 		rm -f "$OUT/.cur.xml"
+		# Without this a failed dump would leave the previous file on the device, and an old screen would be checked.
+		adb shell rm -f /sdcard/ui.xml
 		adb shell uiautomator dump /sdcard/ui.xml > /dev/null 2>&1
 		adb pull /sdcard/ui.xml "$OUT/.cur.xml" > /dev/null 2>&1
 		if [ -s "$OUT/.cur.xml" ] && grep -q "<hierarchy" "$OUT/.cur.xml"; then return 0; fi
