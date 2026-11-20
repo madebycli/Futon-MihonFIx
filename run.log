@@ -1,0 +1,145 @@
+[13:07:23] device: sdk_gphone64_x86_64 API 34 density Physical density: 420
+[13:07:23] job: nav_floating=boolean:false top_bar_floating=boolean:true nav_pinned=boolean:false
+[13:07:28] installing app/build/outputs/apk/debug/app-debug.apk
+Performing Streamed Install
+Success
+[13:08:09] system dialog on screen: text="Pixel Launcher isn't responding"
+[13:08:10] screenshot 00_first_start_main
+favourites: 27
+enabled sources: 30
+history rows: 27
+[13:08:12] === combo 01: nav_floating=boolean:false top_bar_floating=boolean:true nav_pinned=boolean:false nav_label_mode=string:NONE main_fab_round=boolean:false
+[13:08:38] system dialog on screen: text="Pixel Launcher isn't responding"
+[13:10:36] warning: no tab 'History' on screen (01)
+[13:10:48] system dialog on screen: text="Pixel Launcher isn't responding"
+[13:12:41] warning: no tab 'Favorites' on screen (01)
+[13:12:53] system dialog on screen: text="Pixel Launcher isn't responding"
+[13:14:47] warning: no tab 'Explore' on screen (01)
+[13:14:58] system dialog on screen: text="Pixel Launcher isn't responding"
+[13:16:52] warning: no tab 'Feed' on screen (01)
+[13:17:03] system dialog on screen: text="Pixel Launcher isn't responding"
+[13:18:56] warning: no tab 'History' on screen (01)
+[13:19:07] system dialog on screen: text="Pixel Launcher isn't responding"
+[13:21:00] warning: no tab 'Favorites' on screen (01)
+[13:21:12] system dialog on screen: text="Pixel Launcher isn't responding"
+[13:23:06] warning: no tab 'Explore' on screen (01)
+[13:23:17] system dialog on screen: text="Pixel Launcher isn't responding"
+[13:25:10] warning: no tab 'History' on screen (01)
+[13:25:21] system dialog on screen: text="Pixel Launcher isn't responding"
+[13:27:15] warning: no tab 'Favorites' on screen (01)
+[13:27:26] system dialog on screen: text="Pixel Launcher isn't responding"
+[13:29:19] warning: no tab 'Explore' on screen (01)
+[13:29:30] system dialog on screen: text="Pixel Launcher isn't responding"
+[13:31:23] warning: no tab 'History' on screen (01)
+[13:31:35] system dialog on screen: text="Pixel Launcher isn't responding"
+[13:33:28] warning: no tab 'Favorites' on screen (01)
+[13:33:39] system dialog on screen: text="Pixel Launcher isn't responding"
+[13:35:32] warning: no tab 'Explore' on screen (01)
+[13:35:35] === combo 02: nav_floating=boolean:false top_bar_floating=boolean:true nav_pinned=boolean:false nav_label_mode=string:ALL main_fab_round=boolean:false
+[13:35:58] system dialog on screen: text="Pixel Launcher isn't responding"
+[13:36:14] warning: no tab 'History' on screen (02)
+[13:36:26] warning: no tab 'Favorites' on screen (02)
+[13:36:39] warning: no tab 'Explore' on screen (02)
+[13:36:52] warning: no tab 'Feed' on screen (02)
+[13:37:05] warning: no tab 'History' on screen (02)
+[13:37:17] warning: no tab 'Favorites' on screen (02)
+[13:37:30] warning: no tab 'Explore' on screen (02)
+[13:37:43] warning: no tab 'History' on screen (02)
+[13:37:55] warning: no tab 'Favorites' on screen (02)
+[13:38:08] warning: no tab 'Explore' on screen (02)
+[13:38:21] warning: no tab 'History' on screen (02)
+[13:38:34] warning: no tab 'Favorites' on screen (02)
+[13:38:47] warning: no tab 'Explore' on screen (02)
+[13:38:49] === combo 03: nav_floating=boolean:false top_bar_floating=boolean:true nav_pinned=boolean:false nav_label_mode=string:SELECTED main_fab_round=boolean:true
+[13:39:15] warning: no tab 'History' on screen (03)
+[13:41:00] warning: no tab 'Favorites' on screen (03)
+[13:41:24] FAIL: 03 | Explore | fully hidden: top bar not fully hidden: 359px still on screen
+[13:42:43] warning: no tab 'Explore' on screen (03)
+[13:44:19] warning: no tab 'Feed' on screen (03)
+[13:45:06] === combo 04: nav_floating=boolean:false top_bar_floating=boolean:true nav_pinned=boolean:false nav_label_mode=string:SELECTED_BESIDE main_fab_round=boolean:true
+[13:45:32] warning: no tab 'History' on screen (04)
+[13:47:18] warning: no tab 'Favorites' on screen (04)
+[13:47:41] FAIL: 04 | Explore | fully hidden: top bar not fully hidden: 359px still on screen
+[13:49:01] warning: no tab 'Explore' on screen (04)
+[13:50:38] warning: no tab 'Feed' on screen (04)
+[13:51:26] === combo 05-font130: nav_floating=boolean:false top_bar_floating=boolean:true nav_pinned=boolean:false nav_label_mode=string:ALL main_fab_round=boolean:false
+[13:53:41] warning: no tab 'History' on screen (05-font130)
+[13:55:44] warning: no tab 'Favorites' on screen (05-font130)
+[13:57:48] warning: no tab 'Explore' on screen (05-font130)
+[13:59:51] warning: no tab 'Feed' on screen (05-font130)
+[14:01:56] warning: no tab 'History' on screen (05-font130)
+[14:04:00] warning: no tab 'Favorites' on screen (05-font130)
+[14:06:04] warning: no tab 'Explore' on screen (05-font130)
+[14:08:08] warning: no tab 'History' on screen (05-font130)
+[14:10:11] warning: no tab 'Favorites' on screen (05-font130)
+[14:12:14] warning: no tab 'Explore' on screen (05-font130)
+[14:14:17] warning: no tab 'History' on screen (05-font130)
+[14:16:21] warning: no tab 'Favorites' on screen (05-font130)
+[14:18:25] warning: no tab 'Explore' on screen (05-font130)
+[14:18:27] === combo 06-font130: nav_floating=boolean:false top_bar_floating=boolean:true nav_pinned=boolean:false nav_label_mode=string:SELECTED main_fab_round=boolean:true
+[14:18:55] warning: no tab 'History' on screen (06-font130)
+[14:20:39] warning: no tab 'Favorites' on screen (06-font130)
+[14:22:20] warning: no tab 'Explore' on screen (06-font130)
+[14:23:56] warning: no tab 'Feed' on screen (06-font130)
+[14:24:45] === combo 07: nav_floating=boolean:false top_bar_floating=boolean:true nav_pinned=boolean:false nav_label_mode=string:NONE nav_capsule=boolean:false
+[14:26:59] warning: no tab 'History' on screen (07)
+[14:29:02] warning: no tab 'Favorites' on screen (07)
+[14:31:05] warning: no tab 'Explore' on screen (07)
+[14:33:09] warning: no tab 'Feed' on screen (07)
+[14:35:13] warning: no tab 'History' on screen (07)
+[14:37:16] warning: no tab 'Favorites' on screen (07)
+[14:39:19] warning: no tab 'Explore' on screen (07)
+[14:41:23] warning: no tab 'History' on screen (07)
+[14:43:27] warning: no tab 'Favorites' on screen (07)
+[14:45:30] warning: no tab 'Explore' on screen (07)
+[14:47:33] warning: no tab 'History' on screen (07)
+[14:49:36] warning: no tab 'Favorites' on screen (07)
+[14:51:40] warning: no tab 'Explore' on screen (07)
+[14:51:42] === combo 08: nav_floating=boolean:false top_bar_floating=boolean:true nav_pinned=boolean:false nav_label_mode=string:SELECTED nav_full_width=boolean:true main_fab_round=boolean:true
+[14:52:09] warning: no tab 'History' on screen (08)
+[14:53:53] warning: no tab 'Favorites' on screen (08)
+[14:54:16] FAIL: 08 | Explore | fully hidden: top bar not fully hidden: 359px still on screen
+[14:55:36] warning: no tab 'Explore' on screen (08)
+[14:57:13] warning: no tab 'Feed' on screen (08)
+[14:58:01] === combo 09: nav_floating=boolean:false top_bar_floating=boolean:true nav_pinned=boolean:false nav_label_mode=string:ALL nav_floating_height=int:64 nav_corner_radius=int:12 nav_spacing=int:4 nav_height=int:72
+[15:00:16] warning: no tab 'History' on screen (09)
+[15:02:19] warning: no tab 'Favorites' on screen (09)
+[15:04:23] warning: no tab 'Explore' on screen (09)
+[15:06:26] warning: no tab 'Feed' on screen (09)
+[15:08:30] warning: no tab 'History' on screen (09)
+[15:10:34] warning: no tab 'Favorites' on screen (09)
+[15:12:38] warning: no tab 'Explore' on screen (09)
+[15:14:41] warning: no tab 'History' on screen (09)
+[15:16:44] warning: no tab 'Favorites' on screen (09)
+[15:18:47] warning: no tab 'Explore' on screen (09)
+[15:20:50] warning: no tab 'History' on screen (09)
+[15:22:53] warning: no tab 'Favorites' on screen (09)
+[15:24:56] warning: no tab 'Explore' on screen (09)
+[15:24:59] === combo 10: nav_floating=boolean:false top_bar_floating=boolean:true nav_pinned=boolean:false nav_label_mode=string:SELECTED nav_opacity=int:70 nav_accent=boolean:true nav_layered_surface=boolean:true
+[15:27:14] warning: no tab 'History' on screen (10)
+[15:29:18] warning: no tab 'Favorites' on screen (10)
+[15:31:22] warning: no tab 'Explore' on screen (10)
+[15:33:25] warning: no tab 'Feed' on screen (10)
+[15:35:28] warning: no tab 'History' on screen (10)
+[15:37:31] warning: no tab 'Favorites' on screen (10)
+[15:39:35] warning: no tab 'Explore' on screen (10)
+[15:41:38] warning: no tab 'History' on screen (10)
+[15:43:41] warning: no tab 'Favorites' on screen (10)
+[15:45:44] warning: no tab 'Explore' on screen (10)
+[15:47:47] warning: no tab 'History' on screen (10)
+[15:49:50] warning: no tab 'Favorites' on screen (10)
+[15:51:54] warning: no tab 'Explore' on screen (10)
+[15:51:57] === combo 11-landscape: nav_floating=boolean:false top_bar_floating=boolean:true nav_pinned=boolean:false nav_label_mode=string:ALL main_fab_round=boolean:true
+[15:52:23] warning: no tab 'History' on screen (11-landscape)
+[15:54:06] warning: no tab 'Favorites' on screen (11-landscape)
+[15:55:28] FAIL: 11-landscape | Explore | back at the top: first item under the top bar: item top 0 < bar bottom 252
+[15:55:42] warning: no tab 'Explore' on screen (11-landscape)
+[15:57:18] warning: no tab 'Feed' on screen (11-landscape)
+[15:58:09] === combo 12-3button: nav_floating=boolean:false top_bar_floating=boolean:true nav_pinned=boolean:false nav_label_mode=string:SELECTED main_fab_round=boolean:true
+[15:58:35] warning: no tab 'History' on screen (12-3button)
+[15:59:53] FAIL: 12-3button | Favorites | other category, bar hidden: first item under the top bar: item top 12 < bar bottom 264
+[16:00:18] warning: no tab 'Favorites' on screen (12-3button)
+[16:02:06] warning: no tab 'Explore' on screen (12-3button)
+[16:03:42] warning: no tab 'Feed' on screen (12-3button)
+[16:04:33] === live switch of 'Floating top bar'
+[16:05:40] warning: no tab 'Favorites' on screen (13-live)

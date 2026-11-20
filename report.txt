@@ -1,0 +1,10 @@
+03 | Explore | fully hidden: top bar not fully hidden: 359px still on screen
+   -> fail-1.png
+04 | Explore | fully hidden: top bar not fully hidden: 359px still on screen
+   -> fail-2.png
+08 | Explore | fully hidden: top bar not fully hidden: 359px still on screen
+   -> fail-3.png
+11-landscape | Explore | back at the top: first item under the top bar: item top 0 < bar bottom 252
+   -> fail-4.png
+12-3button | Favorites | other category, bar hidden: first item under the top bar: item top 12 < bar bottom 264
+   -> fail-5.png
