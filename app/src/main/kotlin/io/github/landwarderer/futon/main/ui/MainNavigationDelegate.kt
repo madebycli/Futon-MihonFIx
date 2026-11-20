@@ -37,6 +37,7 @@ import io.github.landwarderer.futon.bookmarks.ui.AllBookmarksFragment
 import io.github.landwarderer.futon.core.nav.AppRouter
 import io.github.landwarderer.futon.core.prefs.AppMode
 import io.github.landwarderer.futon.core.prefs.AppSettings
+import io.github.landwarderer.futon.core.prefs.NavLabelMode
 import io.github.landwarderer.futon.core.prefs.NavItem
 import io.github.landwarderer.futon.core.ui.util.RecyclerViewOwner
 import io.github.landwarderer.futon.core.ui.widgets.SlidingBottomNavigationView
@@ -158,6 +159,7 @@ class MainNavigationDelegate(
 		observeSettings(lifecycleOwner)
 		val legacyItem = fragmentManager.findFragmentByTag("primary")?.let(::getItemId)
 		syncTabLifecycles()
+		notifyMenuStateChanged()
 		val fragment = primaryFragment
 		if (fragment != null) {
 			onFragmentChanged(fragment, fromUser = false)
@@ -211,11 +213,18 @@ class MainNavigationDelegate(
 			}
 			badge.isVisible = true
 		}
+		notifyMenuStateChanged()
+	}
+
+	/** The floating bar shows the sections of [navBar]; it redraws when they changed. */
+	private fun notifyMenuStateChanged() {
+		(navBar as? SlidingBottomNavigationView)?.notifyMenuStateChanged()
 	}
 
 	fun setItemVisibility(@IdRes itemId: Int, isVisible: Boolean) {
 		val item = navBar.menu.findItem(itemId) ?: return
 		item.isVisible = isVisible
+		notifyMenuStateChanged()
 		if (item.isChecked && !isVisible) {
 			navBar.selectedItemId = firstItem()?.itemId ?: return
 		}
@@ -450,11 +459,17 @@ class MainNavigationDelegate(
 	}
 
 	private fun observeSettings(lifecycleOwner: LifecycleOwner) {
-		settings.observe(AppSettings.KEY_TRACKER_ENABLED, AppSettings.KEY_SUGGESTIONS, AppSettings.KEY_NAV_LABELS)
+		settings.observe(
+			AppSettings.KEY_TRACKER_ENABLED,
+			AppSettings.KEY_SUGGESTIONS,
+			AppSettings.KEY_NAV_LABEL_MODE,
+			AppSettings.KEY_NAV_CAPSULE,
+		)
 			.onEach {
 				setItemVisibility(R.id.nav_suggestions, settings.isSuggestionsEnabled)
 				setItemVisibility(R.id.nav_feed, settings.isTrackerEnabled)
-				setNavbarIsLabeled(settings.isNavLabelsVisible)
+				setNavbarLabels(settings.navLabelMode)
+				navBar.isItemActiveIndicatorEnabled = settings.isNavCapsuleEnabled
 			}.launchIn(lifecycleOwner.lifecycleScope)
 	}
 
@@ -466,25 +481,32 @@ class MainNavigationDelegate(
 		return null
 	}
 
-	private fun setNavbarIsLabeled(value: Boolean) {
+	/**
+	 * The labels of the docked bar and of the rail. The floating bar reads the same setting itself. "Beside the icon"
+	 * is a look of the floating bar only; the docked bar and the rail show the label of the selected item below its
+	 * icon then, as the docked NavigationBar of Kototoro ignores its indicator style too.
+	 */
+	private fun setNavbarLabels(mode: NavLabelMode) {
+		val isLabeled = mode != NavLabelMode.NONE
 		if (navBar is SlidingBottomNavigationView) {
 			navBar.minimumHeight = navBar.resources.getDimensionPixelSize(
-				if (value) {
+				if (isLabeled) {
 					materialR.dimen.m3_bottom_nav_min_height
 				} else {
 					R.dimen.nav_bar_height_compact
 				},
 			)
 		}
-		navRailHeader?.buttonExpand?.isVisible = value
-		if (!value) {
+		navRailHeader?.buttonExpand?.isVisible = isLabeled
+		if (!isLabeled) {
 			setNavbarIsExpanded(false)
 		}
-		navBar.labelVisibilityMode = if (value) {
-			NavigationBarView.LABEL_VISIBILITY_LABELED
-		} else {
-			NavigationBarView.LABEL_VISIBILITY_UNLABELED
+		navBar.labelVisibilityMode = when (mode) {
+			NavLabelMode.NONE -> NavigationBarView.LABEL_VISIBILITY_UNLABELED
+			NavLabelMode.ALL -> NavigationBarView.LABEL_VISIBILITY_LABELED
+			NavLabelMode.SELECTED, NavLabelMode.SELECTED_BESIDE -> NavigationBarView.LABEL_VISIBILITY_SELECTED
 		}
+		notifyMenuStateChanged()
 	}
 
 	private fun setNavbarIsExpanded(value: Boolean) {

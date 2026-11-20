@@ -15,6 +15,7 @@ import androidx.appcompat.view.ActionMode
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.view.MenuProvider
+import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.children
 import androidx.core.view.inputmethod.EditorInfoCompat
@@ -47,6 +48,7 @@ import io.github.landwarderer.futon.core.prefs.AppSettings
 import io.github.landwarderer.futon.core.prefs.HomeBackgroundFont
 import io.github.landwarderer.futon.core.prefs.NavItem
 import io.github.landwarderer.futon.core.ui.BaseActivity
+import io.github.landwarderer.futon.core.ui.util.BottomOverlay
 import io.github.landwarderer.futon.core.ui.util.FadingAppbarMediator
 import io.github.landwarderer.futon.core.ui.util.FontCache
 import io.github.landwarderer.futon.core.ui.util.MenuInvalidator
@@ -84,6 +86,8 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
@@ -120,6 +124,7 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
 	private var modeSwitcherSpotlight: ModeSwitcherSpotlightOverlay? = null
 	private lateinit var navigationDelegate: MainNavigationDelegate
 	private lateinit var fadingAppbarMediator: FadingAppbarMediator
+	private var navBarController: FloatingNavBarController? = null
 
 	override val appBar: AppBarLayout
 		get() = viewBinding.appbar
@@ -129,11 +134,14 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
 
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
+		builtBarLayout = barLayout()
+		isRebuiltForBarLayout = savedInstanceState?.getBoolean(KEY_REBUILT_FOR_BAR_LAYOUT) == true
 		setContentView(ActivityMainBinding.inflate(layoutInflater))
 		setSupportActionBar(viewBinding.searchBar)
 		updateHomeWatermark()
 
 		viewBinding.fab?.setOnClickListener(this)
+		navBarController = bottomNav?.let { FloatingNavBarController(it, settings, this) }
 		viewBinding.navRail?.headerView?.findViewById<View>(R.id.railFab)?.setOnClickListener(this)
 		fadingAppbarMediator =
 			FadingAppbarMediator(viewBinding.appbar, viewBinding.layoutSearch ?: viewBinding.searchBar)
@@ -179,6 +187,14 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
 			}
 		}, false)
 
+		// Also while this screen is in the background, where the settings are changed: it is rebuilt there unseen.
+		navBarController?.apply()
+		adjustFabVisibility()
+		updateContainerBottomMargin()
+		settings.observe(*BAR_LAYOUT_KEYS).onEach {
+			recreateIfBarLayoutChanged()
+		}.launchIn(lifecycleScope)
+
 		// Defer heavy initialization to after window is shown to prevent ANR on slow devices
 		lifecycleScope.launch {
 			lifecycle.withResumed {
@@ -187,6 +203,9 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
 				viewModel.isLoading.observe(this@MainActivity, this@MainActivity::onLoadingStateChanged)
 				viewModel.isResumeEnabled.observe(this@MainActivity, this@MainActivity::onResumeEnabledChanged)
 				viewModel.feedCounter.observe(this@MainActivity, ::onFeedCounterChanged)
+				viewModel.lastReadManga.observe(this@MainActivity) { manga ->
+					navBarController?.setResumeManga(manga)
+				}
 				viewModel.onShowOnboarding.observeEvent(this@MainActivity) {
 					onboardingLauncher.launch(Intent(this@MainActivity, OnboardingActivity::class.java))
 				}
@@ -229,6 +248,55 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
 		navigationDelegate.syncSelectedItem()
 	}
 
+	override fun onPostCreate(savedInstanceState: Bundle?) {
+		super.onPostCreate(savedInstanceState)
+		if (isRebuiltForBarLayout) {
+			// Rebuilt for other bar settings: the bars start from their normal place (the app bar would otherwise
+			// restore its old offset), the tabs and the positions in the lists stay as they were.
+			isRebuiltForBarLayout = false
+			viewBinding.appbar.setExpanded(true, false)
+			viewBinding.bottomNav?.translationY = 0f
+		}
+	}
+
+	override fun onRestart() {
+		super.onRestart()
+		recreateIfBarLayoutChanged()
+	}
+
+	override fun onResume() {
+		super.onResume()
+		// The lists take the paddings for the floating bars from the window insets. A screen rebuilt in the
+		// background may not have had them dispatched with the final bar sizes: dispatch them again once it is shown.
+		ViewCompat.requestApplyInsets(viewBinding.root)
+	}
+
+	override fun onSaveInstanceState(outState: Bundle) {
+		super.onSaveInstanceState(outState)
+		outState.putBoolean(KEY_REBUILT_FOR_BAR_LAYOUT, isRecreatingForBarLayout)
+	}
+
+	/** The values of the bar settings this screen was built with. */
+	private var builtBarLayout: String? = null
+	private var isRecreatingForBarLayout = false
+	private var isRebuiltForBarLayout = false
+
+	private fun barLayout(): String {
+		val values = settings.getAllValues()
+		return BAR_LAYOUT_KEYS.joinToString("|") { "${values[it]}" }
+	}
+
+	/**
+	 * The look of the bars changed (in the settings, while this screen was in the background): the screen is built
+	 * again instead of restyling the bars in place, where paddings, margins and offsets of the old layout could stay
+	 * behind. The activity is stopped then, so the rebuild is not seen.
+	 */
+	private fun recreateIfBarLayoutChanged() {
+		if (isRecreatingForBarLayout || isFinishing || builtBarLayout == barLayout()) return
+		isRecreatingForBarLayout = true
+		ActivityCompat.recreate(this)
+	}
+
 	override fun onFragmentChanged(fragment: Fragment, fromUser: Boolean) {
 		adjustFabVisibility(topFragment = fragment)
 		adjustAppbar(topFragment = fragment)
@@ -244,6 +312,7 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
 		if (fromUser) {
 			actionModeDelegate.finishActionMode()
 			viewBinding.appbar.setExpanded(true)
+			viewBinding.bottomNav?.revealIfScrolledAway()
 		}
 	}
 
@@ -255,7 +324,7 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
 
 	override fun onClick(v: View) {
 		when (v.id) {
-			R.id.fab, R.id.railFab -> viewModel.openLastReader()
+			R.id.fab, R.id.railFab, R.id.roundFab -> viewModel.openLastReader()
 		}
 	}
 
@@ -271,11 +340,12 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
 				searchBarDefaultMargin + barsInsets.start(v)
 			}
 		}
-		viewBinding.bottomNav?.updatePadding(
-			left = barsInsets.left,
-			right = barsInsets.right,
-			bottom = barsInsets.bottom,
-		)
+		navBarController?.onInsets(barsInsets.left, barsInsets.right, barsInsets.bottom)
+			?: viewBinding.bottomNav?.updatePadding(
+				left = barsInsets.left,
+				right = barsInsets.right,
+				bottom = barsInsets.bottom,
+			)
 		viewBinding.navRail?.updateLayoutParams<MarginLayoutParams> {
 			marginStart = barsInsets.start(v)
 			topMargin = barsInsets.top
@@ -356,6 +426,7 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
 	}
 
 	private fun onLoadingStateChanged(isLoading: Boolean) {
+		navBarController?.setResumeEnabled(!isLoading)
 		val fab = viewBinding.fab ?: viewBinding.navRail?.headerView ?: return
 		fab.isEnabled = !isLoading
 	}
@@ -402,8 +473,13 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
 		isSearchOpened: Boolean = viewBinding.searchView.isShowing,
 	) {
 		navigationDelegate.navRailHeader?.railFab?.isVisible = isResumeEnabled
+		// The round button replaces the continue button of History: never both.
+		val isRound = settings.isMainFabRound
+		val isIdle = !actionModeDelegate.isActionModeStarted && !isSearchOpened
+		val showRound = isResumeEnabled && isRound && isIdle
+		navBarController?.isResumeVisible = showRound
 		val fab = viewBinding.fab ?: return
-		if (isResumeEnabled && !actionModeDelegate.isActionModeStarted && !isSearchOpened && topFragment is HistoryListFragment) {
+		if (isResumeEnabled && !isRound && isIdle && topFragment is HistoryListFragment) {
 			if (!fab.isVisible) {
 				fab.show()
 			}
@@ -415,14 +491,7 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
 	}
 
 	private fun adjustSearchUI(isOpened: Boolean) {
-		val appBarScrollFlags = if (isOpened) {
-			SCROLL_FLAG_NO_SCROLL
-		} else {
-			SCROLL_FLAG_SCROLL or SCROLL_FLAG_ENTER_ALWAYS or SCROLL_FLAG_SNAP
-		}
-		viewBinding.insetsHolder.updateLayoutParams<AppBarLayout.LayoutParams> {
-			scrollFlags = appBarScrollFlags
-		}
+		updateAppBarScrolling(isNavPinned, isOpened)
 		adjustFabVisibility(isSearchOpened = isOpened)
 		bottomNav?.showOrHide(!isOpened)
 		updateContainerBottomMargin()
@@ -499,27 +568,41 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
 			.attachToRecyclerView(viewBinding.recyclerViewSearch)
 	}
 
+	private var isNavPinned = false
+
 	private fun setNavbarPinned(isPinned: Boolean) {
-		val bottomNavBar = viewBinding.bottomNav
-		bottomNavBar?.isPinned = isPinned
-		for (view in viewBinding.appbar.children) {
-			val lp = view.layoutParams as? AppBarLayout.LayoutParams ?: continue
-			val scrollFlags = if (isPinned) {
-				lp.scrollFlags and SCROLL_FLAG_SCROLL.inv()
-			} else {
-				lp.scrollFlags or SCROLL_FLAG_SCROLL
-			}
-			if (scrollFlags != lp.scrollFlags) {
-				lp.scrollFlags = scrollFlags
-				view.layoutParams = lp
+		isNavPinned = isPinned
+		viewBinding.bottomNav?.isPinned = isPinned
+		updateAppBarScrolling(isPinned, viewBinding.searchView.isShowing)
+		updateContainerBottomMargin()
+	}
+
+	private fun updateAppBarScrolling(pinned: Boolean, searchOpen: Boolean) {
+		val flags = if (pinned || searchOpen) SCROLL_FLAG_NO_SCROLL else
+			SCROLL_FLAG_SCROLL or SCROLL_FLAG_ENTER_ALWAYS or SCROLL_FLAG_SNAP
+		for (child in viewBinding.appbar.children) {
+			val params = child.layoutParams as AppBarLayout.LayoutParams
+			if (params.scrollFlags != flags) {
+				params.scrollFlags = flags
+				child.layoutParams = params
 			}
 		}
-		updateContainerBottomMargin()
+		if (pinned || searchOpen) viewBinding.appbar.setExpanded(true, false)
 	}
 
 	private fun updateContainerBottomMargin() {
 		val bottomNavBar = viewBinding.bottomNav ?: return
-		val newMargin = if (bottomNavBar.isPinned && bottomNavBar.isShownOrShowing) bottomNavBar.height else 0
+		val gapBelowBar = (bottomNavBar.layoutParams as? MarginLayoutParams)?.bottomMargin ?: 0
+		// The floating bar never pushes the content up, pinned or not: the lists scroll behind it and get its height
+		// as bottom padding (BottomOverlay), so their last item can be scrolled above the bar.
+		val isFloating = settings.isNavFloating
+		val overlay = if (isFloating && bottomNavBar.isShownOrShowing) navBarController?.listOverlayHeight ?: 0 else 0
+		BottomOverlay.set(viewBinding.container, overlay)
+		val newMargin = if (!isFloating && bottomNavBar.isPinned && bottomNavBar.isShownOrShowing) {
+			bottomNavBar.height + gapBelowBar
+		} else {
+			0
+		}
 		with(viewBinding.container) {
 			val params = layoutParams as MarginLayoutParams
 			if (params.bottomMargin != newMargin) {
@@ -592,3 +675,22 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
 		awaitClose { removeTransitionListener(listener) }
 	}
 }
+
+private const val KEY_REBUILT_FOR_BAR_LAYOUT = "rebuilt_for_bar_layout"
+
+/** Settings that change the layout of the bars; a change rebuilds the main screen. */
+private val BAR_LAYOUT_KEYS = arrayOf(
+	AppSettings.KEY_NAV_FLOATING,
+	AppSettings.KEY_NAV_LABEL_MODE,
+	AppSettings.KEY_NAV_CAPSULE,
+	AppSettings.KEY_NAV_FULL_WIDTH,
+	AppSettings.KEY_NAV_FLOATING_HEIGHT,
+	AppSettings.KEY_NAV_CORNER_RADIUS,
+	AppSettings.KEY_NAV_SPACING,
+	AppSettings.KEY_NAV_LAYERED_SURFACE,
+	AppSettings.KEY_NAV_HEIGHT,
+	AppSettings.KEY_NAV_OPACITY,
+	AppSettings.KEY_NAV_ACCENT,
+	AppSettings.KEY_MAIN_FAB_ROUND,
+	AppSettings.KEY_NAV_PINNED,
+)

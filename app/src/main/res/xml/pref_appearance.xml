@@ -127,6 +127,93 @@
             android:key="nav_main"
             android:title="@string/main_screen_sections" />
 
+        <ListPreference
+            android:entries="@array/nav_label_modes"
+            android:entryValues="@array/values_nav_label_modes"
+            android:key="nav_label_mode"
+            android:title="@string/show_labels_in_navbar"
+            app:useSimpleSummaryProvider="true" />
+
+        <SwitchPreferenceCompat
+            android:defaultValue="true"
+            android:key="nav_capsule"
+            android:summary="@string/nav_capsule_summary"
+            android:title="@string/nav_capsule" />
+
+        <SwitchPreferenceCompat
+            android:defaultValue="false"
+            android:key="nav_accent"
+            android:summary="@string/nav_accent_summary"
+            android:title="@string/nav_accent" />
+
+        <io.github.landwarderer.futon.settings.utils.SliderPreference
+            android:key="nav_opacity"
+            android:stepSize="5"
+            android:title="@string/nav_opacity"
+            android:valueFrom="40"
+            android:valueTo="100"
+            app:defaultValue="100" />
+
+        <SwitchPreferenceCompat
+            android:defaultValue="false"
+            android:key="nav_floating"
+            android:summary="@string/nav_floating_summary"
+            android:title="@string/nav_floating" />
+
+        <SwitchPreferenceCompat
+            android:defaultValue="false"
+            android:key="nav_full_width"
+            android:summary="@string/nav_full_width_summary"
+            android:title="@string/nav_full_width"
+            app:isPreferenceVisible="false" />
+
+        <io.github.landwarderer.futon.settings.utils.SliderPreference
+            android:key="nav_floating_height"
+            android:stepSize="2"
+            android:title="@string/nav_floating_height"
+            android:valueFrom="48"
+            android:valueTo="84"
+            app:defaultValue="52"
+            app:isPreferenceVisible="false" />
+
+        <io.github.landwarderer.futon.settings.utils.SliderPreference
+            android:key="nav_corner_radius"
+            android:stepSize="2"
+            android:title="@string/nav_corner_radius"
+            android:valueFrom="0"
+            android:valueTo="32"
+            app:defaultValue="28"
+            app:isPreferenceVisible="false" />
+
+        <io.github.landwarderer.futon.settings.utils.SliderPreference
+            android:key="nav_spacing"
+            android:stepSize="2"
+            android:title="@string/nav_spacing"
+            android:valueFrom="0"
+            android:valueTo="32"
+            app:defaultValue="16"
+            app:isPreferenceVisible="false" />
+
+        <io.github.landwarderer.futon.settings.utils.SliderPreference
+            android:key="nav_height"
+            android:stepSize="4"
+            android:title="@string/nav_height_min"
+            android:valueFrom="56"
+            android:valueTo="96"
+            app:defaultValue="80" />
+
+        <SwitchPreferenceCompat
+            android:defaultValue="false"
+            android:key="nav_layered_surface"
+            android:summary="@string/nav_layered_surface_summary"
+            android:title="@string/nav_layered_surface" />
+
+        <SwitchPreferenceCompat
+            android:defaultValue="false"
+            android:key="nav_pinned"
+            android:summary="@string/pin_navigation_ui_summary"
+            android:title="@string/pin_navigation_ui" />
+
         <SwitchPreferenceCompat
             android:defaultValue="true"
             android:key="main_fab"
@@ -135,14 +222,10 @@
 
         <SwitchPreferenceCompat
             android:defaultValue="false"
-            android:key="nav_labels"
-            android:title="@string/show_labels_in_navbar" />
-
-        <SwitchPreferenceCompat
-            android:defaultValue="false"
-            android:key="nav_pinned"
-            android:summary="@string/pin_navigation_ui_summary"
-            android:title="@string/pin_navigation_ui" />
+            android:dependency="main_fab"
+            android:key="main_fab_round"
+            android:summary="@string/main_fab_round_summary"
+            android:title="@string/main_fab_round" />
 
         <SwitchPreferenceCompat
             android:defaultValue="false"

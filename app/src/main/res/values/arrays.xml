@@ -15,6 +15,18 @@
 		<item>@string/favourites</item>
 		<item>@string/history</item>
 	</string-array>
+	<string-array name="nav_label_modes">
+		<item>@string/nav_label_mode_none</item>
+		<item>@string/nav_label_mode_all</item>
+		<item>@string/nav_label_mode_selected</item>
+		<item>@string/nav_label_mode_selected_beside</item>
+	</string-array>
+	<string-array name="values_nav_label_modes" translatable="false">
+		<item>NONE</item>
+		<item>ALL</item>
+		<item>SELECTED</item>
+		<item>SELECTED_BESIDE</item>
+	</string-array>
 	<string-array name="list_modes" translatable="false">
 		<item>@string/list</item>
 		<item>@string/detailed_list</item>

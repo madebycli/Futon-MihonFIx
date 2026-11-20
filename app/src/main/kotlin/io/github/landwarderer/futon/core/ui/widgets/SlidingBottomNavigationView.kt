@@ -8,6 +8,7 @@ import android.content.Context
 import android.os.Parcel
 import android.os.Parcelable
 import android.util.AttributeSet
+import android.view.Gravity
 import android.view.MotionEvent
 import android.view.ViewPropertyAnimator
 import androidx.annotation.AttrRes
@@ -49,13 +50,78 @@ class SlidingBottomNavigationView @JvmOverloads constructor(
 		get() = behavior.isPinned
 		set(value) {
 			behavior.isPinned = value
-			if (value) {
-				translationX = 0f
+			if (value && currentState == STATE_UP) {
+				currentAnimator?.cancel()
+				translationY = 0f
 			}
 		}
 
+	/** How far the bar slides to leave the screen: its height plus the gap below it when it floats. */
+	val slideRange: Int
+		get() = measureHeight() + ((layoutParams as? android.view.ViewGroup.MarginLayoutParams)?.bottomMargin ?: 0)
+
 	val isShownOrShowing: Boolean
 		get() = isVisible && currentState == STATE_UP
+
+	// Read back, as the constructor of the super class already set the minimum height from the style.
+	private var dockedMinimumHeight: Int = minimumHeight
+
+	/**
+	 * The floating bar that is shown instead of the docked one, or null for the docked bar. The docked menu view
+	 * stays the source of the sections and the selection; it is only hidden while the floating bar is shown.
+	 */
+	var floatingRow: FloatingNavRow? = null
+		set(value) {
+			if (field === value) return
+			field?.let { removeView(it) }
+			field = value
+			if (value != null) {
+				(value.parent as? android.view.ViewGroup)?.removeView(value)
+				addView(value, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT, Gravity.BOTTOM))
+			}
+			getChildAt(0)?.isVisible = value == null
+			applyMinimumHeight()
+		}
+
+	/**
+	 * A height chosen in the settings for the docked bar, or null to keep the height that follows the labels. It is a
+	 * minimum: the bar never gets lower than its icons and labels need.
+	 */
+	var dockedHeightOverride: Int? = null
+		set(value) {
+			if (field != value) {
+				field = value
+				applyMinimumHeight()
+				requestLayout()
+			}
+		}
+
+	/** Called when the selection, the visible sections or a badge changed, to redraw the floating bar. */
+	var onMenuStateChanged: (() -> Unit)? = null
+
+	fun notifyMenuStateChanged() {
+		onMenuStateChanged?.invoke()
+	}
+
+	override fun setOnItemSelectedListener(listener: OnItemSelectedListener?) {
+		super.setOnItemSelectedListener(
+			listener?.let { l ->
+				OnItemSelectedListener { item ->
+					// The item becomes checked after the listener returned, so the floating bar reads it afterwards.
+					l.onNavigationItemSelected(item).also { post { notifyMenuStateChanged() } }
+				}
+			},
+		)
+	}
+
+	override fun dispatchTouchEvent(ev: MotionEvent): Boolean {
+		val row = floatingRow
+		// The floating bar is narrower than this view: touches beside and above it belong to the content.
+		if (row != null && ev.actionMasked == MotionEvent.ACTION_DOWN && !row.isTouchOnContent(ev.x, ev.y)) {
+			return false
+		}
+		return super.dispatchTouchEvent(ev)
+	}
 
 	override fun getBehavior(): CoordinatorLayout.Behavior<*> {
 		return behavior
@@ -112,7 +178,7 @@ class SlidingBottomNavigationView @JvmOverloads constructor(
 	override fun onRestoreInstanceState(state: Parcelable?) {
 		if (state is SavedState) {
 			super.onRestoreInstanceState(state.superState)
-			super.setTranslationY(state.translationY)
+			super.setTranslationY(if (isPinned && state.currentState == STATE_UP) 0f else state.translationY)
 			currentState = state.currentState
 		} else {
 			super.onRestoreInstanceState(state)
@@ -127,8 +193,17 @@ class SlidingBottomNavigationView @JvmOverloads constructor(
 	}
 
 	override fun setMinimumHeight(minHeight: Int) {
-		super.setMinimumHeight(minHeight)
-		getChildAt(0)?.minimumHeight = minHeight
+		dockedMinimumHeight = minHeight
+		applyMinimumHeight()
+	}
+
+	/** The minimum height is that of the docked bar; the floating bar has its own height. */
+	private fun applyMinimumHeight() {
+		val docked = dockedHeightOverride ?: dockedMinimumHeight
+		super.setMinimumHeight(if (floatingRow == null) docked else 0)
+		// The chosen height is a minimum: when the icons and labels need more room the bar grows instead of cutting
+		// them off, so a low setting never pushes an icon out of the bar.
+		getChildAt(0)?.minimumHeight = docked
 	}
 
 	fun show() {
@@ -154,7 +229,7 @@ class SlidingBottomNavigationView @JvmOverloads constructor(
 		clearAnimation()
 
 		currentState = STATE_DOWN
-		val target = measureHeight()
+		val target = slideRange
 		if (target == 0) {
 			return
 		}
@@ -163,6 +238,17 @@ class SlidingBottomNavigationView @JvmOverloads constructor(
 			SLIDE_DOWN_ANIMATION_DURATION,
 			FastOutLinearInInterpolator(),
 		)
+	}
+
+	/**
+	 * Brings the bar fully back when scrolling left it partly hidden, as Kototoro resets its bottom bar when another
+	 * section is opened. Does nothing while the bar is hidden on purpose (action mode).
+	 */
+	fun revealIfScrolledAway() {
+		if (currentState == STATE_UP && translationY != 0F) {
+			currentAnimator?.cancel()
+			animateTranslation(0F, SLIDE_UP_ANIMATION_DURATION, LinearOutSlowInInterpolator())
+		}
 	}
 
 	fun showOrHide(show: Boolean) {

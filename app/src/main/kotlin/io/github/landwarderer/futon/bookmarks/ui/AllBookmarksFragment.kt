@@ -14,6 +14,7 @@ import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.GridLayoutManager
 import dagger.hilt.android.AndroidEntryPoint
 import io.github.landwarderer.futon.R
+import io.github.landwarderer.futon.core.ui.util.BottomOverlay
 import io.github.landwarderer.futon.bookmarks.domain.Bookmark
 import io.github.landwarderer.futon.bookmarks.ui.adapter.BookmarksAdapter
 import io.github.landwarderer.futon.core.exceptions.resolve.SnackbarErrorObserver
@@ -118,7 +119,7 @@ class AllBookmarksFragment :
 			barsInsets.left + basePadding,
 			barsInsets.top + basePadding,
 			barsInsets.right + basePadding,
-			barsInsets.bottom + basePadding,
+			barsInsets.bottom + basePadding + BottomOverlay.of(v),
 		)
 		return insets.consumeAllSystemBarsInsets()
 	}

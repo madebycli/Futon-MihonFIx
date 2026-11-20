@@ -129,6 +129,7 @@ class AppearanceSettingsFragment :
         }
         updateCustomThemeSummaries()
         bindNavSummary()
+        bindNavBarOptions()
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -169,6 +170,12 @@ class AppearanceSettingsFragment :
                 bindNavSummary()
             }
 
+            AppSettings.KEY_NAV_FLOATING,
+            AppSettings.KEY_NAV_LAYERED_SURFACE,
+                -> bindNavBarOptions()
+
+            AppSettings.KEY_NAV_LABEL_MODE -> settings.syncLegacyNavLabels()
+
             AppSettings.KEY_APP_PASSWORD -> {
                 findPreference<TwoStatePreference>(AppSettings.KEY_PROTECT_APP)
                     ?.isChecked = !settings.appPassword.isNullOrEmpty()
@@ -191,6 +198,22 @@ class AppearanceSettingsFragment :
 
             else -> super.onPreferenceTreeClick(preference)
         }
+    }
+
+    /**
+     * The options of the floating bar are only shown while the bar floats, the raised surface only while it is
+     * docked, so the list only offers what changes the bar that is in use.
+     */
+    private fun bindNavBarOptions() {
+        val isFloating = settings.isNavFloating
+        for (key in FLOATING_NAV_KEYS) {
+            findPreference<Preference>(key)?.isVisible = isFloating
+        }
+        findPreference<Preference>(AppSettings.KEY_NAV_LAYERED_SURFACE)?.isVisible = !isFloating
+        findPreference<Preference>(AppSettings.KEY_NAV_HEIGHT)?.isVisible = !isFloating
+        // The radius shapes the floating bar and the raised docked bar; the plain docked bar has no corners.
+        findPreference<Preference>(AppSettings.KEY_NAV_CORNER_RADIUS)?.isVisible =
+            isFloating || settings.isNavLayeredSurface
     }
 
     private fun postRestart() {
@@ -333,5 +356,11 @@ class AppearanceSettingsFragment :
         const val KEY_CUSTOM_THEMES_MANAGEMENT = "custom_themes_management"
         const val KEY_CUSTOM_THEME_IMPORT = "custom_theme_import"
         const val KEY_CUSTOM_THEME_DELETE = "custom_theme_delete"
+
+        val FLOATING_NAV_KEYS = arrayOf(
+            AppSettings.KEY_NAV_FULL_WIDTH,
+            AppSettings.KEY_NAV_FLOATING_HEIGHT,
+            AppSettings.KEY_NAV_SPACING,
+        )
     }
 }
