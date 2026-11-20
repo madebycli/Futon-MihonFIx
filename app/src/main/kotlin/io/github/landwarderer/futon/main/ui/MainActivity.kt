@@ -473,7 +473,12 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
 	 * the app bar as before, a list starts below the search bar, and it scrolls on behind it.
 	 */
 	private fun updateTopOverlay() {
-		val overlay = if (settings.isTopBarFloating) viewBinding.appbar.height else 0
+		val isFloating = settings.isTopBarFloating
+		val height = viewBinding.appbar.height
+		// Before the app bar is measured its height is 0: keep the last value rather than switching the lists to
+		// the docked layout for a moment (a late callback could then mix the two).
+		if (isFloating && height == 0) return
+		val overlay = if (isFloating) height else 0
 		viewBinding.container.updateLayoutParams<CoordinatorLayout.LayoutParams> {
 			topMargin = -overlay
 		}

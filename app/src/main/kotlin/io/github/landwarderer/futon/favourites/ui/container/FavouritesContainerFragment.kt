@@ -92,8 +92,12 @@ class FavouritesContainerFragment : BaseFragment<FragmentFavouritesContainerBind
 		if (bottom - top != oldBottom - oldTop) updatePagerOverlay()
 	}
 
+	/** Whether the tabs are the floating bar now; a late layout callback must not bring its padding back. */
+	private var isTabsFloating = false
+
 	/** The pager starts at the top, behind the floating tabs; its lists start below them (TopOverlay). */
 	private fun updatePagerOverlay() {
+		if (!isTabsFloating) return
 		val binding = viewBinding ?: return
 		val tabs = binding.tabs
 		val gap = (FLOATING_TABS_GAP_DP * resources.displayMetrics.density).toInt()
@@ -147,6 +151,7 @@ class FavouritesContainerFragment : BaseFragment<FragmentFavouritesContainerBind
 		val tabs = binding.tabs
 		val density = resources.displayMetrics.density
 		val isFloating = topOverlay > 0
+		isTabsFloating = isFloating
 		if (isFloating) {
 			val margin = (FLOATING_TABS_MARGIN_DP * density).toInt()
 			tabs.updateLayoutParams<ViewGroup.MarginLayoutParams> {
