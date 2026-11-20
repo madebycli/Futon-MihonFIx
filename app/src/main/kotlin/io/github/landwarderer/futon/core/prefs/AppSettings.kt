@@ -224,6 +224,13 @@ class AppSettings internal constructor(
 	val isNavLayeredSurface: Boolean
 		get() = prefs.getBoolean(KEY_NAV_LAYERED_SURFACE, false)
 
+	/**
+	 * The search bar (and the category tabs of Favourites) float above the lists of the main screen: the lists scroll
+	 * behind them instead of starting below a band at the top.
+	 */
+	val isTopBarFloating: Boolean
+		get() = prefs.getBoolean(KEY_TOP_BAR_FLOATING, false)
+
 	/** The continue button is a round button with the cover of the last manga, next to the bar on every main screen. */
 	val isMainFabRound: Boolean
 		get() = prefs.getBoolean(KEY_MAIN_FAB_ROUND, false)
@@ -1157,6 +1164,7 @@ class AppSettings internal constructor(
 		const val KEY_NAV_LABELS = "nav_labels"
 		const val KEY_NAV_PINNED = "nav_pinned"
 		const val KEY_NAV_FLOATING = "nav_floating"
+		const val KEY_TOP_BAR_FLOATING = "top_bar_floating"
 		const val KEY_NAV_LABEL_MODE = "nav_label_mode"
 		const val KEY_NAV_CAPSULE = "nav_capsule"
 		const val KEY_NAV_FULL_WIDTH = "nav_full_width"

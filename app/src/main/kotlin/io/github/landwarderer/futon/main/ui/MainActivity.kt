@@ -6,16 +6,23 @@ import android.content.Intent
 import android.content.pm.PackageManager.PERMISSION_GRANTED
 import android.os.Build
 import android.os.Bundle
+import android.view.MotionEvent
+import android.graphics.Rect
 import android.view.View
 import android.view.ViewGroup
+import android.view.ViewOutlineProvider
+import android.graphics.Outline
 import android.view.ViewGroup.MarginLayoutParams
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.view.ActionMode
+import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.view.MenuProvider
 import androidx.core.view.ViewCompat
+import androidx.core.view.allViews
+import androidx.recyclerview.widget.RecyclerView
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.children
 import androidx.core.view.inputmethod.EditorInfoCompat
@@ -50,6 +57,7 @@ import io.github.landwarderer.futon.core.prefs.NavItem
 import io.github.landwarderer.futon.core.ui.BaseActivity
 import io.github.landwarderer.futon.core.ui.util.BottomOverlay
 import io.github.landwarderer.futon.core.ui.util.FadingAppbarMediator
+import io.github.landwarderer.futon.core.ui.util.TopOverlay
 import io.github.landwarderer.futon.core.ui.util.FontCache
 import io.github.landwarderer.futon.core.ui.util.MenuInvalidator
 import io.github.landwarderer.futon.core.ui.widgets.SlidingBottomNavigationView
@@ -145,6 +153,15 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
 		viewBinding.navRail?.headerView?.findViewById<View>(R.id.railFab)?.setOnClickListener(this)
 		fadingAppbarMediator =
 			FadingAppbarMediator(viewBinding.appbar, viewBinding.layoutSearch ?: viewBinding.searchBar)
+		defaultSearchBarElevation = viewBinding.searchBar.elevation
+		viewBinding.appbar.updateLayoutParams<CoordinatorLayout.LayoutParams> {
+			behavior = appBarBehavior
+		}
+		appBarSettler = AppBarSettler(viewBinding.appbar, appBarBehavior, ::shownList)
+		viewBinding.appbar.addOnLayoutChangeListener { _, _, top, _, bottom, _, oldTop, _, oldBottom ->
+			if (bottom - top != oldBottom - oldTop) updateTopOverlay()
+		}
+		applyTopBarStyle()
 
 		navigationDelegate = MainNavigationDelegate(
 			navBar = checkNotNull(bottomNav ?: viewBinding.navRail),
@@ -311,7 +328,9 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
 		)
 		if (fromUser) {
 			actionModeDelegate.finishActionMode()
-			viewBinding.appbar.setExpanded(true)
+			// Each section starts with the search bar shown, at once and not sliding in while the new section fades
+			// in (as Kototoro resets the top bar per destination). The page is still transparent at this moment.
+			viewBinding.appbar.setExpanded(true, false)
 			viewBinding.bottomNav?.revealIfScrolledAway()
 		}
 	}
@@ -457,13 +476,91 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
 		e.printStackTraceDebug("MainActivity::onFirstStart")
 	}
 
+	private var defaultSearchBarElevation = 0f
+	private val appBarBehavior = SettlingAppBarBehavior()
+	private var appBarSettler: AppBarSettler? = null
+
+	/** The vertical list the user sees now: the largest one shown in the content (a Favourites page, for example). */
+	private fun shownList(): RecyclerView? {
+		val rect = Rect()
+		return viewBinding.container.allViews
+			.filterIsInstance<RecyclerView>()
+			.filter { it.isShown && it.layoutManager?.canScrollVertically() == true }
+			.maxByOrNull { if (it.getGlobalVisibleRect(rect)) rect.width() * rect.height() else 0 }
+	}
+
+	override fun dispatchTouchEvent(ev: MotionEvent): Boolean {
+		appBarSettler?.onTouchEvent(ev)
+		return super.dispatchTouchEvent(ev)
+	}
+	private var defaultSearchBarOutline: ViewOutlineProvider? = null
+
+	/** A rounded outline over the whole view, as the search bar is drawn. */
+	private object PillOutlineProvider : ViewOutlineProvider() {
+		override fun getOutline(view: View, outline: Outline) {
+			outline.setRoundRect(0, 0, view.width, view.height, view.height / 2f)
+		}
+	}
+
+	/**
+	 * The floating top bar: the lists reach up behind the app bar and scroll on behind the search bar, which gets a
+	 * shadow (see [updateTopOverlay]). How the app bar hides and comes back on scroll does not change.
+	 */
+	private fun applyTopBarStyle() {
+		val isFloating = settings.isTopBarFloating
+		val searchBar = viewBinding.searchBar
+		if (defaultSearchBarOutline == null) {
+			defaultSearchBarOutline = searchBar.outlineProvider
+		}
+		// The expressive search bar gives no usable outline, so it casts no shadow: it gets the pill as its outline.
+		searchBar.outlineProvider = if (isFloating) PillOutlineProvider else defaultSearchBarOutline
+		searchBar.elevation = if (isFloating) {
+			TOP_BAR_ELEVATION_DP * resources.displayMetrics.density
+		} else {
+			defaultSearchBarElevation
+		}
+		// The app bar, and the layout around it, would cut the shadow off below the search bar.
+		viewBinding.appbar.clipChildren = !isFloating
+		(viewBinding.appbar.parent as? ViewGroup)?.clipChildren = !isFloating
+		(viewBinding.layoutSearch as? ViewGroup)?.clipChildren = !isFloating
+		updateTopOverlay()
+	}
+
+	/**
+	 * The floating top bar works as in Kototoro, where the content's top inset is the top bar's height and follows it
+	 * as it hides: the app bar and its scrolling stay exactly as they are, the content area only reaches up behind the
+	 * app bar by its height, and the lists get that height as top padding. So everything still moves together with
+	 * the app bar as before, a list starts below the search bar, and it scrolls on behind it.
+	 */
+	private fun updateTopOverlay() {
+		val isFloating = settings.isTopBarFloating
+		val height = viewBinding.appbar.height
+		// Before the app bar is measured its height is 0: keep the last value rather than switching the lists to
+		// the docked layout for a moment (a late callback could then mix the two).
+		if (isFloating && height == 0) return
+		val overlay = if (isFloating) height else 0
+		viewBinding.container.updateLayoutParams<CoordinatorLayout.LayoutParams> {
+			topMargin = -overlay
+		}
+		TopOverlay.set(viewBinding.container, overlay)
+	}
+
 	private fun adjustAppbar(topFragment: Fragment) {
-		if (topFragment is FavouritesContainerFragment) {
-			viewBinding.appbar.fitsSystemWindows = true
+		// Favourites keeps the status bar strip of the app bar and fades the search bar out in it (the docked bar,
+		// as before). The floating search bar leaves upwards on every tab alike; the floating category tabs stop below
+		// the status bar on their own.
+		val isFavourites = topFragment is FavouritesContainerFragment && !settings.isTopBarFloating
+		if (isFavourites) {
 			fadingAppbarMediator.bind()
 		} else {
-			viewBinding.appbar.fitsSystemWindows = false
 			fadingAppbarMediator.unbind()
+		}
+		if (viewBinding.appbar.fitsSystemWindows != isFavourites) {
+			viewBinding.appbar.fitsSystemWindows = isFavourites
+			// The app bar keeps the insets of its last dispatch: without a new one it went on keeping the status bar
+			// strip after leaving Favourites, so "fully hidden" left the search bar behind the status bar (and the
+			// other way round), and its height differed from tab to tab.
+			ViewCompat.requestApplyInsets(viewBinding.appbar)
 		}
 	}
 
@@ -674,6 +771,12 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
 		addTransitionListener(listener)
 		awaitClose { removeTransitionListener(listener) }
 	}
+
+	private companion object {
+
+		/** Shadow of the search bar while the top bar floats. */
+		const val TOP_BAR_ELEVATION_DP = 6
+	}
 }
 
 private const val KEY_REBUILT_FOR_BAR_LAYOUT = "rebuilt_for_bar_layout"
@@ -693,4 +796,5 @@ private val BAR_LAYOUT_KEYS = arrayOf(
 	AppSettings.KEY_NAV_ACCENT,
 	AppSettings.KEY_MAIN_FAB_ROUND,
 	AppSettings.KEY_NAV_PINNED,
+	AppSettings.KEY_TOP_BAR_FLOATING,
 )

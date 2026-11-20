@@ -21,6 +21,7 @@ import androidx.recyclerview.widget.RecyclerView
 import dagger.hilt.android.AndroidEntryPoint
 import io.github.landwarderer.futon.R
 import io.github.landwarderer.futon.core.ui.util.BottomOverlay
+import io.github.landwarderer.futon.core.ui.util.TopOverlay
 import io.github.landwarderer.futon.core.exceptions.resolve.SnackbarErrorObserver
 import io.github.landwarderer.futon.core.model.LocalMangaSource
 import io.github.landwarderer.futon.core.model.LocalNovelSource
@@ -112,7 +113,7 @@ class ExploreFragment :
 		val basePadding = v.resources.getDimensionPixelOffset(R.dimen.list_spacing_normal)
 		viewBinding?.recyclerView?.setPadding(
 			/* left = */ barsInsets.left + basePadding,
-			/* top = */ basePadding,
+			/* top = */ basePadding + TopOverlay.of(v),
 			/* right = */ barsInsets.right + basePadding,
 			/* bottom = */ barsInsets.bottom + basePadding + BottomOverlay.of(v),
 		)

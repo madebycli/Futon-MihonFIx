@@ -122,6 +122,12 @@
             android:key="search_suggest_types"
             android:title="@string/search_suggestions" />
 
+        <SwitchPreferenceCompat
+            android:defaultValue="false"
+            android:key="top_bar_floating"
+            android:summary="@string/top_bar_floating_summary"
+            android:title="@string/top_bar_floating" />
+
         <PreferenceScreen
             android:fragment="io.github.landwarderer.futon.settings.nav.NavConfigFragment"
             android:key="nav_main"

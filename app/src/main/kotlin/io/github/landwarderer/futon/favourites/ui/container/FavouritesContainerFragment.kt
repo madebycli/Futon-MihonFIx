@@ -5,7 +5,23 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.ViewStub
+import android.content.res.ColorStateList
+import android.graphics.drawable.Drawable
+import android.graphics.drawable.InsetDrawable
 import androidx.appcompat.view.ActionMode
+import androidx.core.view.allViews
+import androidx.core.view.doOnLayout
+import androidx.core.view.updatePadding
+import androidx.core.view.updateLayoutParams
+import com.google.android.material.color.MaterialColors
+import com.google.android.material.shape.MaterialShapeDrawable
+import com.google.android.material.shape.RelativeCornerSize
+import com.google.android.material.shape.ShapeAppearanceModel
+import io.github.landwarderer.futon.core.ui.util.BottomOverlay
+import io.github.landwarderer.futon.core.ui.util.TopOverlay
+import androidx.core.view.ViewCompat
+import io.github.landwarderer.futon.main.ui.owners.AppBarOwner
+import com.google.android.material.appbar.AppBarLayout
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isGone
 import androidx.core.view.isVisible
@@ -29,6 +45,7 @@ import io.github.landwarderer.futon.core.util.ext.setTabsEnabled
 import io.github.landwarderer.futon.core.util.ext.setTextAndVisible
 import io.github.landwarderer.futon.databinding.FragmentFavouritesContainerBinding
 import io.github.landwarderer.futon.databinding.ItemEmptyStateBinding
+import com.google.android.material.R as materialR
 
 @AndroidEntryPoint
 class FavouritesContainerFragment : BaseFragment<FragmentFavouritesContainerBinding>(),
@@ -67,11 +84,157 @@ class FavouritesContainerFragment : BaseFragment<FragmentFavouritesContainerBind
 	}
 
 	override fun onDestroyView() {
+		bindStatusBarStop(false)
 		actionModeDelegate.removeListener(this)
 		super.onDestroyView()
 	}
 
-	override fun onApplyWindowInsets(v: View, insets: WindowInsetsCompat): WindowInsetsCompat = insets
+	private var defaultIndicator: Drawable? = null
+
+	private val tabsLayoutListener = View.OnLayoutChangeListener { _, _, top, _, bottom, _, oldTop, _, oldBottom ->
+		if (bottom - top != oldBottom - oldTop) updatePagerOverlay()
+	}
+
+	/** Whether the tabs are the floating bar now; a late layout callback must not bring its padding back. */
+	private var isTabsFloating = false
+
+	/** The pager starts at the top, behind the floating tabs; its lists start below them (TopOverlay). */
+	private fun updatePagerOverlay() {
+		if (!isTabsFloating) return
+		val binding = viewBinding ?: return
+		val tabs = binding.tabs
+		val gap = (FLOATING_TABS_GAP_DP * resources.displayMetrics.density).toInt()
+		val block = tabs.height + (tabs.layoutParams as ViewGroup.MarginLayoutParams).topMargin
+		binding.pager.updateLayoutParams<ViewGroup.MarginLayoutParams> { topMargin = -block }
+		TopOverlay.set(binding.pager, block + gap)
+	}
+
+	/**
+	 * The floating tabs move with the content and the search bar, but stop just below the status bar instead of
+	 * sliding under the clock and the status icons; the lists of the pager stop with them, so they stay right below
+	 * the tabs (no overlap, and no gap when another category is opened).
+	 */
+	private val statusBarStop = AppBarLayout.OnOffsetChangedListener { appBar, verticalOffset ->
+		val binding = viewBinding ?: return@OnOffsetChangedListener
+		val statusBar = ViewCompat.getRootWindowInsets(binding.root)
+			?.getInsets(WindowInsetsCompat.Type.statusBars())?.top ?: 0
+		// The content is laid out from the app bar's top (its height reaches up behind it), so the tabs sit at
+		// verticalOffset + the app bar's height; they may not go above the status bar.
+		val naturalTop = verticalOffset + appBar.height
+		val push = (statusBar - naturalTop).coerceAtLeast(0)
+		binding.tabs.translationY = push.toFloat()
+		binding.pager.translationY = push.toFloat()
+		applyPagerPush(push)
+	}
+
+	/**
+	 * Moving the pager down by the push moves the end of its lists down too, below the bottom bar. The lists get the
+	 * push as extra bottom padding (read through [BottomOverlay] on the pager), so their last item still ends above
+	 * the bar. It only changes while the tabs are reaching the status bar, not on every scrolled frame.
+	 */
+	private var pagerPush = 0
+
+	private fun applyPagerPush(push: Int) {
+		val binding = viewBinding ?: return
+		val delta = push - pagerPush
+		if (delta == 0) return
+		pagerPush = push
+		binding.pager.setTag(R.id.tag_bottom_overlay, BottomOverlay.of(binding.root) + push)
+		// Directly, without a new inset pass: the next one reads the same value from the pager's tag.
+		binding.pager.allViews.filterIsInstance<RecyclerView>()
+			.filter { it.layoutManager?.canScrollVertically() == true }
+			.forEach { it.updatePadding(bottom = it.paddingBottom + delta) }
+	}
+	private var isStatusBarStopBound = false
+
+	private fun bindStatusBarStop(bind: Boolean) {
+		val appBar = (activity as? AppBarOwner)?.appBar ?: return
+		if (bind && !isStatusBarStopBound) {
+			appBar.addOnOffsetChangedListener(statusBarStop)
+			isStatusBarStopBound = true
+		} else if (!bind && isStatusBarStopBound) {
+			appBar.removeOnOffsetChangedListener(statusBarStop)
+			isStatusBarStopBound = false
+		}
+	}
+
+	override fun onApplyWindowInsets(v: View, insets: WindowInsetsCompat): WindowInsetsCompat {
+		applyFloatingTabs(TopOverlay.of(v))
+		// The lists of the pager read their bottom padding below this; keep the push of the tabs in it.
+		viewBinding?.pager?.let { pager ->
+			if (isTabsFloating) pager.setTag(R.id.tag_bottom_overlay, BottomOverlay.of(v) + pagerPush)
+		}
+		return insets
+	}
+
+	/**
+	 * With the floating top bar the category tabs float too: a rounded bar with a shadow below the search bar, and the
+	 * lists of the pager scroll behind it. Like the plain row they move with the content, so they leave and come back
+	 * with the search bar exactly as before, and every category starts at the same height. Without it the tabs are
+	 * the plain row above the pager, as before.
+	 */
+	private fun applyFloatingTabs(topOverlay: Int) {
+		val binding = viewBinding ?: return
+		val tabs = binding.tabs
+		val density = resources.displayMetrics.density
+		val isFloating = topOverlay > 0
+		isTabsFloating = isFloating
+		if (isFloating) {
+			val margin = (FLOATING_TABS_MARGIN_DP * density).toInt()
+			tabs.updateLayoutParams<ViewGroup.MarginLayoutParams> {
+				topMargin = topOverlay + (FLOATING_TABS_GAP_DP * density).toInt()
+				marginStart = margin
+				marginEnd = margin
+			}
+			if (tabs.background !is MaterialShapeDrawable) {
+				tabs.background = MaterialShapeDrawable(
+					ShapeAppearanceModel.builder().setAllCornerSizes(RelativeCornerSize(0.5f)).build(),
+				).apply {
+					fillColor = ColorStateList.valueOf(MaterialColors.getColor(tabs, materialR.attr.colorSurfaceContainer))
+				}
+				tabs.clipToOutline = true
+			}
+			tabs.elevation = FLOATING_TABS_ELEVATION_DP * density
+			// The indicator line sits a little above the bottom, inside the rounded bar, instead of on its edge.
+			if (defaultIndicator == null) {
+				defaultIndicator = tabs.tabSelectedIndicator
+				val inset = (FLOATING_TABS_INDICATOR_INSET_DP * density).toInt()
+				val line = defaultIndicator?.constantState?.newDrawable(resources)?.mutate() ?: defaultIndicator
+				tabs.setSelectedTabIndicator(InsetDrawable(line, 0, 0, 0, inset))
+				tabs.setSelectedTabIndicatorHeight((line?.intrinsicHeight?.takeIf { it > 0 } ?: (3 * density).toInt()) + inset)
+			}
+			// Follows every size change of the tabs (they grow once the category names are there), so the lists of
+			// the pager always start below them and never under them.
+			tabs.removeOnLayoutChangeListener(tabsLayoutListener)
+			tabs.addOnLayoutChangeListener(tabsLayoutListener)
+			tabs.doOnLayout { updatePagerOverlay() }
+			bindStatusBarStop(true)
+		} else {
+			tabs.updateLayoutParams<ViewGroup.MarginLayoutParams> {
+				topMargin = 0
+				marginStart = 0
+				marginEnd = 0
+			}
+			tabs.background = null
+			tabs.clipToOutline = false
+			tabs.elevation = 0f
+			tabs.translationY = 0f
+			binding.pager.translationY = 0f
+			applyPagerPush(0)
+			binding.pager.setTag(R.id.tag_bottom_overlay, null)
+			tabs.removeOnLayoutChangeListener(tabsLayoutListener)
+			bindStatusBarStop(false)
+			defaultIndicator?.let {
+				tabs.setSelectedTabIndicator(it)
+				tabs.setSelectedTabIndicatorHeight(-1)
+				defaultIndicator = null
+			}
+			binding.pager.updateLayoutParams<ViewGroup.MarginLayoutParams> { topMargin = 0 }
+			if (binding.pager.getTag(R.id.tag_top_overlay) != null) {
+				TopOverlay.set(binding.pager, 0)
+			}
+		}
+	}
 
 	override fun onActionModeStarted(mode: ActionMode) {
 		viewBinding?.run {
@@ -114,5 +277,13 @@ class FavouritesContainerFragment : BaseFragment<FragmentFavouritesContainerBind
 		return childFragmentManager.findCurrentPagerFragment(
 			viewBinding?.pager ?: return null,
 		)
+	}
+
+	private companion object {
+
+		const val FLOATING_TABS_MARGIN_DP = 12
+		const val FLOATING_TABS_GAP_DP = 4
+		const val FLOATING_TABS_ELEVATION_DP = 6
+		const val FLOATING_TABS_INDICATOR_INSET_DP = 6
 	}
 }
