@@ -4,7 +4,14 @@ All notable changes to this project are documented in this file.
 
 The format is based on "Keep a Changelog" and follows semantic versioning where possible.
 
-## 10.1
+## 10.2
+Date: 2026-11-20
+
+### Extensions
+- Fixed a crash when an extension's background work was cancelled, for example when you opened a manga while the
+  check for new chapters was running. Newer extensions use a newer version of a shared library than Clio did; Clio
+  now ships a version that works with both older and newer extensions.
+
 Date: 2026-11-20
 
 ### Extensions
