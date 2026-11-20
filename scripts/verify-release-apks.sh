@@ -8,6 +8,7 @@ VERSION="${2:?version required}"
 VERSION_CODE="${3:?version code required}"
 APKSIGNER="$(find "$ANDROID_HOME/build-tools" -type f -name apksigner | sort -V | tail -n 1)"
 AAPT="$(find "$ANDROID_HOME/build-tools" -type f -name aapt | sort -V | tail -n 1)"
+DEXDUMP="$(find "$ANDROID_HOME/build-tools" -type f -name dexdump | sort -V | tail -n 1)"
 CERT=12fe17245decb84c98985ddcc08884b874d10a78e4fb747a6ed3e2a42d77b625
 PACKAGE=io.github.madebycli.futon.mihonfix
 ABIS="arm64-v8a armeabi-v7a x86_64 x86"
@@ -57,6 +58,17 @@ for KIND in universal $ABIS; do
     'okhttp3/brotli/Brotli' 'CaptchaAutoResolveCoordinator' 'TachiyomiApkClassLoaderPolicy' 'org/brotli/dec/BrotliInputStream'; do
     if ! grep -Fq "$SYMBOL" "$DEX_DIR/strings.txt"; then
       echo "::error::Missing optimized Mihon ABI symbol: $SYMBOL ($KIND)"
+      exit 1
+    fi
+  done
+  # Extensions built against kotlinx.coroutines 1.11 call Job.cancel$default on the interface, older ones on
+  # Job$DefaultImpls; the host must offer both, or cancelling an extension's work crashes the app.
+  for DEX in "$DEX_DIR"/classes*.dex; do
+    "$DEXDUMP" "$DEX" 2>/dev/null | awk '/Class descriptor/ {c=$4} /name/ && /cancel\$default/ {print c}'
+  done | sort -u > "$DEX_DIR/cancel-default.txt"
+  for OWNER in "'Lkotlinx/coroutines/Job;'" "'Lkotlinx/coroutines/Job\$DefaultImpls;'"; do
+    if ! grep -Fxq "$OWNER" "$DEX_DIR/cancel-default.txt"; then
+      echo "::error::Missing coroutines compatibility method cancel\$default in $OWNER ($KIND)"
       exit 1
     fi
   done
