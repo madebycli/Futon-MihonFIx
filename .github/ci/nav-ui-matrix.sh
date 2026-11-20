@@ -285,7 +285,11 @@ exercise_tab() {
 	check "at rest" $rest_checks top_open first_below_top no_gap_top $([ -n "$bottom" ] && echo bottom_shown)
 	# How the bar looks fully hidden on this tab (Favourites keeps the status bar strip of its app bar).
 	drag 900 500; rest
-	if ensure_main && dump_ui; then python3 "$GEOM" collapsed "$OUT/.cur.xml" "$CTX" "$TAB"; fi
+	if ensure_main && dump_ui; then
+		python3 "$GEOM" collapsed "$OUT/.cur.xml" "$CTX" "$TAB"
+		[ "$TAB" != "Favorites" ] && ! is_on nav_pinned && check "fully hidden" hidden_fully
+		check "height of the bar" same_height
+	fi
 	for _ in 1 2 3 4 5 6; do fling_down; sleep 0.4; done; rest 2
 	drag 120 450; rest
 	check "short drag then release" $rest_checks $bottom

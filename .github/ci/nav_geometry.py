@@ -114,6 +114,15 @@ def main():
             full = base.get("appbar_h", 0)
             if full and m["appbar_h"] < full - SLACK:
                 problems.append(f"top bar not fully open: {m['appbar_h']}px of {full}px")
+        elif check == "hidden_fully":
+            # Outside Favourites a hidden top bar leaves nothing behind the status bar.
+            if m["appbar_h"] > SLACK:
+                problems.append(f"top bar not fully hidden: {m['appbar_h']}px still on screen")
+        elif check == "same_height":
+            # The app bar is the same on every tab (it was 63 px shorter on some).
+            ref = ctx.get("History", {}).get("appbar_h")
+            if ref and base.get("appbar_h") and abs(base["appbar_h"] - ref) > SLACK:
+                problems.append(f"top bar height {base['appbar_h']}px here, {ref}px on History")
         elif check == "pill_below_status":
             if m["tabs_top"] is not None and m["tabs_top"] < sb - SLACK:
                 problems.append(f"category tabs under the status bar: top {m['tabs_top']} < {sb}")
