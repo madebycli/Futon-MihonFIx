@@ -398,6 +398,45 @@ tap_node Favorites; sleep 3
 adb shell input swipe 540 1500 540 1150 600; sleep 2
 shot 39_top_floating_favourites_dark
 adb shell cmd uimode night no > /dev/null 2>&1
+# Swipe to the other category with the search bar scrolled away: both categories start right below the tabs.
+launch 8
+tap_node Favorites; sleep 3
+adb shell input swipe 540 1700 540 900 500; sleep 2
+shot 41_top_floating_category_bar_hidden
+adb shell input swipe 900 1300 150 1300 300; sleep 2
+shot 42_top_floating_category_swiped
+adb shell input swipe 150 1300 900 1300 300; sleep 2
+shot 43_top_floating_category_swiped_back
+# A slight scroll back after hiding everything: the search bar has to slide fully open on release.
+adb shell input swipe 540 1700 540 700 500; sleep 2
+adb shell input swipe 540 1000 540 1060 300; sleep 2
+shot 44_top_floating_slight_reveal_settles
+# Live switch of the setting while Favourites stays open (no restart): no plain tabs with a floating gap.
+adb shell am start -W -n "$PKG/io.github.landwarderer.futon.settings.SettingsActivity" > /dev/null
+sleep 2
+tap_node "Appearance" && sleep 2
+scroll_and_tap "Floating top bar"; sleep 1
+adb shell input keyevent KEYCODE_BACK; sleep 1
+adb shell input keyevent KEYCODE_BACK; sleep 3
+shot 45_top_live_off_favourites
+adb shell am start -W -n "$PKG/io.github.landwarderer.futon.settings.SettingsActivity" > /dev/null
+sleep 2
+tap_node "Appearance" && sleep 2
+scroll_and_tap "Floating top bar"; sleep 1
+adb shell input keyevent KEYCODE_BACK; sleep 1
+adb shell input keyevent KEYCODE_BACK; sleep 3
+shot 46_top_live_on_favourites
+# Pinned and floating: no black bar, the last item can be scrolled above the bottom bar.
+set_prefs top_bar_floating=boolean:true nav_pinned=boolean:true
+launch 8
+tap_node Favorites; sleep 3
+for _ in 1 2 3 4 5; do adb shell input swipe 540 1700 540 500 200; sleep 0.5; done; sleep 2
+shot 47_pinned_floating_list_end
+set_prefs nav_pinned=boolean:false
+launch 8
+tap_node Favorites; sleep 3
+for _ in 1 2 3 4 5; do adb shell input swipe 540 1700 540 500 200; sleep 0.5; done; sleep 2
+shot 48_unpinned_floating_list_end
 set_prefs top_bar_floating=boolean:false
 launch 8
 tap_node Favorites; sleep 3
