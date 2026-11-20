@@ -9,12 +9,15 @@ import android.content.res.ColorStateList
 import android.graphics.drawable.Drawable
 import android.graphics.drawable.InsetDrawable
 import androidx.appcompat.view.ActionMode
+import androidx.core.view.allViews
 import androidx.core.view.doOnLayout
+import androidx.core.view.updatePadding
 import androidx.core.view.updateLayoutParams
 import com.google.android.material.color.MaterialColors
 import com.google.android.material.shape.MaterialShapeDrawable
 import com.google.android.material.shape.RelativeCornerSize
 import com.google.android.material.shape.ShapeAppearanceModel
+import io.github.landwarderer.futon.core.ui.util.BottomOverlay
 import io.github.landwarderer.futon.core.ui.util.TopOverlay
 import androidx.core.view.ViewCompat
 import io.github.landwarderer.futon.main.ui.owners.AppBarOwner
@@ -118,9 +121,29 @@ class FavouritesContainerFragment : BaseFragment<FragmentFavouritesContainerBind
 		// The content is laid out from the app bar's top (its height reaches up behind it), so the tabs sit at
 		// verticalOffset + the app bar's height; they may not go above the status bar.
 		val naturalTop = verticalOffset + appBar.height
-		val push = (statusBar - naturalTop).coerceAtLeast(0).toFloat()
-		binding.tabs.translationY = push
-		binding.pager.translationY = push
+		val push = (statusBar - naturalTop).coerceAtLeast(0)
+		binding.tabs.translationY = push.toFloat()
+		binding.pager.translationY = push.toFloat()
+		applyPagerPush(push)
+	}
+
+	/**
+	 * Moving the pager down by the push moves the end of its lists down too, below the bottom bar. The lists get the
+	 * push as extra bottom padding (read through [BottomOverlay] on the pager), so their last item still ends above
+	 * the bar. It only changes while the tabs are reaching the status bar, not on every scrolled frame.
+	 */
+	private var pagerPush = 0
+
+	private fun applyPagerPush(push: Int) {
+		val binding = viewBinding ?: return
+		val delta = push - pagerPush
+		if (delta == 0) return
+		pagerPush = push
+		binding.pager.setTag(R.id.tag_bottom_overlay, BottomOverlay.of(binding.root) + push)
+		// Directly, without a new inset pass: the next one reads the same value from the pager's tag.
+		binding.pager.allViews.filterIsInstance<RecyclerView>()
+			.filter { it.layoutManager?.canScrollVertically() == true }
+			.forEach { it.updatePadding(bottom = it.paddingBottom + delta) }
 	}
 	private var isStatusBarStopBound = false
 
@@ -137,6 +160,10 @@ class FavouritesContainerFragment : BaseFragment<FragmentFavouritesContainerBind
 
 	override fun onApplyWindowInsets(v: View, insets: WindowInsetsCompat): WindowInsetsCompat {
 		applyFloatingTabs(TopOverlay.of(v))
+		// The lists of the pager read their bottom padding below this; keep the push of the tabs in it.
+		viewBinding?.pager?.let { pager ->
+			if (isTabsFloating) pager.setTag(R.id.tag_bottom_overlay, BottomOverlay.of(v) + pagerPush)
+		}
 		return insets
 	}
 
@@ -193,6 +220,8 @@ class FavouritesContainerFragment : BaseFragment<FragmentFavouritesContainerBind
 			tabs.elevation = 0f
 			tabs.translationY = 0f
 			binding.pager.translationY = 0f
+			applyPagerPush(0)
+			binding.pager.setTag(R.id.tag_bottom_overlay, null)
 			tabs.removeOnLayoutChangeListener(tabsLayoutListener)
 			bindStatusBarStop(false)
 			defaultIndicator?.let {
