@@ -16,6 +16,9 @@ import com.google.android.material.shape.MaterialShapeDrawable
 import com.google.android.material.shape.RelativeCornerSize
 import com.google.android.material.shape.ShapeAppearanceModel
 import io.github.landwarderer.futon.core.ui.util.TopOverlay
+import androidx.core.view.ViewCompat
+import io.github.landwarderer.futon.main.ui.owners.AppBarOwner
+import com.google.android.material.appbar.AppBarLayout
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isGone
 import androidx.core.view.isVisible
@@ -78,11 +81,55 @@ class FavouritesContainerFragment : BaseFragment<FragmentFavouritesContainerBind
 	}
 
 	override fun onDestroyView() {
+		bindStatusBarStop(false)
 		actionModeDelegate.removeListener(this)
 		super.onDestroyView()
 	}
 
 	private var defaultIndicator: Drawable? = null
+
+	private val tabsLayoutListener = View.OnLayoutChangeListener { _, _, top, _, bottom, _, oldTop, _, oldBottom ->
+		if (bottom - top != oldBottom - oldTop) updatePagerOverlay()
+	}
+
+	/** The pager starts at the top, behind the floating tabs; its lists start below them (TopOverlay). */
+	private fun updatePagerOverlay() {
+		val binding = viewBinding ?: return
+		val tabs = binding.tabs
+		val gap = (FLOATING_TABS_GAP_DP * resources.displayMetrics.density).toInt()
+		val block = tabs.height + (tabs.layoutParams as ViewGroup.MarginLayoutParams).topMargin
+		binding.pager.updateLayoutParams<ViewGroup.MarginLayoutParams> { topMargin = -block }
+		TopOverlay.set(binding.pager, block + gap)
+	}
+
+	/**
+	 * The floating tabs move with the content and the search bar, but stop just below the status bar instead of
+	 * sliding under the clock and the status icons; the lists of the pager stop with them, so they stay right below
+	 * the tabs (no overlap, and no gap when another category is opened).
+	 */
+	private val statusBarStop = AppBarLayout.OnOffsetChangedListener { appBar, verticalOffset ->
+		val binding = viewBinding ?: return@OnOffsetChangedListener
+		val statusBar = ViewCompat.getRootWindowInsets(binding.root)
+			?.getInsets(WindowInsetsCompat.Type.statusBars())?.top ?: 0
+		// The content is laid out from the app bar's top (its height reaches up behind it), so the tabs sit at
+		// verticalOffset + the app bar's height; they may not go above the status bar.
+		val naturalTop = verticalOffset + appBar.height
+		val push = (statusBar - naturalTop).coerceAtLeast(0).toFloat()
+		binding.tabs.translationY = push
+		binding.pager.translationY = push
+	}
+	private var isStatusBarStopBound = false
+
+	private fun bindStatusBarStop(bind: Boolean) {
+		val appBar = (activity as? AppBarOwner)?.appBar ?: return
+		if (bind && !isStatusBarStopBound) {
+			appBar.addOnOffsetChangedListener(statusBarStop)
+			isStatusBarStopBound = true
+		} else if (!bind && isStatusBarStopBound) {
+			appBar.removeOnOffsetChangedListener(statusBarStop)
+			isStatusBarStopBound = false
+		}
+	}
 
 	override fun onApplyWindowInsets(v: View, insets: WindowInsetsCompat): WindowInsetsCompat {
 		applyFloatingTabs(TopOverlay.of(v))
@@ -124,12 +171,12 @@ class FavouritesContainerFragment : BaseFragment<FragmentFavouritesContainerBind
 				tabs.setSelectedTabIndicator(InsetDrawable(line, 0, 0, 0, inset))
 				tabs.setSelectedTabIndicatorHeight((line?.intrinsicHeight?.takeIf { it > 0 } ?: (3 * density).toInt()) + inset)
 			}
-			tabs.doOnLayout {
-				val block = tabs.height + (it.layoutParams as ViewGroup.MarginLayoutParams).topMargin
-				// The pager starts at the top, behind the tabs; its lists start below them (TopOverlay).
-				binding.pager.updateLayoutParams<ViewGroup.MarginLayoutParams> { topMargin = -block }
-				TopOverlay.set(binding.pager, block + (FLOATING_TABS_GAP_DP * density).toInt())
-			}
+			// Follows every size change of the tabs (they grow once the category names are there), so the lists of
+			// the pager always start below them and never under them.
+			tabs.removeOnLayoutChangeListener(tabsLayoutListener)
+			tabs.addOnLayoutChangeListener(tabsLayoutListener)
+			tabs.doOnLayout { updatePagerOverlay() }
+			bindStatusBarStop(true)
 		} else {
 			tabs.updateLayoutParams<ViewGroup.MarginLayoutParams> {
 				topMargin = 0
@@ -140,6 +187,9 @@ class FavouritesContainerFragment : BaseFragment<FragmentFavouritesContainerBind
 			tabs.clipToOutline = false
 			tabs.elevation = 0f
 			tabs.translationY = 0f
+			binding.pager.translationY = 0f
+			tabs.removeOnLayoutChangeListener(tabsLayoutListener)
+			bindStatusBarStop(false)
 			defaultIndicator?.let {
 				tabs.setSelectedTabIndicator(it)
 				tabs.setSelectedTabIndicatorHeight(-1)
