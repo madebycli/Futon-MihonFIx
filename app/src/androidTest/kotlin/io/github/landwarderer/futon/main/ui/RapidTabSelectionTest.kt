@@ -11,11 +11,13 @@ import com.google.android.material.navigation.NavigationBarView
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import io.github.landwarderer.futon.R
+import io.github.landwarderer.futon.core.network.MangaHttpClient
 import io.github.landwarderer.futon.core.prefs.AppSettings
 import io.github.landwarderer.futon.reader.initializeReaderTestWorkManager
 import io.github.landwarderer.futon.explore.ui.ExploreFragment
 import io.github.landwarderer.futon.history.ui.HistoryListFragment
 import javax.inject.Inject
+import okhttp3.OkHttpClient
 import org.junit.After
 import org.junit.Before
 import org.junit.Assert.assertEquals
@@ -31,6 +33,10 @@ class RapidTabSelectionTest {
 	@get:Rule val hilt = HiltAndroidRule(this)
 
 	@Inject lateinit var settings: AppSettings
+
+	// The app builds its HTTP client off the main thread before the first screen; the test application does not,
+	// and the debug build refuses to build it on the main thread. Injecting it here builds it on the test thread.
+	@Inject @MangaHttpClient lateinit var httpClient: OkHttpClient
 	private var previousOnboarding = 0
 	private var previousSources = 0
 	private var previousSpotlight = false
