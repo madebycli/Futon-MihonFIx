@@ -27,8 +27,9 @@ class SettlingAppBarBehavior : AppBarLayout.Behavior() {
 	private val restListener = object : RecyclerView.OnScrollListener() {
 		override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
 			if (newState == RecyclerView.SCROLL_STATE_IDLE) {
+				val appBar = watchedAppBar
 				stopWatching()
-				watchedAppBar?.let(::settle)
+				appBar?.let(::settle)
 			}
 		}
 	}
@@ -87,5 +88,6 @@ class SettlingAppBarBehavior : AppBarLayout.Behavior() {
 	private fun stopWatching() {
 		watchedList?.removeOnScrollListener(restListener)
 		watchedList = null
+		watchedAppBar = null
 	}
 }
