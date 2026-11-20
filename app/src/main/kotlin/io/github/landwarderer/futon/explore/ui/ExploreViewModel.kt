@@ -36,6 +36,8 @@ import io.github.landwarderer.futon.list.ui.model.ListModel
 import io.github.landwarderer.futon.list.ui.model.LoadingState
 import io.github.landwarderer.futon.list.ui.model.MangaCompactListModel
 import io.github.landwarderer.futon.suggestions.domain.SuggestionRepository
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -129,14 +131,22 @@ class ExploreViewModel @Inject constructor(
 		}
 	}
 
+	private var randomJob: Job? = null
+	private var installJob: Job? = null
+
+	fun cancelPendingNavigation() {
+		randomJob?.cancel()
+		installJob?.cancel()
+		onOpenManga.value = null
+		onInstallExtension.value = null
+	}
+
 	fun openRandom() {
-		if (isRandomLoading.value) {
-			return
-		}
-		launchJob(Dispatchers.IO) {
+		if (randomJob?.isActive == true) return
+		randomJob = launchJob {
 			isRandomLoading.value = true
 			try {
-				val manga = exploreRepository.findRandomManga(tagsLimit = 8)
+				val manga = withContext(Dispatchers.IO) { exploreRepository.findRandomManga(tagsLimit = 8) }
 				onOpenManga.call(manga)
 			} finally {
 				isRandomLoading.value = false
@@ -229,11 +239,15 @@ class ExploreViewModel @Inject constructor(
 
 	fun updateExtension(item: MangaSourceItem) {
 		val pkgName = item.updatePackage ?: return
-		launchJob(Dispatchers.IO) {
-			val extension = extensionRepos.getAvailableExtensions(ExternalExtensionType.MIHON)
-				.firstOrNull { it.pkgName == pkgName }
-				?: throw IllegalStateException("No update found for $pkgName")
-			installService.createInstallIntent(extension)?.let { onInstallExtension.call(it) }
+		installJob?.cancel()
+		installJob = launchJob {
+			val intent = withContext(Dispatchers.IO) {
+				val extension = extensionRepos.getAvailableExtensions(ExternalExtensionType.MIHON)
+					.firstOrNull { it.pkgName == pkgName }
+					?: throw IllegalStateException("No update found for $pkgName")
+				installService.createInstallIntent(extension)
+			}
+			intent?.let { onInstallExtension.call(it) }
 		}
 	}
 
