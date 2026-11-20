@@ -18,6 +18,7 @@ import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.view.MenuProvider
+import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.children
 import androidx.core.view.inputmethod.EditorInfoCompat
@@ -258,6 +259,13 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
 	override fun onRestart() {
 		super.onRestart()
 		recreateIfBarLayoutChanged()
+	}
+
+	override fun onResume() {
+		super.onResume()
+		// The lists take the paddings for the floating bars from the window insets. A screen rebuilt in the
+		// background may not have had them dispatched with the final bar sizes: dispatch them again once it is shown.
+		ViewCompat.requestApplyInsets(viewBinding.root)
 	}
 
 	override fun onSaveInstanceState(outState: Bundle) {
