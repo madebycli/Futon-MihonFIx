@@ -1,0 +1,111 @@
+[13:07:22] device: sdk_gphone64_x86_64 API 34 density Physical density: 420
+[13:07:22] job: nav_floating=boolean:false top_bar_floating=boolean:true nav_pinned=boolean:true
+[13:07:26] installing app/build/outputs/apk/debug/app-debug.apk
+Performing Streamed Install
+Success
+[13:08:25] screenshot 00_first_start_main
+favourites: 27
+enabled sources: 30
+history rows: 27
+[13:08:27] === combo 01: nav_floating=boolean:false top_bar_floating=boolean:true nav_pinned=boolean:true nav_label_mode=string:NONE main_fab_round=boolean:false
+[13:11:00] warning: no tab 'History' on screen (01)
+[13:13:06] warning: no tab 'Favorites' on screen (01)
+[13:15:14] warning: no tab 'Explore' on screen (01)
+[13:17:21] warning: no tab 'Feed' on screen (01)
+[13:19:27] warning: no tab 'History' on screen (01)
+[13:21:33] warning: no tab 'Favorites' on screen (01)
+[13:23:39] warning: no tab 'Explore' on screen (01)
+[13:25:46] warning: no tab 'History' on screen (01)
+[13:27:52] warning: no tab 'Favorites' on screen (01)
+[13:29:58] warning: no tab 'Explore' on screen (01)
+[13:32:05] warning: no tab 'History' on screen (01)
+[13:34:12] warning: no tab 'Favorites' on screen (01)
+[13:36:18] warning: no tab 'Explore' on screen (01)
+[13:36:22] === combo 02: nav_floating=boolean:false top_bar_floating=boolean:true nav_pinned=boolean:true nav_label_mode=string:ALL main_fab_round=boolean:false
+[13:38:42] warning: no tab 'History' on screen (02)
+[13:40:48] warning: no tab 'Favorites' on screen (02)
+[13:42:54] warning: no tab 'Explore' on screen (02)
+[13:44:59] warning: no tab 'Feed' on screen (02)
+[13:47:05] warning: no tab 'History' on screen (02)
+[13:49:11] warning: no tab 'Favorites' on screen (02)
+[13:51:18] warning: no tab 'Explore' on screen (02)
+[13:53:24] warning: no tab 'History' on screen (02)
+[13:55:30] warning: no tab 'Favorites' on screen (02)
+[13:57:36] warning: no tab 'Explore' on screen (02)
+[13:59:43] warning: no tab 'History' on screen (02)
+[14:01:49] warning: no tab 'Favorites' on screen (02)
+[14:03:55] warning: no tab 'Explore' on screen (02)
+[14:03:58] === combo 03: nav_floating=boolean:false top_bar_floating=boolean:true nav_pinned=boolean:true nav_label_mode=string:SELECTED main_fab_round=boolean:true
+[14:04:26] warning: no tab 'History' on screen (03)
+[14:06:14] warning: no tab 'Favorites' on screen (03)
+[14:07:01] warning: left the main screen (03 | Explore):     topResumedActivity=ActivityRecord{3fed5b1 u0 io.github.landwarderer.futon.debug/io.github.landwarderer.futon.explore.ui.preset.SourcePresetListActivity t12}
+[14:08:07] warning: no tab 'Explore' on screen (03)
+[14:09:48] warning: no tab 'Feed' on screen (03)
+[14:10:40] === combo 04: nav_floating=boolean:false top_bar_floating=boolean:true nav_pinned=boolean:true nav_label_mode=string:SELECTED_BESIDE main_fab_round=boolean:true
+[14:11:08] warning: no tab 'History' on screen (04)
+[14:12:31] FAIL: 04 | Favorites | other category, bar hidden: first item under the top bar: item top 0 < bar bottom 495
+[14:12:58] warning: no tab 'Favorites' on screen (04)
+[14:13:37] warning: left the main screen (04 | Explore):     topResumedActivity=ActivityRecord{98aa40e u0 io.github.landwarderer.futon.debug/io.github.landwarderer.futon.explore.ui.preset.SourcePresetListActivity t13}
+[14:14:35] warning: no tab 'Explore' on screen (04)
+[14:16:17] warning: no tab 'Feed' on screen (04)
+[14:17:09] === combo 05-font130: nav_floating=boolean:false top_bar_floating=boolean:true nav_pinned=boolean:true nav_label_mode=string:ALL main_fab_round=boolean:false
+[14:19:28] warning: no tab 'History' on screen (05-font130)
+[14:21:35] warning: no tab 'Favorites' on screen (05-font130)
+[14:23:41] warning: no tab 'Explore' on screen (05-font130)
+[14:25:47] warning: no tab 'Feed' on screen (05-font130)
+[14:27:53] warning: no tab 'History' on screen (05-font130)
+[14:30:00] warning: no tab 'Favorites' on screen (05-font130)
+[14:32:06] warning: no tab 'Explore' on screen (05-font130)
+[14:34:13] warning: no tab 'History' on screen (05-font130)
+[14:36:19] warning: no tab 'Favorites' on screen (05-font130)
+[14:38:25] warning: no tab 'Explore' on screen (05-font130)
+[14:40:32] warning: no tab 'History' on screen (05-font130)
+[14:42:38] warning: no tab 'Favorites' on screen (05-font130)
+[14:44:44] warning: no tab 'Explore' on screen (05-font130)
+[14:44:47] === combo 06-font130: nav_floating=boolean:false top_bar_floating=boolean:true nav_pinned=boolean:true nav_label_mode=string:SELECTED main_fab_round=boolean:true
+[14:45:16] warning: no tab 'History' on screen (06-font130)
+[14:46:38] FAIL: 06-font130 | Favorites | other category, bar hidden: first item under the top bar: item top 0 < bar bottom 495
+[14:47:04] warning: no tab 'Favorites' on screen (06-font130)
+[14:47:46] warning: left the main screen (06-font130 | Explore):     topResumedActivity=ActivityRecord{20408bb u0 io.github.landwarderer.futon.debug/io.github.landwarderer.futon.explore.ui.preset.SourcePresetListActivity t15}
+[14:48:44] warning: no tab 'Explore' on screen (06-font130)
+[14:50:27] warning: no tab 'Feed' on screen (06-font130)
+[14:51:19] === combo 07: nav_floating=boolean:false top_bar_floating=boolean:true nav_pinned=boolean:true nav_label_mode=string:NONE nav_capsule=boolean:false
+[14:53:38] warning: no tab 'History' on screen (07)
+[14:55:46] warning: no tab 'Favorites' on screen (07)
+[14:57:52] warning: no tab 'Explore' on screen (07)
+[14:59:58] warning: no tab 'Feed' on screen (07)
+[15:02:05] warning: no tab 'History' on screen (07)
+[15:04:10] warning: no tab 'Favorites' on screen (07)
+[15:06:17] warning: no tab 'Explore' on screen (07)
+[15:08:24] warning: no tab 'History' on screen (07)
+[15:10:31] warning: no tab 'Favorites' on screen (07)
+[15:12:38] warning: no tab 'Explore' on screen (07)
+[15:14:43] warning: no tab 'History' on screen (07)
+[15:16:49] warning: no tab 'Favorites' on screen (07)
+[15:18:55] warning: no tab 'Explore' on screen (07)
+[15:18:58] === combo 08: nav_floating=boolean:false top_bar_floating=boolean:true nav_pinned=boolean:true nav_label_mode=string:SELECTED nav_full_width=boolean:true main_fab_round=boolean:true
+[15:19:27] warning: no tab 'History' on screen (08)
+[15:21:14] warning: no tab 'Favorites' on screen (08)
+[15:22:02] warning: left the main screen (08 | Explore):     topResumedActivity=ActivityRecord{2a4ee69 u0 io.github.landwarderer.futon.debug/io.github.landwarderer.futon.explore.ui.preset.SourcePresetListActivity t17}
+[15:23:00] warning: no tab 'Explore' on screen (08)
+[15:24:41] warning: no tab 'Feed' on screen (08)
+[15:25:33] === combo 09: nav_floating=boolean:false top_bar_floating=boolean:true nav_pinned=boolean:true nav_label_mode=string:ALL nav_floating_height=int:64 nav_corner_radius=int:12 nav_spacing=int:4 nav_height=int:72
+[15:27:52] warning: no tab 'History' on screen (09)
+[15:29:58] warning: no tab 'Favorites' on screen (09)
+[15:32:04] warning: no tab 'Explore' on screen (09)
+[15:34:10] warning: no tab 'Feed' on screen (09)
+[15:36:17] warning: no tab 'History' on screen (09)
+[15:38:22] warning: no tab 'Favorites' on screen (09)
+[15:40:28] warning: no tab 'Explore' on screen (09)
+[15:42:33] warning: no tab 'History' on screen (09)
+[15:44:39] warning: no tab 'Favorites' on screen (09)
+[15:46:45] warning: no tab 'Explore' on screen (09)
+[15:48:50] warning: no tab 'History' on screen (09)
+[15:50:56] warning: no tab 'Favorites' on screen (09)
+[15:53:03] warning: no tab 'Explore' on screen (09)
+[15:53:06] === combo 10: nav_floating=boolean:false top_bar_floating=boolean:true nav_pinned=boolean:true nav_label_mode=string:SELECTED nav_opacity=int:70 nav_accent=boolean:true nav_layered_surface=boolean:true
+[15:55:26] warning: no tab 'History' on screen (10)
+[15:57:32] warning: no tab 'Favorites' on screen (10)
+[15:59:37] warning: no tab 'Explore' on screen (10)
+[16:01:43] warning: no tab 'Feed' on screen (10)
+[16:03:49] warning: no tab 'History' on screen (10)

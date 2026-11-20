@@ -1,0 +1,4 @@
+04 | Favorites | other category, bar hidden: first item under the top bar: item top 0 < bar bottom 495
+   -> fail-1.png
+06-font130 | Favorites | other category, bar hidden: first item under the top bar: item top 0 < bar bottom 495
+   -> fail-2.png
