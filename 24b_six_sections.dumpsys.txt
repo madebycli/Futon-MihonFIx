@@ -1,0 +1,404 @@
+TASK 10192:io.github.landwarderer.futon.debug id=37 userId=0 displayId=0(type=INTERNAL)
+  ACTIVITY io.github.landwarderer.futon.debug/io.github.landwarderer.futon.main.ui.MainActivity 83e6dbc pid=13175 userId=0 uid=10192 displayId=0(type=INTERNAL)
+    Local Activity 48d4332 State:
+      mResumed=true mStopped=false mFinished=false
+      mIsInMultiWindowMode=false mIsInPictureInPictureMode=false
+      mChangingConfigurations=false
+      mCurrentConfig={1.0 310mcc260mnc [en_US] ldltr sw320dp w320dp h625dp 420dpi nrml long port finger qwerty/v/v -nav/h winConfig={ mBounds=Rect(0, 0 - 840, 1800) mAppBounds=Rect(0, 96 - 840, 1737) mMaxBounds=Rect(0, 0 - 840, 1800) mDisplayRotation=ROTATION_0 mWindowingMode=fullscreen mDisplayWindowingMode=fullscreen mActivityType=standard mAlwaysOnTop=undefined mRotation=ROTATION_0} as.3 s.2 fontWeightAdjustment=0}
+      mLoadersStarted=true
+      Active Fragments in 62df2e5:
+        #0: ReportFragment{3b061ba #0 androidx.lifecycle.LifecycleDispatcher.report_fragment_tag}
+          mFragmentId=#0 mContainerId=#0 mTag=androidx.lifecycle.LifecycleDispatcher.report_fragment_tag
+          mState=5 mIndex=0 mWho=android:fragment:0 mBackStackNesting=0
+          mAdded=true mRemoving=false mFromLayout=false mInLayout=false
+          mHidden=false mDetached=false mMenuVisible=true mHasMenu=false
+          mRetainInstance=false mRetaining=false mUserVisibleHint=true
+          mFragmentManager=FragmentManager{62df2e5 in HostCallbacks{fbc786b}}
+          mHost=android.app.Activity$HostCallbacks@fbc786b
+          Child FragmentManager{db20fc8 in ReportFragment{3b061ba}}:
+            FragmentManager misc state:
+              mHost=android.app.Activity$HostCallbacks@fbc786b
+              mContainer=android.app.Fragment$1@24fd861
+              mParent=ReportFragment{3b061ba #0 androidx.lifecycle.LifecycleDispatcher.report_fragment_tag}
+              mCurState=5 mStateSaved=false mDestroyed=false
+      Added Fragments:
+        #0: ReportFragment{3b061ba #0 androidx.lifecycle.LifecycleDispatcher.report_fragment_tag}
+      FragmentManager misc state:
+        mHost=android.app.Activity$HostCallbacks@fbc786b
+        mContainer=android.app.Activity$HostCallbacks@fbc786b
+        mCurState=5 mStateSaved=false mDestroyed=false
+    ViewRoot:
+      mAdded=true
+      mRemoved=false
+      mStopped=false
+      mPausedForTransition=false
+      mConsumeBatchedInputScheduled=false
+      mConsumeBatchedInputImmediatelyScheduled=false
+      mPendingInputEventCount=0
+      mProcessInputEventsScheduled=false
+      mTraversalScheduled=false
+      mReportNextDraw=false
+      mLastReportedMergedConfiguration={mGlobalConfig={1.0 310mcc260mnc [en_US] ldltr sw320dp w320dp h625dp 420dpi nrml long port finger qwerty/v/v -nav/h winConfig={ mBounds=Rect(0, 0 - 840, 1800) mAppBounds=Rect(0, 96 - 840, 1737) mMaxBounds=Rect(0, 0 - 840, 1800) mDisplayRotation=ROTATION_0 mWindowingMode=fullscreen mDisplayWindowingMode=fullscreen mActivityType=undefined mAlwaysOnTop=undefined mRotation=ROTATION_0} as.3 s.720 fontWeightAdjustment=0} mOverrideConfig={1.0 310mcc260mnc [en_US] ldltr sw320dp w320dp h625dp 420dpi nrml long port finger qwerty/v/v -nav/h winConfig={ mBounds=Rect(0, 0 - 840, 1800) mAppBounds=Rect(0, 96 - 840, 1737) mMaxBounds=Rect(0, 0 - 840, 1800) mDisplayRotation=ROTATION_0 mWindowingMode=fullscreen mDisplayWindowingMode=fullscreen mActivityType=standard mAlwaysOnTop=undefined mRotation=ROTATION_0} as.3 s.2 fontWeightAdjustment=0}}
+      mLastConfigurationFromResources={1.0 310mcc260mnc [en_US] ldltr sw320dp w320dp h625dp 420dpi nrml long port finger qwerty/v/v -nav/h winConfig={ mBounds=Rect(0, 0 - 840, 1800) mAppBounds=Rect(0, 96 - 840, 1737) mMaxBounds=Rect(0, 0 - 840, 1800) mDisplayRotation=ROTATION_0 mWindowingMode=fullscreen mDisplayWindowingMode=fullscreen mActivityType=standard mAlwaysOnTop=undefined mRotation=ROTATION_0} as.3 s.2 fontWeightAdjustment=0}
+      mIsAmbientMode=false
+      mUnbufferedInputSource=0
+      mAttachInfo=       AttachInfo:
+        mHasWindowFocus=true
+        mWindowVisibility=0
+        mInTouchMode=true
+        mUnbufferedDispatchRequested=false
+      android.view.ViewRootImpl$NativePreImeInputStage: mQueueLength=0
+      android.view.ViewRootImpl$ImeInputStage: mQueueLength=0
+      android.view.ViewRootImpl$NativePostImeInputStage: mQueueLength=0
+      android.view.ViewRootImpl$WindowInputEventReceiver
+       mInputChannel: fa4b5bd io.github.landwarderer.futon.debug/io.github.landwarderer.futon.main.ui.MainActivity (client)
+       mSeqMap: {}
+       mReceiverPtr:
+        mInputConsumer:
+          mResampleTouch = true
+          mChannel = fa4b5bd io.github.landwarderer.futon.debug/io.github.landwarderer.futon.main.ui.MainActivity (client)
+          mMsgDeferred: false
+          Batches:
+              <empty>
+          mSeqChains:
+              <empty>
+          mConsumeTimes:
+              <empty>
+          
+        mBatchedInputEventPending: false
+        mOutboundQueue:
+          <empty>
+        
+    Choreographer:
+      mFrameScheduled=false
+      mLastFrameTime=1069060 (6384 ms ago)
+    InsetsController:
+      InsetsState
+        mDisplayFrame=Rect(0, 0 - 840, 1800)
+        mDisplayCutout=DisplayCutout{insets=Rect(0, 96 - 0, 0) waterfall=Insets{left=0, top=0, right=0, bottom=0} boundingRect={Bounds=[Rect(0, 0 - 0, 0), Rect(369, 0 - 458, 96), Rect(0, 0 - 0, 0), Rect(0, 0 - 0, 0)]} cutoutPathParserInfo={CutoutPathParserInfo{displayWidth=840 displayHeight=1800 physicalDisplayWidth=1080 physicalDisplayHeight=2400 density={2.625} cutoutSpec={M 507,64 a 33,33 0 1 0 66,0 33,33 0 1 0 -66,0 Z @left} rotation={0} scale={1.0} physicalPixelDisplaySizeRatio={0.75}}}}
+        mRoundedCorners=RoundedCorners{[RoundedCorner{position=TopLeft, radius=21, center=Point(21, 21)}, RoundedCorner{position=TopRight, radius=21, center=Point(819, 21)}, RoundedCorner{position=BottomRight, radius=21, center=Point(819, 1779)}, RoundedCorner{position=BottomLeft, radius=21, center=Point(21, 1779)}]}
+        mRoundedCornerFrame=Rect(0, 0 - 840, 1800)
+        mPrivacyIndicatorBounds=PrivacyIndicatorBounds {static bounds=Rect(587, 0 - 803, 96) rotation=0}
+        mDisplayShape=DisplayShape{ spec=-1893857183 displayWidth=1080 displayHeight=2400 physicalPixelDisplaySizeRatio=1.0 rotation=0 offsetX=0 offsetY=0 scale=1.0}
+          InsetsSource id=3 type=ime frame=[0,0][0,0] visible=false flags= insetsRoundedCornerFrame=false
+          InsetsSource id=27 type=displayCutout frame=[0,0][840,96] visible=true flags= insetsRoundedCornerFrame=false
+          InsetsSource id=46ec0000 type=statusBars frame=[0,0][840,96] visible=true flags= insetsRoundedCornerFrame=false
+          InsetsSource id=46ec0005 type=mandatorySystemGestures frame=[0,0][840,128] visible=true flags= insetsRoundedCornerFrame=false
+          InsetsSource id=46ec0006 type=tappableElement frame=[0,0][840,96] visible=true flags= insetsRoundedCornerFrame=false
+          InsetsSource id=7b3d0001 type=navigationBars frame=[0,1737][840,1800] visible=true flags=SUPPRESS_SCRIM insetsRoundedCornerFrame=false
+          InsetsSource id=7b3d0004 type=systemGestures frame=[0,0][78,1800] visible=true flags= insetsRoundedCornerFrame=false
+          InsetsSource id=7b3d0005 type=mandatorySystemGestures frame=[0,1716][840,1800] visible=true flags= insetsRoundedCornerFrame=false
+          InsetsSource id=7b3d0006 type=tappableElement frame=[0,0][0,0] visible=true flags= insetsRoundedCornerFrame=false
+          InsetsSource id=7b3d0024 type=systemGestures frame=[762,0][840,1800] visible=true flags= insetsRoundedCornerFrame=false
+    WindowOnBackDispatcher:
+        Top Callback: android.app.Activity$$ExternalSyntheticLambda0@bd6f8b3
+        Callbacks: 
+          Callback: android.app.Activity$$ExternalSyntheticLambda0@bd6f8b3 Priority=-1
+    View Hierarchy:
+      DecorView@bf2df86[MainActivity]
+        android.widget.LinearLayout{b49c57c V.E...... ........ 0,0-840,1800}
+          android.view.ViewStub{e283047 G.E...... ......I. 0,0-0,0 #10201ca android:id/action_mode_bar_stub}
+          android.widget.FrameLayout{27d0e05 V.E...... ........ 0,0-840,1800}
+            androidx.appcompat.widget.FitWindowsFrameLayout{662ae5a V.E...... ........ 0,0-840,1800 #7f090045 app:id/action_bar_root}
+              androidx.appcompat.widget.ContentFrameLayout{3bc6074 V.E...... ........ 0,0-840,1800 #1020002 android:id/content}
+                androidx.coordinatorlayout.widget.CoordinatorLayout{a50999d V.E...... ........ 0,0-840,1800}
+                  com.google.android.material.textview.MaterialTextView{5fecb2b V.ED..... ........ 249,576-590,1224 #7f090443 app:id/textViewWatermark}
+                  androidx.fragment.app.FragmentContainerView{da5cb88 V.E...... ........ 0,327-840,2127 #7f090186 app:id/container}
+                    android.widget.FrameLayout{f8d6e12 V.E...... ........ 0,0-840,1800}
+                      androidx.swiperefreshlayout.widget.SwipeRefreshLayout{aad89e3 V..D..... ........ 0,0-840,1800 #7f0903fe app:id/swipeRefreshLayout}
+                        io.github.landwarderer.futon.core.ui.list.fastscroll.FastScrollRecyclerView{4790fe0 VFED..... ........ 0,0-840,1800 #7f090372 app:id/recyclerView}
+                          android.widget.HorizontalScrollView{1a23299 VFED..... ........ 21,21-819,127 #7f09038e app:id/scrollView}
+                            io.github.landwarderer.futon.core.ui.widgets.ChipsView{8d0595e V.E...... ........ 21,0-2300,106 #7f090172 app:id/chips_tags}
+                              io.github.landwarderer.futon.core.ui.widgets.ChipsView$DataChip{8a4e13f VFED..CL. ........ 0,5-287,90 #1 aid=1073741825}
+                              io.github.landwarderer.futon.core.ui.widgets.ChipsView$DataChip{8f4a0c VFED..CL. ........ 308,5-660,90 #2 aid=1073741826}
+                              io.github.landwarderer.futon.core.ui.widgets.ChipsView$DataChip{6da5f55 VFED..CL. ........ 681,5-984,90 #3 aid=1073741827}
+                              io.github.landwarderer.futon.core.ui.widgets.ChipsView$DataChip{4c4ad6a VFED..CL. ........ 1005,5-1263,90 #4}
+                              io.github.landwarderer.futon.core.ui.widgets.ChipsView$DataChip{e90525b VFED..CL. ........ 1284,5-1561,90 #5}
+                              io.github.landwarderer.futon.core.ui.widgets.ChipsView$DataChip{9ecfaf8 VFED..CL. ........ 1582,5-1959,90 #6}
+                              io.github.landwarderer.futon.core.ui.widgets.ChipsView$DataChip{22e9bd1 VFED..CL. ........ 1980,5-2279,90 #7}
+                          android.widget.LinearLayout{5f83636 V.E...... ........ 21,127-819,237}
+                            com.google.android.material.textview.MaterialTextView{ef7b937 V.ED..... ........ 0,8-672,101 #7f090486 app:id/textView_title}
+                            com.google.android.material.button.MaterialButton{172cea4 IFED..C.. ......I. 672,0-798,110 #7f090105 app:id/button_more}
+                          android.widget.LinearLayout{fb0240d VFE...CLX ........ 26,242-282,710}
+                            android.widget.FrameLayout{8097fc2 V.E...... ........ 16,16-240,326}
+                              io.github.landwarderer.futon.image.ui.CoverImageView{5f884f2 V.ED..... ........ 0,0-224,310 #7f09023b app:id/imageView_cover}
+                              io.github.landwarderer.futon.history.ui.util.ReadingProgressView{304b1d3 V.ED..... ........ 119,205-203,289 #7f090363 app:id/progressView}
+                              io.github.landwarderer.futon.core.ui.widgets.IconsView{3603110 V.E...... ........ 0,26-59,85 #7f090224 app:id/iconsView}
+                                android.widget.ImageView{147f409 V.ED..... ........ 11,11-48,48}
+                              io.github.landwarderer.futon.core.ui.widgets.BadgeView{ff3d60e G.ED..... ......I. 0,0-0,0 #7f0900c4 app:id/badge}
+                            com.google.android.material.textview.MaterialTextView{2de982f V.ED..... ........ 16,326-240,452 #7f090486 app:id/textView_title}
+                          android.widget.LinearLayout{e7f4e3c VFE...CLX ........ 292,242-548,710}
+                            android.widget.FrameLayout{472c7c5 V.E...... ........ 16,16-240,326}
+                              io.github.landwarderer.futon.image.ui.CoverImageView{f85fe3e V.ED..... ........ 0,0-224,310 #7f09023b app:id/imageView_cover}
+                              io.github.landwarderer.futon.history.ui.util.ReadingProgressView{51b451a V.ED..... ........ 119,205-203,289 #7f090363 app:id/progressView}
+                              io.github.landwarderer.futon.core.ui.widgets.IconsView{7c6884b V.E...... ........ 0,26-59,85 #7f090224 app:id/iconsView}
+                                android.widget.ImageView{2111228 V.ED..... ........ 11,11-48,48}
+                              io.github.landwarderer.futon.core.ui.widgets.BadgeView{7bd1b41 G.ED..... ......I. 0,0-0,0 #7f0900c4 app:id/badge}
+                            com.google.android.material.textview.MaterialTextView{f1898e6 V.ED..... ........ 16,326-240,452 #7f090486 app:id/textView_title}
+                          android.widget.LinearLayout{3f35e27 VFE...CLX ........ 558,242-814,710}
+                            android.widget.FrameLayout{e7928d4 V.E...... ........ 16,16-240,326}
+                              io.github.landwarderer.futon.image.ui.CoverImageView{dfc04a V.ED..... ........ 0,0-224,310 #7f09023b app:id/imageView_cover}
+                              io.github.landwarderer.futon.history.ui.util.ReadingProgressView{bff2a7d V.ED..... ........ 119,205-203,289 #7f090363 app:id/progressView}
+                              io.github.landwarderer.futon.core.ui.widgets.IconsView{4455d72 V.E...... ........ 0,26-59,85 #7f090224 app:id/iconsView}
+                                android.widget.ImageView{c2db5c3 V.ED..... ........ 11,11-48,48}
+                              io.github.landwarderer.futon.core.ui.widgets.BadgeView{4a9fe40 G.ED..... ......I. 0,0-0,0 #7f0900c4 app:id/badge}
+                            com.google.android.material.textview.MaterialTextView{d58f179 V.ED..... ........ 16,326-240,452 #7f090486 app:id/textView_title}
+                          android.widget.LinearLayout{507debe VFE...CLX ........ 26,720-282,1188}
+                            android.widget.FrameLayout{cbfd88b V.E...... ........ 16,16-240,326}
+                              io.github.landwarderer.futon.image.ui.CoverImageView{510cffa V.ED..... ........ 0,0-224,310 #7f09023b app:id/imageView_cover}
+                              io.github.landwarderer.futon.history.ui.util.ReadingProgressView{98d5626 V.ED..... ........ 119,205-203,289 #7f090363 app:id/progressView}
+                              io.github.landwarderer.futon.core.ui.widgets.IconsView{4c58581 V.E...... ........ 0,26-59,85 #7f090224 app:id/iconsView}
+                                android.widget.ImageView{f2beb1f V.ED..... ........ 11,11-48,48}
+                              io.github.landwarderer.futon.core.ui.widgets.BadgeView{50be6c G.ED..... ......I. 0,0-0,0 #7f0900c4 app:id/badge}
+                            com.google.android.material.textview.MaterialTextView{82bbd68 V.ED..... ........ 16,326-240,452 #7f090486 app:id/textView_title}
+                          android.widget.LinearLayout{fee2c35 VFE...CLX ........ 292,720-548,1188}
+                            android.widget.FrameLayout{fdf28ca V.E...... ........ 16,16-240,326}
+                              io.github.landwarderer.futon.image.ui.CoverImageView{eff5cb4 V.ED..... ........ 0,0-224,310 #7f09023b app:id/imageView_cover}
+                              io.github.landwarderer.futon.history.ui.util.ReadingProgressView{4b34814 V.ED..... ........ 119,205-203,289 #7f090363 app:id/progressView}
+                              io.github.landwarderer.futon.core.ui.widgets.IconsView{8d17267 V.E...... ........ 0,26-59,85 #7f090224 app:id/iconsView}
+                                android.widget.ImageView{6ae1a3b V.ED..... ........ 11,11-48,48}
+                              io.github.landwarderer.futon.core.ui.widgets.BadgeView{8c15558 G.ED..... ......I. 0,0-0,0 #7f0900c4 app:id/badge}
+                            com.google.android.material.textview.MaterialTextView{c6256b1 V.ED..... ........ 16,326-240,452 #7f090486 app:id/textView_title}
+                          android.widget.LinearLayout{a2f0796 VFE...CLX ........ 558,720-814,1188}
+                            android.widget.FrameLayout{3c3f8bd V.E...... ........ 16,16-240,326}
+                              io.github.landwarderer.futon.image.ui.CoverImageView{88f9020 V.ED..... ........ 0,0-224,310 #7f09023b app:id/imageView_cover}
+                              io.github.landwarderer.futon.history.ui.util.ReadingProgressView{f86d180 V.ED..... ........ 119,205-203,289 #7f090363 app:id/progressView}
+                              io.github.landwarderer.futon.core.ui.widgets.IconsView{478ce03 V.E...... ........ 0,26-59,85 #7f090224 app:id/iconsView}
+                                android.widget.ImageView{93c63b9 V.ED..... ........ 11,11-48,48}
+                              io.github.landwarderer.futon.core.ui.widgets.BadgeView{e5a1f17 G.ED..... ......I. 0,0-0,0 #7f0900c4 app:id/badge}
+                            com.google.android.material.textview.MaterialTextView{f68aeb2 V.ED..... ........ 16,326-240,452 #7f090486 app:id/textView_title}
+                          android.widget.LinearLayout{4a26f04 VFE...CLX ........ 26,1198-282,1666}
+                            android.widget.FrameLayout{814aced V.E...... ........ 16,16-240,326}
+                              io.github.landwarderer.futon.image.ui.CoverImageView{cb8602 V.ED..... ........ 0,0-224,310 #7f09023b app:id/imageView_cover}
+                              io.github.landwarderer.futon.history.ui.util.ReadingProgressView{9cc0722 V.ED..... ........ 119,205-203,289 #7f090363 app:id/progressView}
+                              io.github.landwarderer.futon.core.ui.widgets.IconsView{c5795b3 V.E...... ........ 0,26-59,85 #7f090224 app:id/iconsView}
+                                android.widget.ImageView{c597770 V.ED..... ........ 11,11-48,48}
+                              io.github.landwarderer.futon.core.ui.widgets.BadgeView{51c2ae9 G.ED..... ......I. 0,0-0,0 #7f0900c4 app:id/badge}
+                            com.google.android.material.textview.MaterialTextView{b47736e V.ED..... ........ 16,326-240,452 #7f090486 app:id/textView_title}
+                          android.widget.LinearLayout{7abda0f VFE...CLX ........ 292,1198-548,1666}
+                            android.widget.FrameLayout{f2f03fe V.E...... ........ 16,16-240,326}
+                              io.github.landwarderer.futon.image.ui.CoverImageView{b70004e V.ED..... ........ 0,0-224,310 #7f09023b app:id/imageView_cover}
+                              io.github.landwarderer.futon.history.ui.util.ReadingProgressView{7369a9c V.ED..... ........ 119,205-203,289 #7f090363 app:id/progressView}
+                              io.github.landwarderer.futon.core.ui.widgets.IconsView{6038ca5 V.E...... ........ 0,26-59,85 #7f090224 app:id/iconsView}
+                                android.widget.ImageView{fb587a V.ED..... ........ 11,11-48,48}
+                              io.github.landwarderer.futon.core.ui.widgets.BadgeView{856082b G.ED..... ......I. 0,0-0,0 #7f0900c4 app:id/badge}
+                            com.google.android.material.textview.MaterialTextView{eb0475f V.ED..... ........ 16,326-240,452 #7f090486 app:id/textView_title}
+                          android.widget.LinearLayout{f60c488 VFE...CLX ........ 558,1198-814,1666}
+                            android.widget.FrameLayout{94785ac V.E...... ........ 16,16-240,326}
+                              io.github.landwarderer.futon.image.ui.CoverImageView{ecfd35a V.ED..... ........ 0,0-224,310 #7f09023b app:id/imageView_cover}
+                              io.github.landwarderer.futon.history.ui.util.ReadingProgressView{1bbfa7b V.ED..... ........ 119,205-203,289 #7f090363 app:id/progressView}
+                              io.github.landwarderer.futon.core.ui.widgets.IconsView{773620a V.E...... ........ 0,26-59,85 #7f090224 app:id/iconsView}
+                                android.widget.ImageView{1454e21 V.ED..... ........ 11,11-48,48}
+                              io.github.landwarderer.futon.core.ui.widgets.BadgeView{6d68246 G.ED..... ......I. 0,0-0,0 #7f0900c4 app:id/badge}
+                            com.google.android.material.textview.MaterialTextView{d368275 V.ED..... ........ 16,326-240,452 #7f090486 app:id/textView_title}
+                          android.widget.LinearLayout{d2afc07 VFE...CLX ........ 26,1676-282,2144}
+                            android.widget.FrameLayout{881a134 V.E...... ........ 16,16-240,326}
+                              io.github.landwarderer.futon.image.ui.CoverImageView{b8e2d62 V.ED..... ........ 0,0-224,310 #7f09023b app:id/imageView_cover}
+                              io.github.landwarderer.futon.history.ui.util.ReadingProgressView{87ab5d V.ED..... ........ 119,205-203,289 #7f090363 app:id/progressView}
+                              io.github.landwarderer.futon.core.ui.widgets.IconsView{6e87cd2 V.E...... ........ 0,26-59,85 #7f090224 app:id/iconsView}
+                                android.widget.ImageView{37151a3 V.ED..... ........ 11,11-48,48}
+                              io.github.landwarderer.futon.core.ui.widgets.BadgeView{5319ca0 G.ED..... ......I. 0,0-0,0 #7f0900c4 app:id/badge}
+                            com.google.android.material.textview.MaterialTextView{798a059 V.ED..... ........ 16,326-240,452 #7f090486 app:id/textView_title}
+                          android.widget.LinearLayout{aad941e VFE...CLX ........ 292,1676-548,2144}
+                            android.widget.FrameLayout{97d5098 V.E...... ........ 16,16-240,326}
+                              io.github.landwarderer.futon.image.ui.CoverImageView{fa5bdae V.ED..... ........ 0,0-224,310 #7f09023b app:id/imageView_cover}
+                              io.github.landwarderer.futon.history.ui.util.ReadingProgressView{c3d64ff V.ED..... ........ 119,205-203,289 #7f090363 app:id/progressView}
+                              io.github.landwarderer.futon.core.ui.widgets.IconsView{723e2cc V.E...... ........ 0,26-59,85 #7f090224 app:id/iconsView}
+                                android.widget.ImageView{f29e915 V.ED..... ........ 11,11-48,48}
+                              io.github.landwarderer.futon.core.ui.widgets.BadgeView{51ad42a G.ED..... ......I. 0,0-0,0 #7f0900c4 app:id/badge}
+                            com.google.android.material.textview.MaterialTextView{b8d521b V.ED..... ........ 16,326-240,452 #7f090486 app:id/textView_title}
+                          android.widget.LinearLayout{6125fb8 VFE...CLX ........ 558,1676-814,2144}
+                            android.widget.FrameLayout{679d0f1 V.E...... ........ 16,16-240,326}
+                              io.github.landwarderer.futon.image.ui.CoverImageView{f9406ba V.ED..... ........ 0,0-224,310 #7f09023b app:id/imageView_cover}
+                              io.github.landwarderer.futon.history.ui.util.ReadingProgressView{f4d0191 V.ED..... ........ 119,205-203,289 #7f090363 app:id/progressView}
+                              io.github.landwarderer.futon.core.ui.widgets.IconsView{16a08f6 V.E...... ........ 0,26-59,85 #7f090224 app:id/iconsView}
+                                android.widget.ImageView{d24f4f7 V.ED..... ........ 11,11-48,48}
+                              io.github.landwarderer.futon.core.ui.widgets.BadgeView{969bf64 G.ED..... ......I. 0,0-0,0 #7f0900c4 app:id/badge}
+                            com.google.android.material.textview.MaterialTextView{aed94d6 V.ED..... ........ 16,326-240,452 #7f090486 app:id/textView_title}
+                        androidx.swiperefreshlayout.widget.CircleImageView{5af25cd G.ED..... ......ID 368,-105-472,0}
+                      io.github.landwarderer.futon.core.ui.list.fastscroll.FastScroller{2a5be82 V.E...... ........ 698,21-835,1779 #7f0901df app:id/fast_scroller}
+                        com.google.android.material.textview.MaterialTextView{b29e993 I.ED..... ......I. 21,21-116,116 #7f0900da app:id/bubble}
+                        android.widget.FrameLayout{b56dd0 G.E...... ......I. 0,0-0,0 #7f090394 app:id/scrollbar}
+                          androidx.appcompat.widget.AppCompatImageView{39551c9 G.ED..... ......ID 0,0-0,0 #7f0904b5 app:id/track}
+                          androidx.appcompat.widget.AppCompatImageView{ff540ce V.ED..... ......I. 0,0-0,0 #7f0904a3 app:id/thumb}
+                  com.google.android.material.appbar.AppBarLayout{6cb4921 V.E...... ........ 0,0-840,327 #7f0900b5 app:id/appbar}
+                    io.github.landwarderer.futon.core.ui.widgets.WindowInsetHolder{27f8bef V.ED..... ........ 0,0-840,96 #7f090258 app:id/insetsHolder}
+                    com.google.android.material.search.SearchBar{6cb96fc VFE...C.. ........ 42,138-798,285 #7f090396 app:id/search_bar}
+                      androidx.appcompat.widget.AppCompatImageButton{f984185 V.ED..... ........ 11,0-137,147}
+                      android.widget.FrameLayout{9a89bda V.E...... ........ 137,45-406,102 #7f09032c app:id/open_search_bar_text_view_container}
+                        com.google.android.material.textview.MaterialTextView{e2f80b V.ED..... ........ 0,0-269,57 #7f09032b app:id/open_search_bar_text_view}
+                        com.google.android.material.textview.MaterialTextView{bb926e8 I.ED..... ......I. 0,0-0,57 #7f09032a app:id/open_search_bar_placeholder_text_view}
+                      androidx.appcompat.widget.ActionMenuView{7207101 V.E...... ........ 503,0-756,147}
+                        androidx.appcompat.view.menu.ActionMenuItemView{3049ba6 VFED..C.. ........ 0,10-127,136 #7f090040 app:id/action_app_mode}
+                        androidx.appcompat.widget.ActionMenuPresenter$OverflowMenuButton{8c709e7 VFED..CL. ........ 127,10-253,136}
+                  com.google.android.material.search.SearchView{55c6146 V.E...... ........ 0,0-840,1800 #7f09039e app:id/search_view}
+                    android.view.View{16dc994 V.ED..... ........ 0,0-840,1800 #7f090335 app:id/open_search_view_scrim}
+                    com.google.android.material.internal.ClippableRoundedCornerLayout{ba21c3d GFE...... ......I. 0,0-0,0 #7f090334 app:id/open_search_view_root}
+                      android.widget.LinearLayout{ccecc32 V.E...... ......ID 0,0-0,0 #7f09032d app:id/open_search_view_background}
+                        android.view.View{6f05d83 V.ED..... ......I. 0,0-0,0 #7f090337 app:id/open_search_view_status_bar_spacer}
+                        android.widget.FrameLayout{727eb00 G.E...... ......I. 0,0-0,0 #7f090333 app:id/open_search_view_header_container}
+                        android.widget.FrameLayout{7993f39 V.E...... ......I. 0,0-0,0 #7f09033a app:id/open_search_view_toolbar_container}
+                          com.google.android.material.appbar.MaterialToolbar{c99797e G.E...... ......ID 0,0-0,0 #7f090331 app:id/open_search_view_dummy_toolbar}
+                          com.google.android.material.appbar.MaterialToolbar{5d14edf V.E...... ......ID 0,0-0,0 #7f090339 app:id/open_search_view_toolbar}
+                            androidx.appcompat.widget.AppCompatImageButton{fa0b72c VFED..C.. ......I. 0,0-0,0}
+                            android.widget.LinearLayout{74595f5 V.E...... ......I. 0,0-0,0 #7f090338 app:id/open_search_view_text_container}
+                              com.google.android.material.textview.MaterialTextView{ccfaf8a G.ED..... ......I. 0,0-0,0 #7f090336 app:id/open_search_view_search_prefix}
+                              androidx.appcompat.widget.AppCompatEditText{aa5f9fb VFED..CL. ......ID 0,0-0,0 #7f090332 app:id/open_search_view_edit_text}
+                              androidx.appcompat.widget.AppCompatImageButton{df81a18 GFED..C.. ......I. 0,0-0,0 #7f09032e app:id/open_search_view_clear_button}
+                            androidx.appcompat.widget.ActionMenuView{1269c71 V.E...... ......I. 0,0-0,0}
+                              androidx.appcompat.view.menu.ActionMenuItemView{1813a56 VFED..C.. ......I. 0,0-0,0 #7f0900a1 app:id/action_voice_search}
+                              androidx.appcompat.widget.ActionMenuPresenter$OverflowMenuButton{8503ad7 VFED..CL. ......I. 0,0-0,0}
+                        android.view.View{560bfc4 V.ED..... ......ID 0,0-0,0 #7f090330 app:id/open_search_view_divider}
+                        com.google.android.material.internal.TouchObserverFrameLayout{a378ead V.E...... ......I. 0,0-0,0 #7f09032f app:id/open_search_view_content_container}
+                          androidx.recyclerview.widget.RecyclerView{deea5e2 VFED.V... ......I. 0,0-0,0 #7f090378 app:id/recyclerView_search}
+                  com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton{1cef07 GFED..C.. ......I. 0,0-0,0 #7f0901db app:id/fab}
+                  io.github.landwarderer.futon.core.ui.widgets.SlidingBottomNavigationView{3901834 V.E...... ........ 0,1390-840,1800 #7f0900d4 app:id/bottomNav}
+                    com.google.android.material.bottomnavigation.BottomNavigationMenuView{3f3ad73 G.E...... ......I. 0,0-0,0}
+                      com.google.android.material.bottomnavigation.BottomNavigationItemView{78c1430 VFE...C.. ..S...I. 0,0-0,0 #7f09030d app:id/nav_history}
+                        android.widget.LinearLayout{1eb68a9 V.E...... ..S...I. 0,0-0,0 #7f090313 app:id/navigation_bar_item_content_container}
+                          android.widget.FrameLayout{6d53e2e V.E...... ..S...I. 0,0-0,0 #7f090314 app:id/navigation_bar_item_icon_container}
+                            android.view.View{751adcf V.ED..... ..S...I. 0,0-0,0 #7f090312 app:id/navigation_bar_item_active_indicator_view}
+                            android.widget.LinearLayout{dd6435c V.E...... ..S...I. 0,0-0,0 #7f090316 app:id/navigation_bar_item_inner_content_container}
+                              androidx.appcompat.widget.AppCompatImageView{1e8e665 V.ED..... ..S...I. 0,0-0,0 #7f090315 app:id/navigation_bar_item_icon_view}
+                          com.google.android.material.internal.BaselineLayout{d7b0f3a V.E...... ..S...I. 0,0-0,0 #7f090317 app:id/navigation_bar_item_labels_group}
+                            com.google.android.material.textview.MaterialTextView{ce557eb I.ED..... ..S...ID 0,0-0,0 #7f090319 app:id/navigation_bar_item_small_label_view}
+                            com.google.android.material.textview.MaterialTextView{9323948 V.ED..... ..S...I. 0,0-0,0 #7f090318 app:id/navigation_bar_item_large_label_view}
+                      com.google.android.material.bottomnavigation.BottomNavigationItemView{d8683e1 VFE...C.. ......I. 0,0-0,0 #7f09030b app:id/nav_favorites}
+                        android.widget.LinearLayout{f7ae506 V.E...... ......I. 0,0-0,0 #7f090313 app:id/navigation_bar_item_content_container}
+                          android.widget.FrameLayout{1bf87c7 V.E...... ......I. 0,0-0,0 #7f090314 app:id/navigation_bar_item_icon_container}
+                            android.view.View{4d5a1f4 V.ED..... ......I. 0,0-0,0 #7f090312 app:id/navigation_bar_item_active_indicator_view}
+                            android.widget.LinearLayout{d067d1d V.E...... ......I. 0,0-0,0 #7f090316 app:id/navigation_bar_item_inner_content_container}
+                              androidx.appcompat.widget.AppCompatImageView{7504b92 V.ED..... ......I. 0,0-0,0 #7f090315 app:id/navigation_bar_item_icon_view}
+                          com.google.android.material.internal.BaselineLayout{922d963 G.E...... ......I. 0,0-0,0 #7f090317 app:id/navigation_bar_item_labels_group}
+                            com.google.android.material.textview.MaterialTextView{7a4e960 V.ED..... ......ID 0,0-0,0 #7f090319 app:id/navigation_bar_item_small_label_view}
+                            com.google.android.material.textview.MaterialTextView{92ce19 I.ED..... ......I. 0,0-0,0 #7f090318 app:id/navigation_bar_item_large_label_view}
+                      com.google.android.material.bottomnavigation.BottomNavigationItemView{9a38ede VFE...C.. ......I. 0,0-0,0 #7f09030e app:id/nav_local}
+                        android.widget.LinearLayout{ddfa8bf V.E...... ......I. 0,0-0,0 #7f090313 app:id/navigation_bar_item_content_container}
+                          android.widget.FrameLayout{5f3b8c V.E...... ......I. 0,0-0,0 #7f090314 app:id/navigation_bar_item_icon_container}
+                            android.view.View{6f932d5 V.ED..... ......I. 0,0-0,0 #7f090312 app:id/navigation_bar_item_active_indicator_view}
+                            android.widget.LinearLayout{b55baea V.E...... ......I. 0,0-0,0 #7f090316 app:id/navigation_bar_item_inner_content_container}
+                              androidx.appcompat.widget.AppCompatImageView{d7011db V.ED..... ......I. 0,0-0,0 #7f090315 app:id/navigation_bar_item_icon_view}
+                          com.google.android.material.internal.BaselineLayout{88a8478 G.E...... ......I. 0,0-0,0 #7f090317 app:id/navigation_bar_item_labels_group}
+                            com.google.android.material.textview.MaterialTextView{4272751 V.ED..... ......ID 0,0-0,0 #7f090319 app:id/navigation_bar_item_small_label_view}
+                            com.google.android.material.textview.MaterialTextView{c4c9bb6 I.ED..... ......I. 0,0-0,0 #7f090318 app:id/navigation_bar_item_large_label_view}
+                      com.google.android.material.bottomnavigation.BottomNavigationItemView{8d3f0b7 VFE...C.. ......I. 0,0-0,0 #7f090310 app:id/nav_updated}
+                        android.widget.LinearLayout{a1f7024 V.E...... ......I. 0,0-0,0 #7f090313 app:id/navigation_bar_item_content_container}
+                          android.widget.FrameLayout{365e78d V.E...... ......I. 0,0-0,0 #7f090314 app:id/navigation_bar_item_icon_container}
+                            android.view.View{2febd42 V.ED..... ......I. 0,0-0,0 #7f090312 app:id/navigation_bar_item_active_indicator_view}
+                            android.widget.LinearLayout{72ce153 V.E...... ......I. 0,0-0,0 #7f090316 app:id/navigation_bar_item_inner_content_container}
+                              androidx.appcompat.widget.AppCompatImageView{3f56a90 V.ED..... ......I. 0,0-0,0 #7f090315 app:id/navigation_bar_item_icon_view}
+                          com.google.android.material.internal.BaselineLayout{1566f89 G.E...... ......I. 0,0-0,0 #7f090317 app:id/navigation_bar_item_labels_group}
+                            com.google.android.material.textview.MaterialTextView{4bf6b8e V.ED..... ......ID 0,0-0,0 #7f090319 app:id/navigation_bar_item_small_label_view}
+                            com.google.android.material.textview.MaterialTextView{61a3faf I.ED..... ......I. 0,0-0,0 #7f090318 app:id/navigation_bar_item_large_label_view}
+                      com.google.android.material.bottomnavigation.BottomNavigationItemView{8ee9fbc VFE...C.. ......I. 0,0-0,0 #7f090309 app:id/nav_bookmarks}
+                        android.widget.LinearLayout{9ad7b45 V.E...... ......I. 0,0-0,0 #7f090313 app:id/navigation_bar_item_content_container}
+                          android.widget.FrameLayout{6cab29a V.E...... ......I. 0,0-0,0 #7f090314 app:id/navigation_bar_item_icon_container}
+                            android.view.View{3d527cb V.ED..... ......I. 0,0-0,0 #7f090312 app:id/navigation_bar_item_active_indicator_view}
+                            android.widget.LinearLayout{5e3fba8 V.E...... ......I. 0,0-0,0 #7f090316 app:id/navigation_bar_item_inner_content_container}
+                              androidx.appcompat.widget.AppCompatImageView{4af86c1 V.ED..... ......I. 0,0-0,0 #7f090315 app:id/navigation_bar_item_icon_view}
+                          com.google.android.material.internal.BaselineLayout{4115e66 G.E...... ......I. 0,0-0,0 #7f090317 app:id/navigation_bar_item_labels_group}
+                            com.google.android.material.textview.MaterialTextView{f0c75a7 V.ED..... ......ID 0,0-0,0 #7f090319 app:id/navigation_bar_item_small_label_view}
+                            com.google.android.material.textview.MaterialTextView{a512a54 I.ED..... ......I. 0,0-0,0 #7f090318 app:id/navigation_bar_item_large_label_view}
+                      com.google.android.material.bottomnavigation.BottomNavigationItemView{6ccdfd VFE...C.. ......I. 0,0-0,0 #7f09030f app:id/nav_suggestions}
+                        android.widget.LinearLayout{3c4faf2 V.E...... ......I. 0,0-0,0 #7f090313 app:id/navigation_bar_item_content_container}
+                          android.widget.FrameLayout{880c543 V.E...... ......I. 0,0-0,0 #7f090314 app:id/navigation_bar_item_icon_container}
+                            android.view.View{fc097c0 V.ED..... ......I. 0,0-0,0 #7f090312 app:id/navigation_bar_item_active_indicator_view}
+                            android.widget.LinearLayout{1bd4cf9 V.E...... ......I. 0,0-0,0 #7f090316 app:id/navigation_bar_item_inner_content_container}
+                              androidx.appcompat.widget.AppCompatImageView{ca3d43e V.ED..... ......I. 0,0-0,0 #7f090315 app:id/navigation_bar_item_icon_view}
+                          com.google.android.material.internal.BaselineLayout{260729f G.E...... ......I. 0,0-0,0 #7f090317 app:id/navigation_bar_item_labels_group}
+                            com.google.android.material.textview.MaterialTextView{bf76fec V.ED..... ......ID 0,0-0,0 #7f090319 app:id/navigation_bar_item_small_label_view}
+                            com.google.android.material.textview.MaterialTextView{8fcbfb5 I.ED..... ......I. 0,0-0,0 #7f090318 app:id/navigation_bar_item_large_label_view}
+                    io.github.landwarderer.futon.core.ui.widgets.FloatingNavRow{e05c357 V.E...... ........ 0,0-840,305}
+                      io.github.landwarderer.futon.core.ui.widgets.FloatingNavRow$BarView{104f64a V.ED..... ........ 2,158-837,305}
+                        io.github.landwarderer.futon.core.ui.widgets.FloatingNavRow$ItemView{642de44 VFED..C.. ..S..... 0,0-135,147}
+                          android.widget.LinearLayout{96399bb V.E...... ..S..... 21,25-114,122}
+                            io.github.landwarderer.futon.core.ui.widgets.FloatingNavRow$CheckableImageView{6c98b2d V.ED..... ..S..... 15,0-78,63}
+                            android.widget.TextView{9e19ed8 V.ED..... ..S..... 0,63-93,97}
+                        io.github.landwarderer.futon.core.ui.widgets.FloatingNavRow$ItemView{686a231 VFED..C.. ........ 140,0-275,147}
+                          android.widget.LinearLayout{e062862 V.E...... ........ 36,42-99,105}
+                            io.github.landwarderer.futon.core.ui.widgets.FloatingNavRow$CheckableImageView{fa42d16 V.ED..... ........ 0,0-63,63}
+                            android.widget.TextView{3a81697 G.ED..... ......ID 0,0-0,0}
+                        io.github.landwarderer.futon.core.ui.widgets.FloatingNavRow$ItemView{53dd084 VFED..C.. ........ 280,0-415,147}
+                          android.widget.LinearLayout{6b93df3 V.E...... ........ 36,42-99,105}
+                            io.github.landwarderer.futon.core.ui.widgets.FloatingNavRow$CheckableImageView{af2306d V.ED..... ........ 0,0-63,63}
+                            android.widget.TextView{52e04a2 G.ED..... ......ID 0,0-0,0}
+                        io.github.landwarderer.futon.core.ui.widgets.FloatingNavRow$ItemView{14d8533 VFED..C.. ........ 420,0-555,147}
+                          android.widget.LinearLayout{ab19ab0 V.E...... ........ 36,42-99,105}
+                            io.github.landwarderer.futon.core.ui.widgets.FloatingNavRow$CheckableImageView{50970f0 V.ED..... ........ 0,0-63,63}
+                            android.widget.TextView{f0e6669 G.ED..... ......ID 0,0-0,0}
+                        io.github.landwarderer.futon.core.ui.widgets.FloatingNavRow$ItemView{a8bc8ee VFED..C.. ........ 560,0-695,147}
+                          android.widget.LinearLayout{ee0ad29 V.E...... ........ 36,42-99,105}
+                            io.github.landwarderer.futon.core.ui.widgets.FloatingNavRow$CheckableImageView{ad1418f V.ED..... ........ 0,0-63,63}
+                            android.widget.TextView{acac1c G.ED..... ......ID 0,0-0,0}
+                        io.github.landwarderer.futon.core.ui.widgets.FloatingNavRow$ItemView{f9e0025 VFED..C.. ........ 700,0-835,147}
+                          android.widget.LinearLayout{12268ae V.E...... ........ 36,42-99,105}
+                            io.github.landwarderer.futon.core.ui.widgets.FloatingNavRow$CheckableImageView{bef85fa V.ED..... ........ 0,0-63,63}
+                            android.widget.TextView{92a67ab G.ED..... ......ID 0,0-0,0}
+                      io.github.landwarderer.futon.main.ui.RoundResumeButton{be66e08 VFE...C.. ........ 690,0-837,147 #7f090382 app:id/roundFab}
+                        io.github.landwarderer.futon.image.ui.CoverImageView{78fd7a5 V.ED..... ........ 0,0-147,147}
+                        android.view.View{8d379a1 V.ED..... ........ 0,0-147,147}
+                        android.widget.ImageView{4a007c6 V.ED..... ........ 42,42-105,105}
+              androidx.appcompat.widget.ViewStubCompat{3a5d387 G.E...... ......I. 0,0-0,0 #7f090079 app:id/action_mode_bar_stub}
+        androidx.activity.EdgeToEdge$enableEdgeToEdge$1$2{57862b4 G.E...... ......I. 0,0-0,0}
+    Looper (main, tid 2) {fb19bbe}
+      Message 0: { when=+1h29m47s466ms callback=androidx.work.impl.background.greedy.TimeLimiter$$ExternalSyntheticLambda0 target=android.os.Handler }
+      Message 1: { when=+17h43m26s389ms callback=androidx.work.impl.background.greedy.DelayedWorkTracker$1 target=android.os.Handler }
+      (Total messages: 2, polling=false, quitting=false)
+    ResourcesManager:
+      total apks: 7
+      resources: 5
+      resource impls: 5
+    1 dumpables:
+    #0: AutofillManager
+        AutofillManager:
+          sessionId: 2147483647
+          state: UNKNOWN
+          context: io.github.landwarderer.futon.main.ui.MainActivity@48d4332
+          service client: null
+          client: android.view.autofill.AutofillClientController@d8d0edd (android.os.BinderProxy@5e0de9)
+          enabled: false
+          enabledAugmentedOnly: false
+          hasService: true
+          hasCallback: false
+          onInvisibleCalled false
+          last autofilled data: null
+          id of last fill UI shown: null
+          tracked views: null
+          fillable ids: null
+          entered ids: null
+          save trigger id: null
+          save on finish(): false
+          options: logLvl=2, compatMode=false, augmented=false, appDisabledExpiration=0
+          compat mode enabled:   fill dialog enabled: false
+          fill dialog enabled hints: [password, passwordAuto, creditCardNumber, creditCardSecurityCode, creditCardExpirationDate]
+        false
+          debug: true verbose: false
+        Autofill Compat Mode: false
+    Local FragmentActivity 48d4332 State:
+      mCreated=true mResumed=true mStopped=false    Active Fragments:
+    HistoryListFragment{f822123} (35872cf7-0566-4b3f-a74a-8961b0560e28 id=0x7f090186 tag=primary:io.github.landwarderer.futon.history.ui.HistoryListFragment)
+        mFragmentId=#7f090186 mContainerId=#7f090186 mTag=primary:io.github.landwarderer.futon.history.ui.HistoryListFragment
+        mState=7 mWho=35872cf7-0566-4b3f-a74a-8961b0560e28 mBackStackNesting=0
+        mAdded=true mRemoving=false mFromLayout=false mInLayout=false
+        mHidden=false mDetached=false mMenuVisible=true mHasMenu=false
+        mRetainInstance=false mUserVisibleHint=true
+        mFragmentManager=FragmentManager{492f620 in HostCallbacks{650bbd9}}}
+        mHost=androidx.fragment.app.FragmentActivity$HostCallbacks@650bbd9
+        mArguments=Bundle[{is_btab=true}]
+        mPopDirection=false
+        mContainer=androidx.fragment.app.FragmentContainerView{da5cb88 V.E...... ........ 0,327-840,2127 #7f090186 app:id/container}
+        mView=android.widget.FrameLayout{f8d6e12 V.E...... ........ 0,0-840,1800}
+        Child FragmentManager{c72499e in HistoryListFragment{f822123}}}:
+          Back Stack Index: 0
+          FragmentManager misc state:
+            mHost=androidx.fragment.app.FragmentActivity$HostCallbacks@650bbd9
+            mContainer=androidx.fragment.app.Fragment$5@d4bac7f
+            mParent=HistoryListFragment{f822123} (35872cf7-0566-4b3f-a74a-8961b0560e28 id=0x7f090186 tag=primary:io.github.landwarderer.futon.history.ui.HistoryListFragment)
+            mCurState=7 mStateSaved=false mStopped=false mDestroyed=false
+    Added Fragments:
+      #0: HistoryListFragment{f822123} (35872cf7-0566-4b3f-a74a-8961b0560e28 id=0x7f090186 tag=primary:io.github.landwarderer.futon.history.ui.HistoryListFragment)
+    Back Stack Index: 0
+    FragmentManager misc state:
+      mHost=androidx.fragment.app.FragmentActivity$HostCallbacks@650bbd9
+      mContainer=androidx.fragment.app.FragmentActivity$HostCallbacks@650bbd9
+      mCurState=7 mStateSaved=false mStopped=false mDestroyed=false

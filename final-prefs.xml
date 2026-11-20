@@ -1,0 +1,56 @@
+<?xml version='1.0' encoding='utf-8'?>
+<map>
+    <boolean name="description_collapse" value="true" />
+    <string name="home_background_font">BOLD</string>
+    <boolean name="nav_full_width" value="false" />
+    <int name="nav_opacity" value="100" />
+    <string name="screenshots_policy">allow</string>
+    <boolean name="main_fab" value="true" />
+    <string name="details_tab">-1</string>
+    <boolean name="tracker_progress_refresh" value="true" />
+    <string name="list_mode_2">GRID</string>
+    <set name="tips_closed">
+        <string>suggestions</string>
+    </set>
+    <boolean name="tracker_unstuck_migration" value="true" />
+    <string name="nav_main">HISTORY,FAVORITES,EXPLORE,FEED</string>
+    <int name="nav_floating_height" value="52" />
+    <boolean name="quick_filter" value="true" />
+    <boolean name="main_fab_round" value="true" />
+    <set name="search_suggest_types">
+        <string>SOURCES</string>
+        <string>GENRES</string>
+        <string>QUERIES_RECENT</string>
+        <string>AUTHORS</string>
+        <string>QUERIES_SUGGEST</string>
+        <string>RECENT_SOURCES</string>
+        <string>MANGA</string>
+    </set>
+    <string name="theme">-1</string>
+    <int name="onboarding_version" value="1" />
+    <boolean name="nav_labels" value="true" />
+    <int name="nav_spacing" value="16" />
+    <boolean name="mode_switcher_spotlight_shown" value="true" />
+    <boolean name="pages_tab" value="true" />
+    <set name="manga_list_badges">
+        <string>1</string>
+        <string>4</string>
+    </set>
+    <string name="progress_indicators">PERCENT_READ</string>
+    <boolean name="shortcuts_no_nsfw" value="true" />
+    <boolean name="nav_layered_surface" value="false" />
+    <boolean name="amoled_theme" value="true" />
+    <boolean name="nav_floating" value="true" />
+    <int name="nav_corner_radius" value="28" />
+    <boolean name="dynamic_shortcuts" value="true" />
+    <boolean name="nav_capsule" value="true" />
+    <boolean name="exit_confirm" value="false" />
+    <string name="nav_label_mode">SELECTED</string>
+    <string name="app_locale" />
+    <int name="sources_version" value="1" />
+    <boolean name="nav_accent" value="false" />
+    <boolean name="merge_repeated_chapters" value="true" />
+    <boolean name="suggestions" value="true" />
+    <long name="extension_update_last_check" value="1795180123705" />
+    <string name="extension_update_pending" />
+<boolean name="nav_pinned" value="false" /><boolean name="top_bar_floating" value="false" /></map>
