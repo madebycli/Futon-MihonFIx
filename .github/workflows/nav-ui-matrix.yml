@@ -1,7 +1,7 @@
 name: Navigation matrix (XXL)
 # Test-only: every combination of the bar settings in parallel jobs, gestures on every tab and geometry checks after
 # each of them (.github/ci/nav-ui-matrix.sh). Each job publishes its report, failure screenshots and UI dumps to the
-# branch test/nav-matrix-<job>.
+# branch test/nav-matrix-<job>. The job log ends with the report as well (step Summary).
 on:
   workflow_dispatch:
   push:
