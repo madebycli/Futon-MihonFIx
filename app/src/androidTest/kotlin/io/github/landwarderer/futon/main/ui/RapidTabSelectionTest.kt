@@ -97,7 +97,8 @@ class RapidTabSelectionTest {
 				assertEquals(tabs.size, tabs.distinctBy { f -> f.tag }.size)
 				settled = target.isInstance(current) && current?.lifecycle?.currentState == Lifecycle.State.RESUMED &&
 					tabs.count { f -> f.lifecycle.currentState == Lifecycle.State.RESUMED } == 1 &&
-					it.navigation().selectedItemId == id
+					it.navigation().selectedItemId == id &&
+					current?.view?.alpha == 1f
 			}
 			if (!settled) SystemClock.sleep(25)
 		}
