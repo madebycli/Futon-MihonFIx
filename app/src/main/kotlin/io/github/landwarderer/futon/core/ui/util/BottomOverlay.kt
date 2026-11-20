@@ -19,6 +19,8 @@ object BottomOverlay {
 		if (view.getTag(R.id.tag_bottom_overlay) != px) {
 			view.setTag(R.id.tag_bottom_overlay, px)
 			ViewCompat.requestApplyInsets(view)
+			// A request made during a layout pass, or while the window is not shown, can get lost: ask once more.
+			view.post { ViewCompat.requestApplyInsets(view) }
 		}
 	}
 
