@@ -244,4 +244,8 @@ done
 shot 07_settings_bars
 adb shell input swipe 540 1700 540 1200 400; sleep 1
 shot 08_settings_bars_more
+for n in 09 10 11 12; do
+	adb shell input swipe 540 1700 540 1100 400; sleep 1
+	shot "${n}_settings_further"
+done
 log "done"
