@@ -56,8 +56,8 @@ jobs:
           disable-animations: false
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           script: |
-            ./gradlew :app:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=io.github.landwarderer.futon.main.ui.RapidTabSelectionTest --no-configuration-cache
             bash .github/ci/nav-ui-check.sh "$PWD/nav-ui-out"
+            ./gradlew :app:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=io.github.landwarderer.futon.main.ui.RapidTabSelectionTest --no-configuration-cache
       - name: Upload screenshots and logs
         if: always()
         uses: actions/upload-artifact@v4
