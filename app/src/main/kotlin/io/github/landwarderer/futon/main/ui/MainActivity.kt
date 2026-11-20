@@ -7,6 +7,7 @@ import android.content.pm.PackageManager.PERMISSION_GRANTED
 import android.os.Build
 import android.os.Bundle
 import android.view.MotionEvent
+import android.graphics.Rect
 import android.view.View
 import android.view.ViewGroup
 import android.view.ViewOutlineProvider
@@ -20,6 +21,8 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.view.MenuProvider
 import androidx.core.view.ViewCompat
+import androidx.core.view.allViews
+import androidx.recyclerview.widget.RecyclerView
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.children
 import androidx.core.view.inputmethod.EditorInfoCompat
@@ -154,7 +157,7 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
 		viewBinding.appbar.updateLayoutParams<CoordinatorLayout.LayoutParams> {
 			behavior = appBarBehavior
 		}
-		appBarSettler = AppBarSettler(viewBinding.appbar, appBarBehavior)
+		appBarSettler = AppBarSettler(viewBinding.appbar, appBarBehavior, ::shownList)
 		viewBinding.appbar.addOnLayoutChangeListener { _, _, top, _, bottom, _, oldTop, _, oldBottom ->
 			if (bottom - top != oldBottom - oldTop) updateTopOverlay()
 		}
@@ -476,6 +479,15 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
 	private var defaultSearchBarElevation = 0f
 	private val appBarBehavior = SettlingAppBarBehavior()
 	private var appBarSettler: AppBarSettler? = null
+
+	/** The vertical list the user sees now: the largest one shown in the content (a Favourites page, for example). */
+	private fun shownList(): RecyclerView? {
+		val rect = Rect()
+		return viewBinding.container.allViews
+			.filterIsInstance<RecyclerView>()
+			.filter { it.isShown && it.layoutManager?.canScrollVertically() == true }
+			.maxByOrNull { if (it.getGlobalVisibleRect(rect)) rect.width() * rect.height() else 0 }
+	}
 
 	override fun dispatchTouchEvent(ev: MotionEvent): Boolean {
 		appBarSettler?.onTouchEvent(ev)
