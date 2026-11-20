@@ -546,7 +546,10 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
 	}
 
 	private fun adjustAppbar(topFragment: Fragment) {
-		val isFavourites = topFragment is FavouritesContainerFragment
+		// Favourites keeps the status bar strip of the app bar and fades the search bar out in it (the docked bar,
+		// as before). The floating search bar leaves upwards on every tab alike; the floating category tabs stop below
+		// the status bar on their own.
+		val isFavourites = topFragment is FavouritesContainerFragment && !settings.isTopBarFloating
 		if (isFavourites) {
 			fadingAppbarMediator.bind()
 		} else {
