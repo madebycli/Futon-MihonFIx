@@ -58,6 +58,28 @@ class MihonLoadPriorityTest {
 		running.join()
 	}
 
+	@Test
+	fun runningBackgroundLoadGivesWayToAUserLoad() = runTest {
+		val never = CompletableDeferred<Unit>()
+		var preempted = false
+		val background = launch {
+			try {
+				withContext(MihonLoadPriority.Background()) {
+					MihonLoadPriority.run(SOURCE) { never.await() }
+				}
+			} catch (e: MihonLoadPriority.PreemptedByUser) {
+				preempted = true
+				throw e
+			}
+		}
+		runCurrent()
+		assertEquals("user", MihonLoadPriority.run(SOURCE) { "user" })
+		runCurrent()
+		background.join()
+		assertTrue(preempted)
+		assertTrue(background.isCancelled)
+	}
+
 	private companion object {
 		const val SOURCE = 7537715367149829912L
 		const val OTHER_SOURCE = 1L

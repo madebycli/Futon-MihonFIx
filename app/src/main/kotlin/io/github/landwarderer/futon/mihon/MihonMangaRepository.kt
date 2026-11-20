@@ -29,6 +29,8 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.currentCoroutineContext
 import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.JsonObject
@@ -137,8 +139,17 @@ class MihonMangaRepository(
      */
     override suspend fun getDetailsImpl(manga: Manga): Manga {
         val mine = CompletableDeferred<Manga>()
-        val running = detailsInFlight.putIfAbsent(manga.url, mine)
-        if (running != null) return running.await()
+        while (true) {
+            val running = detailsInFlight.putIfAbsent(manga.url, mine) ?: break
+            try {
+                return running.await()
+            } catch (e: CancellationException) {
+                // Still active here: the load joined was a background one that gave way to a load of the user
+                // (MihonLoadPriority), so load it here instead of ending with it.
+                currentCoroutineContext().ensureActive()
+                detailsInFlight.remove(manga.url, running)
+            }
+        }
         try {
             val details = MihonLoadPriority.run(source.sourceId) { loadDetails(manga) }
             mine.complete(details)
