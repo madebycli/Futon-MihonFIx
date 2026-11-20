@@ -29,6 +29,8 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.currentCoroutineContext
 import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.JsonObject
@@ -137,10 +139,19 @@ class MihonMangaRepository(
      */
     override suspend fun getDetailsImpl(manga: Manga): Manga {
         val mine = CompletableDeferred<Manga>()
-        val running = detailsInFlight.putIfAbsent(manga.url, mine)
-        if (running != null) return running.await()
+        while (true) {
+            val running = detailsInFlight.putIfAbsent(manga.url, mine) ?: break
+            try {
+                return running.await()
+            } catch (e: CancellationException) {
+                // Still active here: the load joined was a background one that gave way to a load of the user
+                // (MihonLoadPriority), so load it here instead of ending with it.
+                currentCoroutineContext().ensureActive()
+                detailsInFlight.remove(manga.url, running)
+            }
+        }
         try {
-            val details = loadDetails(manga)
+            val details = MihonLoadPriority.run(source.sourceId) { loadDetails(manga) }
             mine.complete(details)
             return details
         } catch (e: Throwable) {
@@ -202,7 +213,10 @@ class MihonMangaRepository(
         ).copy(id = manga.id).toManga()
     }
 
-    override suspend fun getPagesImpl(chapter: MangaChapter): List<MangaPage> = withContext(Dispatchers.IO) {
+    override suspend fun getPagesImpl(chapter: MangaChapter): List<MangaPage> =
+        MihonLoadPriority.run(source.sourceId) { loadPages(chapter) }
+
+    private suspend fun loadPages(chapter: MangaChapter): List<MangaPage> = withContext(Dispatchers.IO) {
         val sChapter = MihonChapterSnapshotStore.get(source.sourceId, chapter.url)
             ?: snapshotPersistence?.getChapter(source.sourceId, chapter.url)?.also(::rememberMihonChapter)
             ?: chapter.toContentChapter(source).toMihonChapter()

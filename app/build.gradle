@@ -71,6 +71,10 @@ android {
 	buildTypes {
 		debug {
 			applicationIdSuffix = '.debug'
+			// Own sync account and providers, so a test build installs next to the release app.
+			resValue 'string', 'account_type_sync', defaultConfig.applicationId + '.debug.sync'
+			resValue 'string', 'sync_authority_history', defaultConfig.applicationId + '.debug.history'
+			resValue 'string', 'sync_authority_favourites', defaultConfig.applicationId + '.debug.favourites'
 			buildConfigField "String", "SENTRY_DSN", '""'
 		}
 		release {
@@ -83,6 +87,9 @@ android {
 		nightly {
 			initWith release
 			applicationIdSuffix = '.nightly'
+			resValue 'string', 'account_type_sync', defaultConfig.applicationId + '.nightly.sync'
+			resValue 'string', 'sync_authority_history', defaultConfig.applicationId + '.nightly.history'
+			resValue 'string', 'sync_authority_favourites', defaultConfig.applicationId + '.nightly.favourites'
 			signingConfig signingConfigs.release
 			buildConfigField "String", "SENTRY_DSN", "\"${System.getenv('SENTRY_DSN') ?: ''}\""
 		}
