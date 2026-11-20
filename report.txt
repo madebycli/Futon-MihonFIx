@@ -1,0 +1,6 @@
+03 | Explore | fully hidden: top bar not fully hidden: 359px still on screen
+   -> fail-1.png
+04 | Explore | fully hidden: top bar not fully hidden: 359px still on screen
+   -> fail-2.png
+08 | Explore | fully hidden: top bar not fully hidden: 359px still on screen
+   -> fail-3.png
