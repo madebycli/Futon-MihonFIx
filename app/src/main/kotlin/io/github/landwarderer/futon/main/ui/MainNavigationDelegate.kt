@@ -1,5 +1,8 @@
 package io.github.landwarderer.futon.main.ui
 
+import android.animation.Animator
+import android.animation.AnimatorListenerAdapter
+import android.animation.ObjectAnimator
 import android.os.Bundle
 import android.view.Gravity
 import android.view.Menu
@@ -23,7 +26,6 @@ import androidx.lifecycle.lifecycleScope
 import com.google.android.material.navigation.NavigationBarView
 import com.google.android.material.navigationrail.NavigationRailView
 import androidx.recyclerview.widget.RecyclerView
-import androidx.transition.Fade
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.channels.trySendBlocking
 import kotlinx.coroutines.flow.callbackFlow
@@ -52,6 +54,7 @@ import io.github.landwarderer.futon.suggestions.ui.SuggestionsFragment
 import io.github.landwarderer.futon.tracker.ui.feed.FeedFragment
 import io.github.landwarderer.futon.tracker.ui.updates.UpdatesFragment
 import java.util.LinkedList
+import kotlin.math.abs
 import com.google.android.material.R as materialR
 
 /**
@@ -78,7 +81,8 @@ class MainNavigationDelegate(
 		if (!fragmentManager.isDestroyed && !fragmentManager.isStateSaved) {
 			val target = pendingTab
 			pendingTab = null
-			if (target != null && !target.isInstance(primaryFragment)) {
+			// While a page fades, the tab chosen last always wins, also when it is the page that is fading out.
+			if (target != null && (fadeAnimator != null || !target.isInstance(primaryFragment))) {
 				showTab(target, pendingFromUser)
 			}
 			if (trimRequested) {
@@ -277,8 +281,51 @@ class MainNavigationDelegate(
 		if (pendingTab != null || trimRequested) navBar.post(applyPending)
 	}
 
-	/** Shows the tab of [fragmentClass], creating it on the first visit, and hides the tab that was shown. */
+	/**
+	 * Shows the tab of [fragmentClass], creating it on the first visit, and hides the tab that was shown.
+	 *
+	 * The page that is left fades out first, then the other one fades in, so the two are never visible together.
+	 * The fade is done here and not with fragment transitions: these overlapped when the tabs were switched quickly,
+	 * and a page fades as one layer, with its shadows (the floating Favourites tabs), instead of view by view. A new
+	 * switch during a fade carries on from the page as it is, so nothing is left half transparent.
+	 */
 	private fun showTab(fragmentClass: Class<out Fragment>, fromUser: Boolean) {
+		val generation = ++fadeGeneration
+		val current = primaryFragment
+		val currentView = current?.view
+		if (current != null && fragmentClass.isInstance(current)) {
+			// Back to the page that was fading out: bring it back.
+			currentView?.let { fade(it, 1f, TAB_FADE_IN_MS) {} }
+			return
+		}
+		if (current == null || currentView == null || !currentView.isAttachedToWindow) {
+			fadeAnimator?.cancel()
+			commitTab(fragmentClass, fromUser, fadeIn = false)
+			return
+		}
+		// The tab stays alive while hidden: a fling or smooth scroll still running in it would go on moving the
+		// app bar and the bottom bar, which the tabs share, and leave them stuck halfway on the new tab.
+		currentView.allViews.filterIsInstance<RecyclerView>().forEach { list ->
+			list.stopScroll()
+			list.stopNestedScroll(ViewCompat.TYPE_TOUCH)
+			list.stopNestedScroll(ViewCompat.TYPE_NON_TOUCH)
+		}
+		fade(currentView, 0f, TAB_FADE_OUT_MS) {
+			if (generation != fadeGeneration) return@fade
+			if (fragmentManager.isDestroyed || fragmentManager.isStateSaved) {
+				// Left the screen meanwhile: switch when it is back (schedulePendingChanges).
+				currentView.alpha = 1f
+				pendingTab = fragmentClass
+				pendingFromUser = fromUser
+				return@fade
+			}
+			commitTab(fragmentClass, fromUser, fadeIn = true)
+			// Hidden now; it has to be opaque again when it is shown next time.
+			currentView.alpha = 1f
+		}
+	}
+
+	private fun commitTab(fragmentClass: Class<out Fragment>, fromUser: Boolean, fadeIn: Boolean) {
 		val tag = TAG_PRIMARY_PREFIX + fragmentClass.name
 		val current = primaryFragment
 		val existing = fragmentManager.findFragmentByTag(tag)
@@ -287,21 +334,6 @@ class MainNavigationDelegate(
 				putBoolean(AppRouter.KEY_IS_BOTTOMTAB, true)
 			}
 		}
-		// The shown tab fades out first, then the other one fades in: both are never visible at the same time (with
-		// an overlapping fade the old page showed through the new one). Set on every switch, as tabs that were
-		// restored after a recreation have no transitions.
-		if (current != null && current !== target) {
-			current.exitTransition = Fade(Fade.OUT).setDuration(TAB_FADE_OUT_MS)
-			// The tab stays alive while hidden: a fling or smooth scroll still running in it would go on moving the
-			// app bar and the bottom bar, which the tabs share, and leave them stuck halfway on the new tab.
-			current.view?.allViews?.filterIsInstance<RecyclerView>()?.forEach { list ->
-				list.stopScroll()
-				list.stopNestedScroll(ViewCompat.TYPE_TOUCH)
-				list.stopNestedScroll(ViewCompat.TYPE_NON_TOUCH)
-			}
-		}
-		target.enterTransition = Fade(Fade.IN).setDuration(TAB_FADE_IN_MS)
-		target.allowEnterTransitionOverlap = false
 		val transaction = fragmentManager.beginTransaction().setReorderingAllowed(true)
 		if (current != null && current !== target) {
 			// STARTED, not RESUMED: a hidden tab keeps its content up to date but does not own the menu or the toolbar.
@@ -319,7 +351,51 @@ class MainNavigationDelegate(
 			transaction.add(R.id.container, target, tag)
 		}
 		transaction.commitNow()
+		val targetView = target.view
+		if (fadeIn && targetView != null) {
+			// Transparent before its first frame, then faded in.
+			targetView.alpha = 0f
+			fade(targetView, 1f, TAB_FADE_IN_MS) {}
+		} else {
+			targetView?.alpha = 1f
+		}
 		onFragmentChanged(target, fromUser = fromUser)
+	}
+
+	private var fadeGeneration = 0
+	private var fadeAnimator: Animator? = null
+
+	/** Fades [view] to [alpha] as one layer; the duration is for a full fade and shortened for a part of it. */
+	private fun fade(view: View, alpha: Float, fullDuration: Long, onEnd: () -> Unit) {
+		fadeAnimator?.cancel()
+		val distance = abs(view.alpha - alpha)
+		if (distance == 0f) {
+			fadeAnimator = null
+			onEnd()
+			return
+		}
+		val layerType = view.layerType
+		fadeAnimator = ObjectAnimator.ofFloat(view, View.ALPHA, view.alpha, alpha).apply {
+			duration = (fullDuration * distance).toLong()
+			addListener(object : AnimatorListenerAdapter() {
+				private var isCancelled = false
+
+				override fun onAnimationStart(animation: Animator) {
+					view.setLayerType(View.LAYER_TYPE_HARDWARE, null)
+				}
+
+				override fun onAnimationCancel(animation: Animator) {
+					isCancelled = true
+				}
+
+				override fun onAnimationEnd(animation: Animator) {
+					view.setLayerType(layerType, null)
+					if (fadeAnimator === animation) fadeAnimator = null
+					if (!isCancelled) onEnd()
+				}
+			})
+			start()
+		}
 	}
 
 	private fun syncTabLifecycles() {
