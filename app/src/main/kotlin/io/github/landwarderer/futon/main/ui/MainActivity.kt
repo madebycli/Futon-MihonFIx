@@ -308,7 +308,9 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
 		)
 		if (fromUser) {
 			actionModeDelegate.finishActionMode()
-			viewBinding.appbar.setExpanded(true)
+			// Each section starts with the search bar shown, at once and not sliding in while the new section fades
+			// in (as Kototoro resets the top bar per destination). The page is still transparent at this moment.
+			viewBinding.appbar.setExpanded(true, false)
 			viewBinding.bottomNav?.revealIfScrolledAway()
 		}
 	}
@@ -515,12 +517,18 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
 	}
 
 	private fun adjustAppbar(topFragment: Fragment) {
-		if (topFragment is FavouritesContainerFragment) {
-			viewBinding.appbar.fitsSystemWindows = true
+		val isFavourites = topFragment is FavouritesContainerFragment
+		if (isFavourites) {
 			fadingAppbarMediator.bind()
 		} else {
-			viewBinding.appbar.fitsSystemWindows = false
 			fadingAppbarMediator.unbind()
+		}
+		if (viewBinding.appbar.fitsSystemWindows != isFavourites) {
+			viewBinding.appbar.fitsSystemWindows = isFavourites
+			// The app bar keeps the insets of its last dispatch: without a new one it went on keeping the status bar
+			// strip after leaving Favourites, so "fully hidden" left the search bar behind the status bar (and the
+			// other way round), and its height differed from tab to tab.
+			ViewCompat.requestApplyInsets(viewBinding.appbar)
 		}
 	}
 
