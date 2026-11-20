@@ -1,0 +1,100 @@
+name: Navigation matrix (XXL)
+# Test-only: every combination of the bar settings in parallel jobs, gestures on every tab and geometry checks after
+# each of them (.github/ci/nav-ui-matrix.sh). Each job publishes its report, failure screenshots and UI dumps to the
+# branch test/nav-matrix-<job>.
+on:
+  workflow_dispatch:
+  push:
+    branches: [test/nav-tabs-integration]
+permissions:
+  contents: write
+concurrency:
+  group: nav-matrix-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Android SDK
+        run: |
+          set -euo pipefail
+          SDKMANAGER="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          set +o pipefail
+          yes | "$SDKMANAGER" --licenses > /dev/null
+          set -o pipefail
+          "$SDKMANAGER" "platform-tools" "platforms;android-37.0" "build-tools;36.0.0"
+      - name: Build debug APK
+        run: |
+          rm -f gradle/gradle-daemon-jvm.properties
+          ./gradlew -Dorg.gradle.java.home="$JAVA_HOME" :app:assembleDebug --no-configuration-cache --console=plain
+      - uses: actions/upload-artifact@v4
+        with:
+          name: matrix-debug-apk
+          path: app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+          retention-days: 3
+  matrix:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    strategy:
+      fail-fast: false
+      matrix:
+        nav: [floating, docked]
+        top: [floating, docked]
+        pinned: [pinned, unpinned]
+    name: bottom ${{ matrix.nav }}, top ${{ matrix.top }}, ${{ matrix.pinned }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: matrix-debug-apk
+          path: app/build/outputs/apk/debug
+      - name: Enable emulator acceleration
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Job settings
+        run: |
+          prefs="nav_floating=boolean:${{ matrix.nav == 'floating' }}"
+          prefs="$prefs top_bar_floating=boolean:${{ matrix.top == 'floating' }}"
+          prefs="$prefs nav_pinned=boolean:${{ matrix.pinned == 'pinned' }}"
+          echo "JOB_PREFS=$prefs" >> "$GITHUB_ENV"
+          echo "JOB_NAME=${{ matrix.nav }}-${{ matrix.top }}-${{ matrix.pinned }}" >> "$GITHUB_ENV"
+      - name: Gestures and checks on Android 14
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          profile: pixel_6
+          disable-animations: false
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          script: bash .github/ci/nav-ui-matrix.sh "$PWD/nav-matrix-out" "$JOB_PREFS"
+      - name: Summary
+        if: always()
+        run: |
+          test -f nav-matrix-out/report.txt || exit 0
+          { echo "### $JOB_NAME"; echo '```'; cat nav-matrix-out/report.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          echo "----- report -----"; cat nav-matrix-out/report.txt
+      - name: Publish the report to test/nav-matrix-${{ env.JOB_NAME }}
+        if: always()
+        run: |
+          set -euo pipefail
+          test -d nav-matrix-out || exit 0
+          rm -f nav-matrix-out/.db nav-matrix-out/.db-wal nav-matrix-out/.prefs.xml
+          cd nav-matrix-out
+          git init -q
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -q -b "test/nav-matrix-$JOB_NAME"
+          git add -A
+          git commit -q -m "Matrix $JOB_NAME of run ${{ github.run_id }} (${{ github.sha }})"
+          git push -q -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" "test/nav-matrix-$JOB_NAME"
