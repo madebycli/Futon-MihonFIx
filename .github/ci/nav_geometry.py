@@ -89,6 +89,11 @@ def main():
     ui, ctx_path, tab = sys.argv[2], sys.argv[3], sys.argv[4]
     ctx = load(ctx_path)
     m = measure(ui)
+    if cmd == "collapsed":
+        ctx.setdefault(tab, {})["collapsed_h"] = m["appbar_h"]
+        with open(ctx_path, "w") as f:
+            json.dump(ctx, f)
+        return
     if cmd == "baseline":
         ctx[tab] = m
         with open(ctx_path, "w") as f:
@@ -101,9 +106,10 @@ def main():
         if check == "top_rest":
             # Fully shown or fully hidden, never halfway.
             full = base.get("appbar_h", 0)
+            collapsed = base.get("collapsed_h", 0)
             h = m["appbar_h"]
-            if full and not (h >= full - SLACK or h <= sb + SLACK):
-                problems.append(f"top bar halfway: visible {h}px of {full}px")
+            if full and not (h >= full - SLACK or h <= max(collapsed, 0) + SLACK):
+                problems.append(f"top bar halfway: visible {h}px of {full}px (hidden: {collapsed}px)")
         elif check == "top_open":
             full = base.get("appbar_h", 0)
             if full and m["appbar_h"] < full - SLACK:

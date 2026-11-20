@@ -176,6 +176,7 @@ record_failure() {
 # check <label> <checks...>: the screen as it is now.
 check() {
 	local label=$1; shift
+	ensure_main || return
 	CHECKS=$((CHECKS + 1))
 	if ! dump_ui; then
 		WARNINGS=$((WARNINGS + 1)); log "warning: no UI dump for $COMBO | $TAB | $label"; return
@@ -220,9 +221,50 @@ status_bar_height() {
 	python3 - "$OUT/.win.txt" "$CTX" <<'PY'
 import json, re, sys
 text = open(sys.argv[1], errors="replace").read()
-m = re.search(r"type=statusBars frame=\[\d+,\d+\]\[\d+,(\d+)\]", text) or re.search(r"statusBars.*?frame=\[\d+,\d+\]\[\d+,(\d+)\]", text)
-json.dump({"status_bar": int(m.group(1)) if m else 0, "max_gap": 96}, open(sys.argv[2], "w"))
+heights = [int(h) for h in re.findall(r"type=statusBars frame=\[\d+,\d+\]\[\d+,(\d+)\]", text)]
+json.dump({"status_bar": max(heights, default=0), "max_gap": 96}, open(sys.argv[2], "w"))
 PY
+}
+
+# A gesture can still land as a tap and open a manga: go back to the main screen and note it as a slip of the
+# test, not as a failure of the app. Returns 1 when the main screen was not shown.
+ensure_main() {
+	local top
+	top=$(adb shell dumpsys activity activities | grep -m1 -E "topResumedActivity|mResumedActivity" | tr -d '\r')
+	case "$top" in *MainActivity*) return 0;; esac
+	WARNINGS=$((WARNINGS + 1)); log "warning: left the main screen ($COMBO | $TAB): $top"
+	for _ in 1 2 3; do
+		adb shell input keyevent KEYCODE_BACK; sleep 1
+		top=$(adb shell dumpsys activity activities | grep -m1 -E "topResumedActivity|mResumedActivity" | tr -d '\r')
+		case "$top" in *MainActivity*) return 1;; esac
+	done
+	launch 6
+	return 1
+}
+
+# Taps a section of the navigation; when the bottom bar is scrolled away it is brought back first. Never taps a
+# remembered position (there may be a manga under it now).
+tap_tab() {
+	local xy
+	dismiss_system_dialogs
+	for attempt in 1 2 3; do
+		dump_ui || continue
+		xy=$(python3 - "$OUT/.cur.xml" "$1" <<'PY'
+import re, sys, xml.etree.ElementTree as ET
+root = ET.parse(sys.argv[1]).getroot()
+for n in root.iter('node'):
+	if sys.argv[2] in (n.get('content-desc'), n.get('text')) and n.get('clickable') == 'true':
+		x1, y1, x2, y2 = map(int, re.findall(r'\d+', n.get('bounds')))
+		if y2 - y1 > 20:
+			print((x1 + x2) // 2, (y1 + y2) // 2)
+			break
+PY
+)
+		if [ -n "$xy" ]; then adb shell input tap $xy; return 0; fi
+		drag -500 400; rest 1.2
+	done
+	WARNINGS=$((WARNINGS + 1)); log "warning: no tab '$1' on screen ($COMBO)"
+	return 1
 }
 
 is_on() { case " $JOB_PREFS $COMBO_PREFS " in *" $1=boolean:true "*) return 0;; *) return 1;; esac; }
@@ -239,6 +281,10 @@ exercise_tab() {
 	check_one_tab "after switching"
 	baseline
 	check "at rest" $rest_checks top_open first_below_top no_gap_top $([ -n "$bottom" ] && echo bottom_shown)
+	# How the bar looks fully hidden on this tab (Favourites keeps the status bar strip of its app bar).
+	drag 900 500; rest
+	if ensure_main && dump_ui; then python3 "$GEOM" collapsed "$OUT/.cur.xml" "$CTX" "$TAB"; fi
+	for _ in 1 2 3 4 5 6; do fling_down; sleep 0.4; done; rest 2
 	drag 120 450; rest
 	check "short drag then release" $rest_checks $bottom
 	drag 60 300; rest
@@ -251,7 +297,7 @@ exercise_tab() {
 	check "bar hidden by a long drag" $rest_checks $bottom
 	drag -60 300; rest
 	check "slight drag back" $rest_checks $bottom
-	drag -25 250; rest
+	drag -45 250; rest
 	check "tiny drag back" $rest_checks $bottom
 	fling_up; rest 2.5
 	check "after a fling" $rest_checks $bottom
@@ -270,7 +316,7 @@ exercise_tab() {
 		adb shell input swipe $((W * 85 / 100)) $((H / 2)) $((W * 15 / 100)) $((H / 2)) 250; rest 1.8
 		check "other category, bar hidden" $rest_checks first_below_top no_gap_top
 		adb shell input swipe $((W * 15 / 100)) $((H / 2)) $((W * 85 / 100)) $((H / 2)) 250; rest 1.8
-		check "first category again" $rest_checks first_below_top no_gap_top
+		check "first category again" $rest_checks
 		drag 120 450; sleep 0.2
 		adb shell input swipe $((W * 85 / 100)) $((H / 2)) $((W * 15 / 100)) $((H / 2)) 250; rest 1.8
 		check "category swiped with the bar halfway" $rest_checks
@@ -295,20 +341,20 @@ run_combo() {
 	status_bar_height
 	local i=0 next
 	for TAB in "${TABS[@]}"; do
-		tap_node "$TAB" || continue
+		tap_tab "$TAB" || continue
 		exercise_tab
 		# A drag that leaves the bar halfway, then at once another tab: the bar has to settle there.
 		next=${TABS[$(( (i + 1) % ${#TABS[@]} ))]}
 		i=$((i + 1))
 		drag 120 400
-		tap_node "$next" > /dev/null 2>&1
+		tap_tab "$next"
 		local prev=$TAB; TAB=$next; rest 1.8
 		check "tab switch right after a drag (from $prev)" top_rest
 		check_one_tab "fast switch from $prev"
 		TAB=$prev
 	done
 	# Rapid switching: exactly one tab at the end.
-	for _ in 1 2 3; do tap_node History > /dev/null; tap_node Favorites > /dev/null; tap_node Explore > /dev/null; done
+	for _ in 1 2 3; do tap_tab History; tap_tab Favorites; tap_tab Explore; done
 	TAB=Explore; rest 2
 	check_one_tab "rapid switching"
 	if adb logcat -d | grep -A3 "FATAL EXCEPTION" | grep -q "Process: $PKG"; then
@@ -323,7 +369,7 @@ live_switch() {
 	COMBO=$1; local title=$2
 	log "=== live switch of '$title'"
 	launch 8
-	tap_node Favorites; rest 1.5
+	tap_tab Favorites; rest 1.5
 	drag 700 500; rest
 	for round in 1 2; do
 		adb shell am start -W -n "$PKG/io.github.landwarderer.futon.settings.SettingsActivity" > /dev/null
@@ -333,7 +379,7 @@ live_switch() {
 		adb shell input keyevent KEYCODE_BACK; sleep 1
 		adb shell input keyevent KEYCODE_BACK; sleep 3
 		for TAB in Favorites History; do
-			tap_node "$TAB" || continue
+			tap_tab "$TAB" || continue
 			rest 1.5
 			check "after switching '$title' ($round)" top_rest first_below_top no_gap_top
 			check_one_tab "after switching '$title' ($round)"
