@@ -1,6 +1,7 @@
 package io.github.landwarderer.futon.main.ui
 
 import android.Manifest
+import android.content.ComponentCallbacks2
 import android.content.Intent
 import android.content.pm.PackageManager.PERMISSION_GRANTED
 import android.os.Build
@@ -239,6 +240,22 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
 				}
 				initSearch()
 			}
+		}
+	}
+
+	override fun onPostResume() {
+		super.onPostResume()
+		navigationDelegate.schedulePendingChanges()
+	}
+
+	override fun onTrimMemory(level: Int) {
+		super.onTrimMemory(level)
+		// The kept tabs are only a shortcut; give their memory back when the system is really short of it. Not already
+		// at TRIM_MEMORY_BACKGROUND, which comes whenever the app simply goes to the background: the tabs would then
+		// reload after every return, the very thing keeping them avoids. Low-RAM devices keep fewer tabs anyway.
+		@Suppress("DEPRECATION")
+		if (level == ComponentCallbacks2.TRIM_MEMORY_RUNNING_CRITICAL || level >= ComponentCallbacks2.TRIM_MEMORY_MODERATE) {
+			navigationDelegate.releaseHiddenTabs()
 		}
 	}
 
