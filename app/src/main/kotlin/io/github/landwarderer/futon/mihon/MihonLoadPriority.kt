@@ -33,8 +33,11 @@ object MihonLoadPriority {
 	suspend fun <T> run(sourceId: Long, block: suspend () -> T): T {
 		val context = currentCoroutineContext()
 		if (context[Background] != null) {
-			while ((userLoads[sourceId] ?: 0) > 0) {
-				delay(WAIT_STEP_MS)
+			if ((userLoads[sourceId] ?: 0) > 0) {
+				MihonLoadLog.i("background load waits for the user source=$sourceId")
+				while ((userLoads[sourceId] ?: 0) > 0) {
+					delay(WAIT_STEP_MS)
+				}
 			}
 			val job = context[Job] ?: return block()
 			val running = backgroundLoads.computeIfAbsent(sourceId) { ConcurrentHashMap.newKeySet() }
@@ -47,7 +50,10 @@ object MihonLoadPriority {
 		}
 		userLoads.merge(sourceId, 1, Int::plus)
 		try {
-			backgroundLoads[sourceId]?.toList()?.forEach { it.cancel(PreemptedByUser()) }
+			backgroundLoads[sourceId]?.toList()?.takeIf { it.isNotEmpty() }?.let { running ->
+				MihonLoadLog.i("user load cancels ${running.size} background load(s) source=$sourceId")
+				running.forEach { it.cancel(PreemptedByUser()) }
+			}
 			return block()
 		} finally {
 			userLoads.compute(sourceId) { _, count -> if (count == null || count <= 1) null else count - 1 }

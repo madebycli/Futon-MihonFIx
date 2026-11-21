@@ -52,6 +52,7 @@ abstract class CachingMangaRepository(
 			cache.getDetails(source, manga.url)?.let { return it }
 		}
 		val details = asyncSafe {
+			DebugSlowDetails.apply()
 			getDetailsImpl(manga)
 		}
 		if (cachePolicy.writeEnabled) {

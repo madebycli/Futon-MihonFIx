@@ -27,7 +27,7 @@ internal class AwaitingMihonMangaRepository(
     private val extensionManager: MihonExtensionManager,
     private val cache: MemoryContentCache,
     private val snapshotPersistence: MihonSnapshotPersistence,
-) : EmptyMangaRepository(source) {
+) : EmptyMangaRepository(source), DetailsPreviewRepository {
 
     @Volatile
     private var resolved: MihonMangaRepository? = null
@@ -50,6 +50,8 @@ internal class AwaitingMihonMangaRepository(
         delegate().getList(offset, order, filter)
 
     override suspend fun getDetails(manga: Manga): Manga = delegate().getDetails(manga)
+
+    override suspend fun getDetailsPreview(manga: Manga): Manga? = delegate().getDetailsPreview(manga)
 
     override suspend fun getPages(chapter: MangaChapter): List<MangaPage> = delegate().getPages(chapter)
 

@@ -306,8 +306,12 @@ class DetailsActivity :
 	}
 
 	override fun onRefresh() {
+		isRefreshPulled = true
 		viewModel.reload()
 	}
+
+	/** The user pulled to refresh: then, and only then, the pull-to-refresh indicator shows the loading. */
+	private var isRefreshPulled = false
 
 	override fun onDraw() {
 		viewBinding.run {
@@ -405,9 +409,22 @@ class DetailsActivity :
 		viewBinding.groupRelated.isVisible = true
 	}
 
+	/**
+	 * While the details are updated, what is already known stays shown and usable (reading, downloading). A pull to
+	 * refresh shows its own indicator; any other update only a small one in the toolbar next to the download button
+	 * ([DetailsMenuProvider], [isUpdatingQuietly]), not one sliding in from the top.
+	 */
 	private fun onLoadingStateChanged(isLoading: Boolean) {
-		viewBinding.swipeRefreshLayout.isRefreshing = isLoading
+		if (!isLoading) {
+			isRefreshPulled = false
+		}
+		viewBinding.swipeRefreshLayout.isRefreshing = isLoading && isRefreshPulled
+		isUpdatingQuietly = isLoading && !isRefreshPulled
+		invalidateMenu()
 	}
+
+	var isUpdatingQuietly = false
+		private set
 
 	private fun onScrobblingInfoChanged(scrobblings: List<ScrobblingInfo>) {
 		var adapter = viewBinding.recyclerViewScrobbling.adapter as? ScrollingInfoAdapter
@@ -509,7 +526,8 @@ class DetailsActivity :
 
 	private fun onHistoryChanged(info: HistoryInfo, isLoading: Boolean) = with(infoBinding) {
 		textViewChapters.text = when {
-			isLoading -> getString(R.string.loading_)
+			// Known chapters stay shown while they are updated; "Loading" only when there are none yet.
+			isLoading && info.totalChapters <= 0 -> getString(R.string.loading_)
 			info.currentChapter >= 0 -> getString(
 				R.string.chapter_d_of_d,
 				info.currentChapter + 1,

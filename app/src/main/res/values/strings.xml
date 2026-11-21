@@ -1173,4 +1173,5 @@
     <string name="source_origin_built_in">Built-in</string>
     <string name="source_origin_mihon">Mihon extension</string>
     <string name="source_summary_with_origin">%1$s · %2$s</string>
+    <string name="updating_details">Updating…</string>
 </resources>

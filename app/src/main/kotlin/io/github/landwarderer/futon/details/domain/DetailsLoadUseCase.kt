@@ -5,6 +5,7 @@ import coil3.request.CachePolicy
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -15,6 +16,7 @@ import io.github.landwarderer.futon.core.model.isLocal
 import io.github.landwarderer.futon.core.nav.MangaIntent
 import io.github.landwarderer.futon.core.os.NetworkState
 import io.github.landwarderer.futon.core.parser.CachingMangaRepository
+import io.github.landwarderer.futon.core.parser.DetailsPreviewRepository
 import io.github.landwarderer.futon.core.parser.MangaDataRepository
 import io.github.landwarderer.futon.core.parser.MangaRepository
 import io.github.landwarderer.futon.core.ui.model.MangaOverride
@@ -116,6 +118,7 @@ class DetailsLoadUseCase @Inject constructor(
 		override: MangaOverride?,
 		force: Boolean
 	) = coroutineScope {
+		emitPreview(manga, override)
 		val remoteDeferred = async {
 			getDetails(manga, force)
 		}
@@ -145,6 +148,26 @@ class DetailsLoadUseCase @Inject constructor(
 		mangaDataRepository.updateChapters(remoteDetails)
 	}
 
+	/**
+	 * Some extensions read a long chapter list for a minute or more, and details and chapters come from the same load.
+	 * For a manga not read yet (no description or chapters stored), the details without the chapter list are loaded
+	 * first and shown meanwhile, as Mihon does; the full load follows.
+	 */
+	private suspend fun FlowCollector<MangaDetails>.emitPreview(manga: Manga, override: MangaOverride?) {
+		if (!manga.chapters.isNullOrEmpty() && !manga.description.isNullOrBlank()) return
+		val repository = mangaRepositoryFactory.create(manga.source) as? DetailsPreviewRepository ?: return
+		val preview = withTimeoutOrNull(PREVIEW_TIMEOUT_MS) { repository.getDetailsPreview(manga) } ?: return
+		emit(
+			MangaDetails(
+				manga = preview.copy(chapters = manga.chapters),
+				localManga = null,
+				override = override,
+				description = preview.description?.parseAsHtml(withImages = false),
+				isLoaded = false,
+			),
+		)
+	}
+
 	private suspend fun getDetails(seed: Manga, force: Boolean) = runCatchingCancellable {
 		val repository = mangaRepositoryFactory.create(seed.source)
 		if (repository is CachingMangaRepository) {
@@ -165,3 +188,5 @@ class DetailsLoadUseCase @Inject constructor(
 			renderDescription(this, if (withImages) imageGetter else null)
 		}.trim().nullIfEmpty()
 }
+
+private const val PREVIEW_TIMEOUT_MS = 20_000L

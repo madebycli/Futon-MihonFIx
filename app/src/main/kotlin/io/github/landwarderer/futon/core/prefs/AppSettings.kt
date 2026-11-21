@@ -913,6 +913,10 @@ class AppSettings internal constructor(
 
 	fun observeChanges() = prefs.observeChanges()
 
+	/** Debug builds only: extra time for every details load, to test a slow source (see DebugSlowDetails). */
+	val debugDetailsDelayMs: Long
+		get() = prefs.getLong("debug_details_delay_ms", 0L)
+
 	fun observe(vararg keys: String): Flow<String?> = prefs.observeChanges()
 		.filter { key -> key == null || key in keys }
 		.onStart { emit(null) }

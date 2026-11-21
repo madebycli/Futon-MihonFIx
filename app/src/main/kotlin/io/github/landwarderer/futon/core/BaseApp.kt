@@ -1,5 +1,6 @@
 package io.github.landwarderer.futon.core
 
+import io.github.landwarderer.futon.core.parser.DebugSlowDetails
 import android.app.Application
 import android.content.Context
 import android.os.Build
@@ -73,6 +74,9 @@ open class BaseApp : Application(), Configuration.Provider {
 		PlatformRegistry.applicationContext = this // TODO replace with OkHttp.initialize
 		AppCompatDelegate.setDefaultNightMode(settings.theme)
 		settings.migrateNavLabelMode()
+		if (BuildConfig.DEBUG) {
+			DebugSlowDetails.delayMs = settings.debugDetailsDelayMs
+		}
 		// Initialize Sentry only if user has opted in
 		if (settings.isCrashAnalyticsEnabled) {
 			initializeSentry()
