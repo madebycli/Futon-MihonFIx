@@ -688,4 +688,5 @@
     <string name="source_summary_with_origin">%1$s · %2$s</string>
     <string name="merge_chapter_groups">Kapitelgruppen zusammenführen</string>
     <string name="merge_chapter_groups_summary">Alle Gruppen eines Mangas in einer Liste anzeigen; wiederholte Kapitel erscheinen einmal. Es wird nichts gelöscht.</string>
+    <string name="updating_details">Wird aktualisiert …</string>
 </resources>

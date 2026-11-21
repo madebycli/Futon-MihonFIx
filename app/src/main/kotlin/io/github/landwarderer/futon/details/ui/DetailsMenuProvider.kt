@@ -54,6 +54,7 @@ class DetailsMenuProvider(
 		menu.findItem(R.id.action_scrobbling).isVisible = viewModel.isScrobblingAvailable
 		menu.findItem(R.id.action_online).isVisible = viewModel.remoteManga.value != null
 		menu.findItem(R.id.action_stats).isVisible = viewModel.isStatsAvailable.value
+		menu.findItem(R.id.action_updating)?.isVisible = (activity as? DetailsActivity)?.isUpdatingQuietly == true
 	}
 
 	override fun onMenuItemSelected(menuItem: MenuItem): Boolean {

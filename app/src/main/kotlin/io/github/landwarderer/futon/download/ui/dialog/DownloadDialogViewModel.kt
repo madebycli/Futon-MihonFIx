@@ -9,6 +9,8 @@ import io.github.landwarderer.futon.R
 import io.github.landwarderer.futon.core.model.getPreferredBranch
 import io.github.landwarderer.futon.core.model.parcelable.ParcelableManga
 import io.github.landwarderer.futon.core.nav.AppRouter
+import io.github.landwarderer.futon.core.parser.CachingMangaRepository
+import io.github.landwarderer.futon.core.parser.MangaDataRepository
 import io.github.landwarderer.futon.core.parser.MangaRepository
 import io.github.landwarderer.futon.core.prefs.AppSettings
 import io.github.landwarderer.futon.core.prefs.DownloadFormat
@@ -29,11 +31,12 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
 import org.koitharu.kotatsu.parsers.model.Manga
 import org.koitharu.kotatsu.parsers.util.mapToSet
 import org.koitharu.kotatsu.parsers.util.runCatchingCancellable
 import org.koitharu.kotatsu.parsers.util.sizeOrZero
-import org.koitharu.kotatsu.parsers.util.suspendlazy.suspendLazy
 import javax.inject.Inject
 
 @HiltViewModel
@@ -44,6 +47,7 @@ class DownloadDialogViewModel @Inject constructor(
 	private val localStorageManager: LocalStorageManager,
 	private val localMangaRepository: LocalMangaRepository,
 	private val mangaRepositoryFactory: MangaRepository.Factory,
+	private val mangaDataRepository: MangaDataRepository,
 	private val historyRepository: HistoryRepository,
 	private val settings: AppSettings,
 ) : BaseViewModel() {
@@ -51,13 +55,12 @@ class DownloadDialogViewModel @Inject constructor(
 	val manga = savedStateHandle.require<Array<ParcelableManga>>(AppRouter.KEY_MANGA).map {
 		it.manga
 	}
-	private val mangaDetails = suspendLazy {
-		coroutineScope {
-			manga.map { m ->
-				async { m.getDetails() }
-			}.awaitAll()
-		}
-	}
+	/**
+	 * The details the options and the downloads are made from. The chapters already known (just loaded, or stored)
+	 * are used at once, so a slow source does not hold the dialog up; the update from the source runs as before and
+	 * replaces them when it is done.
+	 */
+	private val mangaDetails = MutableStateFlow<List<Manga>?>(null)
 	val onScheduled = MutableEventFlow<Boolean>()
 	val defaultFormat = MutableStateFlow<DownloadFormat?>(null)
 	val availableDestinations = MutableStateFlow(listOf(defaultDestination()))
@@ -77,6 +80,19 @@ class DownloadDialogViewModel @Inject constructor(
 		}
 		launchJob(Dispatchers.IO) {
 			try {
+				val known = coroutineScope {
+					manga.map { m -> async { m.getKnownDetails() } }.awaitAll()
+				}
+				if (known.all { it != null }) {
+					mangaDetails.value = known.filterNotNull()
+					loadAvailableOptions()
+					isOptionsLoading.value = false
+				}
+				val fresh = coroutineScope {
+					manga.map { m -> async { m.getDetails() } }.awaitAll()
+				}
+				// A manga whose update failed keeps the chapters known before instead of losing them.
+				mangaDetails.value = fresh.mapIndexed { i, m -> if (m.chapters.isNullOrEmpty()) known[i] ?: m else m }
 				loadAvailableOptions()
 			} finally {
 				isOptionsLoading.value = false
@@ -94,7 +110,7 @@ class DownloadDialogViewModel @Inject constructor(
 	) {
 		launchLoadingJob(Dispatchers.IO) {
 			val requiresCharging = settings.isDownloadOnlyOnChargingEnabled
-			val tasks = mangaDetails.get().map { m ->
+			val tasks = mangaDetails.filterNotNull().first().map { m ->
 				val chapters = checkNotNull(m.chapters) { "Manga \"${m.title}\" cannot be loaded" }
 				val chaptersIds = chaptersMacro.getChaptersIds(m.id, chapters)?.toLongArray() ?: longArrayOf()
 				m to chaptersIds
@@ -162,8 +178,10 @@ class DownloadDialogViewModel @Inject constructor(
 		isAvailable = true,
 	)
 
+	private var hasOptions = false
+
 	private suspend fun loadAvailableOptions() {
-		val details = mangaDetails.get()
+		val details = mangaDetails.value ?: return
 		var totalChapters = 0
 		val branches = ArrayMap<String?, Int>()
 		var maxChapters = 0
@@ -187,7 +205,11 @@ class DownloadDialogViewModel @Inject constructor(
 				branches.increment(c.branch)
 			}
 		}
-		val defaultBranch = preferredBranches.firstOrNull()
+		// Called again when the update from the source arrives: what the user chose meanwhile is kept.
+		val previous = if (hasOptions) chaptersSelectOptions.value else null
+		hasOptions = true
+		val defaultBranch = previous?.wholeBranch?.selectedBranch?.takeIf { it in branches }
+			?: preferredBranches.firstOrNull()
 		chaptersSelectOptions.value = ChapterSelectOptions(
 			wholeManga = ChaptersSelectMacro.WholeManga(totalChapters),
 			wholeBranch = if (branches.size > 1) {
@@ -200,7 +222,7 @@ class DownloadDialogViewModel @Inject constructor(
 			},
 			firstChapters = if (maxChapters > 0) {
 				ChaptersSelectMacro.FirstChapters(
-					chaptersCount = minOf(5, maxChapters),
+					chaptersCount = previous?.firstChapters?.chaptersCount?.coerceIn(1, maxChapters) ?: minOf(5, maxChapters),
 					maxAvailableCount = maxChapters,
 					branch = defaultBranch,
 				)
@@ -209,7 +231,8 @@ class DownloadDialogViewModel @Inject constructor(
 			},
 			unreadChapters = if (currentChaptersIds.isNotEmpty()) {
 				ChaptersSelectMacro.UnreadChapters(
-					chaptersCount = minOf(5, maxUnreadChapters),
+					chaptersCount = previous?.unreadChapters?.chaptersCount?.coerceIn(0, maxUnreadChapters)
+						?: minOf(5, maxUnreadChapters),
 					maxAvailableCount = maxUnreadChapters,
 					currentChaptersIds = currentChaptersIds,
 				)
@@ -251,6 +274,13 @@ class DownloadDialogViewModel @Inject constructor(
 			}
 		}
 	}
+
+	/** The chapters already known: just loaded (memory cache) or stored in the database; null when there are none. */
+	private suspend fun Manga.getKnownDetails(): Manga? = runCatchingCancellable {
+		val cached = (mangaRepositoryFactory.create(source) as? CachingMangaRepository)?.peekDetails(this)
+		cached?.takeUnless { it.chapters.isNullOrEmpty() }
+			?: mangaDataRepository.findMangaById(id, withChapters = true)?.takeUnless { it.chapters.isNullOrEmpty() }
+	}.getOrNull()
 
 	private suspend fun Manga.getDetails(): Manga = runCatchingCancellable {
 		mangaRepositoryFactory.create(source).getDetails(this)

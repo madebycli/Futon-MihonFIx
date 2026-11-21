@@ -15,6 +15,7 @@ import com.google.android.material.chip.Chip
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import io.github.landwarderer.futon.R
 import io.github.landwarderer.futon.core.nav.ReaderIntent
@@ -91,7 +92,10 @@ class ChaptersFragment :
 			ChapterGridSpanHelper.attach(this)
 		}
 		binding.chipsFilter.onChipClickListener = this
-		viewModel.isLoading.observe(viewLifecycleOwner, this::onLoadingStateChanged)
+		// The chapters already known stay in the list while they are updated (a small indicator in the toolbar shows
+		// it); the large indicator is only for a list that has nothing to show yet.
+		combine(viewModel.isLoading, viewModel.chapters) { isLoading, chapters -> isLoading && chapters.isEmpty() }
+			.observe(viewLifecycleOwner, this::onLoadingStateChanged)
 		viewModel.chapters
 			.map { it.withVolumeHeaders(requireContext()) }
 			.flowOn(Dispatchers.IO)
