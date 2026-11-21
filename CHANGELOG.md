@@ -4,6 +4,18 @@ All notable changes to this project are documented in this file.
 
 The format is based on "Keep a Changelog" and follows semantic versioning where possible.
 
+## 10.4
+Date: 2026-11-21
+
+### Details
+- The download button is back in the top bar. The update indicator sits right next to it instead of taking its
+  place.
+
+### Downloads
+- The download dialog uses the chapters shown on the details screen, so all options (a branch, the first chapters,
+  the next unread chapters) are available right away while the details update.
+- "Whole manga" with "start now" begins at once, even before any chapters are known.
+
 ## 10.3
 Date: 2026-11-21
 
