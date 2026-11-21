@@ -12,6 +12,7 @@ import io.github.landwarderer.futon.core.nav.AppRouter
 import io.github.landwarderer.futon.core.parser.CachingMangaRepository
 import io.github.landwarderer.futon.core.parser.MangaDataRepository
 import io.github.landwarderer.futon.core.parser.MangaRepository
+import io.github.landwarderer.futon.core.parser.ShownMangaDetails
 import io.github.landwarderer.futon.core.prefs.AppSettings
 import io.github.landwarderer.futon.core.prefs.DownloadFormat
 import io.github.landwarderer.futon.core.ui.BaseViewModel
@@ -48,6 +49,7 @@ class DownloadDialogViewModel @Inject constructor(
 	private val localMangaRepository: LocalMangaRepository,
 	private val mangaRepositoryFactory: MangaRepository.Factory,
 	private val mangaDataRepository: MangaDataRepository,
+	private val shownMangaDetails: ShownMangaDetails,
 	private val historyRepository: HistoryRepository,
 	private val settings: AppSettings,
 ) : BaseViewModel() {
@@ -110,11 +112,15 @@ class DownloadDialogViewModel @Inject constructor(
 	) {
 		launchLoadingJob(Dispatchers.IO) {
 			val requiresCharging = settings.isDownloadOnlyOnChargingEnabled
-			val tasks = mangaDetails.filterNotNull().first().map { m ->
+			// "Whole manga" needs no chapter list here: with none known yet, the download starts at once and the
+			// download itself takes the stored chapters, or loads them.
+			val details = mangaDetails.value
+				?: if (startNow && chaptersMacro is ChaptersSelectMacro.WholeManga) null else mangaDetails.filterNotNull().first()
+			val tasks = details?.map { m ->
 				val chapters = checkNotNull(m.chapters) { "Manga \"${m.title}\" cannot be loaded" }
 				val chaptersIds = chaptersMacro.getChaptersIds(m.id, chapters)?.toLongArray() ?: longArrayOf()
 				m to chaptersIds
-			}
+			} ?: manga.map { m -> m to longArrayOf() }
 
 			if (startNow) {
 				android.util.Log.d("DownloadDialog", "Starting downloads immediately for ${tasks.size} manga")
@@ -275,12 +281,19 @@ class DownloadDialogViewModel @Inject constructor(
 		}
 	}
 
-	/** The chapters already known: just loaded (memory cache) or stored in the database; null when there are none. */
-	private suspend fun Manga.getKnownDetails(): Manga? = runCatchingCancellable {
-		val cached = (mangaRepositoryFactory.create(source) as? CachingMangaRepository)?.peekDetails(this)
-		cached?.takeUnless { it.chapters.isNullOrEmpty() }
-			?: mangaDataRepository.findMangaById(id, withChapters = true)?.takeUnless { it.chapters.isNullOrEmpty() }
-	}.getOrNull()
+	/**
+	 * The chapters already known: the ones the details screen shows, just loaded ones (memory cache) or the stored
+	 * ones; null when there are none. Each place is tried on its own, so one failing does not hide the others.
+	 */
+	private suspend fun Manga.getKnownDetails(): Manga? {
+		shownMangaDetails.get(id)?.let { return it }
+		runCatchingCancellable {
+			(mangaRepositoryFactory.create(source) as? CachingMangaRepository)?.peekDetails(this)
+		}.getOrNull()?.takeUnless { it.chapters.isNullOrEmpty() }?.let { return it }
+		return runCatchingCancellable {
+			mangaDataRepository.findMangaById(id, withChapters = true)
+		}.getOrNull()?.takeUnless { it.chapters.isNullOrEmpty() }
+	}
 
 	private suspend fun Manga.getDetails(): Manga = runCatchingCancellable {
 		mangaRepositoryFactory.create(source).getDetails(this)

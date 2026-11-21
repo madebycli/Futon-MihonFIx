@@ -8,6 +8,7 @@ import io.github.landwarderer.futon.bookmarks.domain.BookmarksRepository
 import io.github.landwarderer.futon.core.model.getPreferredBranch
 import io.github.landwarderer.futon.core.model.isNsfw
 import io.github.landwarderer.futon.core.nav.MangaIntent
+import io.github.landwarderer.futon.core.parser.ShownMangaDetails
 import io.github.landwarderer.futon.core.prefs.AppSettings
 import io.github.landwarderer.futon.core.prefs.ListMode
 import io.github.landwarderer.futon.core.prefs.TriStateOption
@@ -77,6 +78,7 @@ class DetailsViewModel @Inject constructor(
 	private val progressUpdateUseCase: ProgressUpdateUseCase,
 	private val readingTimeUseCase: ReadingTimeUseCase,
 	statsRepository: StatsRepository,
+	private val shownMangaDetails: ShownMangaDetails,
 ) : ChaptersPagesViewModel(
 	settings = settings,
 	interactor = interactor,
@@ -270,6 +272,7 @@ class DetailsViewModel @Inject constructor(
 				}
 			}.collect {
 				mangaDetails.value = it
+				it.toRemoteManga()?.let(shownMangaDetails::put)
 			}
 	}
 
