@@ -120,6 +120,13 @@ data class MangaDetails(
 
     fun toManga() = mergedManga
 
+    /** The manga of the source with its chapters as the source lists them (no local-only ones); null for local. */
+    fun toRemoteManga(): Manga? = if (manga.isLocal) {
+        null
+    } else {
+        manga.copy(chapters = remoteChaptersSource ?: manga.chapters)
+    }
+
     fun getLocale(): Locale? {
         findAppropriateLocale(chaptersByBranch.keys.singleOrNull())?.let {
             return it

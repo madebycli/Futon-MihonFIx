@@ -10,6 +10,7 @@ import androidx.activity.result.ActivityResultCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.core.view.MenuProvider
+import androidx.core.view.isVisible
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.snackbar.Snackbar
@@ -39,6 +40,11 @@ class DetailsMenuProvider(
 
 	override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
 		menuInflater.inflate(R.menu.opt_details, menu)
+		// The download item has its own view (button + loading indicator), which does not forward clicks by itself.
+		val saveItem = menu.findItem(R.id.action_save)
+		saveItem.actionView?.findViewById<View>(R.id.button_download)?.setOnClickListener {
+			onMenuItemSelected(saveItem)
+		}
 	}
 
 	override fun onPrepareMenu(menu: Menu) {
@@ -54,7 +60,8 @@ class DetailsMenuProvider(
 		menu.findItem(R.id.action_scrobbling).isVisible = viewModel.isScrobblingAvailable
 		menu.findItem(R.id.action_online).isVisible = viewModel.remoteManga.value != null
 		menu.findItem(R.id.action_stats).isVisible = viewModel.isStatsAvailable.value
-		menu.findItem(R.id.action_updating)?.isVisible = (activity as? DetailsActivity)?.isUpdatingQuietly == true
+		menu.findItem(R.id.action_save).actionView?.findViewById<View>(R.id.progress_updating)?.isVisible =
+			(activity as? DetailsActivity)?.isUpdatingQuietly == true
 	}
 
 	override fun onMenuItemSelected(menuItem: MenuItem): Boolean {

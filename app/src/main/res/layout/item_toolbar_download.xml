@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+The download button of the details screen and, right of it, a small loading indicator while the details are updated
+in the background (the shown ones stay usable). Both share one toolbar slot, so the indicator never pushes the
+download button or another action into the overflow menu.
+-->
+<LinearLayout
+	xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:app="http://schemas.android.com/apk/res-auto"
+	android:layout_width="wrap_content"
+	android:layout_height="match_parent"
+	android:gravity="center_vertical"
+	android:orientation="horizontal">
+
+	<ImageButton
+		android:id="@+id/button_download"
+		style="?attr/actionButtonStyle"
+		android:layout_width="wrap_content"
+		android:layout_height="match_parent"
+		android:contentDescription="@string/download"
+		android:src="@drawable/ic_download"
+		android:tooltipText="@string/download" />
+
+	<FrameLayout
+		android:id="@+id/progress_updating"
+		android:layout_width="28dp"
+		android:layout_height="match_parent"
+		android:contentDescription="@string/updating_details"
+		android:tooltipText="@string/updating_details"
+		android:visibility="gone">
+
+		<com.google.android.material.progressindicator.CircularProgressIndicator
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_gravity="center_vertical|start"
+			android:importantForAccessibility="no"
+			android:indeterminate="true"
+			app:indicatorSize="16dp"
+			app:trackThickness="2dp" />
+
+	</FrameLayout>
+
+</LinearLayout>
