@@ -4,6 +4,22 @@ All notable changes to this project are documented in this file.
 
 The format is based on "Keep a Changelog" and follows semantic versioning where possible.
 
+## 10.3
+Date: 2026-11-21
+
+### Details
+- The description and chapters you already know stay on screen while they are updated from the source; the new
+  data replaces them seamlessly. With extensions, the description and info show up before a long chapter list has
+  finished loading.
+- While the details update in the background, a small spinner in the top bar next to the download button shows it.
+  The pull-to-refresh circle only appears when you pull, and the large spinner in the chapter list only when no
+  chapters are known yet.
+
+### Downloads
+- The download dialog opens with the chapters already known instead of waiting for the source; when the update
+  arrives, the list is refreshed and your choices are kept.
+- Downloads no longer reload the details when the chapters are already known.
+
 ## 10.2
 Date: 2026-11-20
 
@@ -12,6 +28,7 @@ Date: 2026-11-20
   check for new chapters was running. Newer extensions use a newer version of a shared library than Clio did; Clio
   now ships a version that works with both older and newer extensions.
 
+## 10.1
 Date: 2026-11-20
 
 ### Extensions
@@ -21,6 +38,7 @@ Date: 2026-11-20
 - The check for new chapters goes through the titles of each extension one at a time, as Mihon does; built-in sources
   are unchanged.
 
+## 10.0
 Date: 2026-11-20
 
 ### Main screen
@@ -47,6 +65,7 @@ Date: 2026-11-20
 - Release APKs per ABI (arm64-v8a, armeabi-v7a, x86_64, x86) and a universal APK. The separate legacy update APK is
   no longer published.
 
+## 9.11.1
 Date: 2026-11-19
 
 ### Mihon extensions
